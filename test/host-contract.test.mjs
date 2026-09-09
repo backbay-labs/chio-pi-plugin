@@ -165,3 +165,20 @@ test("stock Pi serializes model-emitted sibling kernel calls", async () => {
   assert.ok(session.messages.filter(message => message.role === "toolResult").every(message => !message.isError));
   session.dispose();
 });
+
+
+test("stock Pi retains verified denials and terminal tool errors as unsuccessful tool results", async () => {
+  for (const denied of [true, false]) {
+    const f = await fixture();
+    const evidence = {fixture: "verified-by-executor", request: "original"};
+    const executor = {async execute() {return {outcome: denied ? "denied" : "completed", content: "recorded failure", evidence, toolError: !denied};}};
+    const {session} = await createChioPiSession({...f, executor, trustedGatewayTransport: true});
+    scriptedTools(session, [{name: "chio_execute", arguments: {tool: "read", arguments: {path: "protected"}}}]);
+    await session.prompt("Execute requested operation");
+    const result = session.messages.find(message => message.role === "toolResult");
+    assert.equal(result.isError, true);
+    assert.deepEqual(result.details.evidence, evidence);
+    assert.equal(result.details.outcome, denied ? "denied" : "completed");
+    session.dispose();
+  }
+});

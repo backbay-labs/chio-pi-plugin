@@ -51,7 +51,10 @@ async function main() {
     process.on("SIGINT", interrupt);
     process.on("SIGTERM", terminate);
     session.subscribe(event => {
-      if (event.type === "tool_execution_end" && event.isError) toolErrors++;
+      if (event.type === "tool_execution_end") {
+        const details = event.result?.details as {outcome?: string; toolError?: boolean} | undefined;
+        if (event.isError || details?.outcome === "denied" || details?.toolError === true) toolErrors++;
+      }
       if (event.type === "tool_execution_start" || event.type === "tool_execution_end" || event.type === "message_end") process.stdout.write(JSON.stringify(event) + "\n");
     });
     await session.prompt(values.get("--prompt")!, { expandPromptTemplates: false });

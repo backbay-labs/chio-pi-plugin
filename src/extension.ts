@@ -32,6 +32,12 @@ export const CHIO_TOOL_NAME = "chio_execute";
  * Loading this factory into an unrestricted Pi session does not isolate it. */
 export function chioExtension(executor: KernelExecutor | undefined) {
   return (pi: ExtensionAPI): void => {
+    // Preserve the receipt in native tool results while keeping failures visible
+    // to stock Pi. Throwing here discards structured evidence in the host.
+    pi.on("tool_result", event => {
+      const details = event.details as {outcome?: string; toolError?: boolean} | undefined;
+      if (event.toolName === CHIO_TOOL_NAME && (details?.outcome === "denied" || details?.toolError === true)) return {isError: true};
+    });
     pi.registerTool({
       name: CHIO_TOOL_NAME,
       label: "Chio kernel tool",
@@ -57,9 +63,9 @@ export function chioExtension(executor: KernelExecutor | undefined) {
         if (typeof result.content !== "string" || !result.evidence) {
           throw new Error("Kernel evidence missing; external outcome unknown, do not redispatch");
         }
-        if (result.outcome === "denied") throw new Error(`Chio denied operation: ${result.content}`);
-        if (result.toolError) throw new Error(`Chio tool completed with an error: ${result.content}`);
-        return { content: [{ type: "text", text: result.content }], details: { evidence: result.evidence, outcome: result.outcome } };
+        const content = result.outcome === "denied" ? `Chio denied operation: ${result.content}`
+          : result.toolError ? `Chio tool completed with an error: ${result.content}` : result.content;
+        return { content: [{ type: "text", text: content }], details: { evidence: result.evidence, outcome: result.outcome, toolError: result.toolError === true } };
       },
     });
   };
