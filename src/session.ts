@@ -18,6 +18,8 @@ export interface ChioPiOptions {
   modelRuntime: ModelRuntime;
   provider: string;
   model: string;
+  /** Operator-owned local model relay in the sandboxed launcher. */
+  modelBaseUrl?: string;
   executor?: KernelExecutor;
   sessionManager?: SessionManager;
   toolInventory?: { name: string; description?: string; inputSchema: Record<string, unknown> }[];
@@ -66,7 +68,7 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
     cwd: options.cwd,
     agentDir: options.agentDir,
     modelRuntime: options.modelRuntime,
-    model,
+    model: options.modelBaseUrl ? { ...model, baseUrl: options.modelBaseUrl } : model,
     noTools: "all",
     tools: [CHIO_TOOL_NAME],
     resourceLoader,

@@ -1,0 +1,77 @@
+
+  #  /opt/homebrew/Cellar/node/25.5.0/bin/node[85338]: void node::os::GetOSInformation(const FunctionCallbackInfo<Value> &) at ../src/node_os.cc:88
+  #  Assertion failed: (args.Length()) >= (1)
+
+----- Native stack trace -----
+
+ 1: 0x107c977c4 node::Assert(node::AssertionInfo const&) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+ 2: 0x1068eb114 node::os::GetOSInformation(v8::FunctionCallbackInfo<v8::Value> const&) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+ 3: 0x1065bf298 Builtins_CallApiCallbackGeneric [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+ 4: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+ 5: 0x137e44b90 
+ 6: 0x137e446d4 
+ 7: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+ 8: 0x137e44b90 
+ 9: 0x137e446d4 
+10: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+11: 0x137e44b90 
+12: 0x137e446d4 
+13: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+14: 0x137e44b90 
+15: 0x137e446d4 
+16: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+17: 0x137e44b90 
+18: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+19: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+20: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+21: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+22: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+23: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+24: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+25: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+26: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+27: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+28: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+29: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+30: 0x1065bde40 Builtins_InterpreterPushArgsThenFastConstructFunction [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+31: 0x10674d020 Builtins_ConstructHandler [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+32: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+33: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+34: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+35: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+36: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+37: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+38: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+39: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+40: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+41: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+42: 0x1065bd5ec Builtins_InterpreterEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+43: 0x1065ba96c Builtins_JSEntryTrampoline [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+44: 0x1065ba610 Builtins_JSEntry [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+45: 0x106db37a0 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+46: 0x106db31a0 v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>, v8::base::Vector<v8::internal::DirectHandle<v8::internal::Object> const>) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+47: 0x106c8c9a0 v8::Function::Call(v8::Isolate*, v8::Local<v8::Context>, v8::Local<v8::Value>, int, v8::Local<v8::Value>*) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+48: 0x10684e2e8 node::builtins::BuiltinLoader::CompileAndCall(v8::Local<v8::Context>, char const*, node::Realm*) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+49: 0x1069013b0 node::Realm::ExecuteBootstrapper(char const*) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+50: 0x10682d27c node::StartExecution(node::Environment*, char const*) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+51: 0x10682d1f8 node::StartExecution(node::Environment*, std::__1::function<v8::MaybeLocal<v8::Value> (node::StartExecutionCallbackInfo const&)>) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+52: 0x10679b684 node::LoadEnvironment(node::Environment*, std::__1::function<v8::MaybeLocal<v8::Value> (node::StartExecutionCallbackInfo const&)>, std::__1::function<void (node::Environment*, v8::Local<v8::Value>, v8::Local<v8::Value>)>) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+53: 0x1068c0be8 node::NodeMainInstance::Run(node::ExitCode*, node::Environment*) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+54: 0x1068c0930 node::NodeMainInstance::Run() [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+55: 0x10682fdec node::Start(int, char**) [/opt/homebrew/Cellar/node/25.5.0/lib/libnode.141.dylib]
+56: 0x18893bda4 start [/usr/lib/dyld]
+
+----- JavaScript stack trace -----
+
+1: node:os:79:5
+2: compileForInternalLoader (node:internal/bootstrap/realm:398:7)
+3: requireBuiltin (node:internal/bootstrap/realm:429:14)
+4: node:internal/repl/history:21:12
+5: compileForInternalLoader (node:internal/bootstrap/realm:398:7)
+6: requireBuiltin (node:internal/bootstrap/realm:429:14)
+7: node:internal/readline/interface:76:25
+8: compileForInternalLoader (node:internal/bootstrap/realm:398:7)
+9: requireBuiltin (node:internal/bootstrap/realm:429:14)
+10: node:internal/fs/promises:117:23
+
+

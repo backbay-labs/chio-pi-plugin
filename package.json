@@ -39,7 +39,7 @@
     "node": ">=22.19.0"
   },
   "bin": {
-    "chio-pi": "./dist/cli.js"
+    "chio-pi": "./dist/protected-cli.js"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "0.85.1"

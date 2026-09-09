@@ -1,0 +1,29 @@
+
+> @chio/pi-plugin@0.1.0 test
+> npm run build && node --test test/*.test.mjs
+
+
+> @chio/pi-plugin@0.1.0 build
+> tsc
+
+✔ native file, shell, descendant, network, and custom routes are absent from the actual Pi dispatcher (35.244667ms)
+✔ project extension, settings, skill, and context tampering do not load code or restore tools (9.55925ms)
+✔ extension omission leaves no tools; extension crash refuses session startup (9.120083ms)
+✔ missing kernel fails through actual Pi tool dispatch without local effects (9.349292ms)
+✔ unknown outcome survives executor recreation and blocks subsequent dispatch (14.453458ms)
+✔ retained completed results replay without redispatch and changed semantics conflict (23.769292ms)
+✔ pre-dispatch cancellation and known non-dispatch allow later legitimate work (26.361333ms)
+✔ denial preserves fence because it may follow an external effect (17.350042ms)
+✔ stock Pi serializes model-emitted sibling kernel calls (77.029792ms)
+✔ model relay requires complete text/function history and removes provider item references (1.250333ms)
+✔ model relay refuses alternate models, hosted tools, references and background routes (0.173958ms)
+✔ only a normal provider stop can report conversation completion (1.987542ms)
+✔ resource uncertainty survives provider completion, failure and cancellation (0.122834ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1457.2655

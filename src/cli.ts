@@ -37,6 +37,7 @@ async function main() {
   try {
     const modelRuntime = await ModelRuntime.create({ authPath: join(agentDir, "auth.json"), modelsPath: null, modelsStorePath: join(agentDir, "models-cache.json"), allowModelNetwork: false });
     ({ session } = await createChioPiSession({ cwd, agentDir, modelRuntime, provider: values.get("--provider")!, model: values.get("--model")!, executor: controlled.executor,
+      modelBaseUrl: process.env.CHIO_PI_MODEL_BASE_URL,
       sessionManager: resume ? SessionManager.open(await realpath(resume), sessions, cwd) : SessionManager.create(cwd, sessions),
       toolInventory: config.tools,
     }));

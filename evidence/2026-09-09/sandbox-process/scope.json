@@ -1,0 +1,16 @@
+{
+  "status": "partial process qualification; not kernel acceptance",
+  "host": "@earendil-works/pi-coding-agent@0.85.1",
+  "model": "actual openai/gpt-4.1-mini",
+  "installation": "disposable APFS clone of prior cold installation, overlaid current source build; final release tarball not yet created",
+  "kernelCredential": "deliberately fake non-authorizing bearer and format-only metadata; no kernel operation requested",
+  "successfulVariant": "model-only-v6.jsonl",
+  "policySha256": "559ec2783d9b57808fd2904ecc33fe7cdc76c58533e63993b135b7d85fa2f5a0",
+  "failedVariants": [
+    "model-only.jsonl",
+    "model-only-v2.jsonl",
+    "model-only-v3.jsonl",
+    "model-only-v5.jsonl"
+  ],
+  "intermediateSuccessfulVariant": "model-only-v4.jsonl used broader sysctl permissions, superseded"
+}

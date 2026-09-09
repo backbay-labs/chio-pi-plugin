@@ -4,14 +4,14 @@ This candidate runs the real Pi SDK with a native Chio extension. Pi can perform
 
 **Acceptance is incomplete.** [Acceptance](docs/ACCEPTANCE.md) records the real host observations and every remaining gate. This is a qualified development candidate, not an announced accepted release.
 
-The Pi SDK process and operator profile are trusted in this candidate. There is no OS sandbox around that process: it can read its prepared credential and contact the kernel. The tested restriction applies to model-reachable tools, with the protected filesystem owned by a separate resource container. Arbitrary host process compromise and a hostile same-UID program are not covered by the current evidence.
+The `chio-pi` launcher confines the Pi process with a macOS sandbox. It can read the installed code and its own delegated session configuration, and write only its dedicated profile. Operator and other hosts' credentials are excluded. A small operator-owned model relay keeps the provider key outside Pi and permits only text/function requests to the selected model. The kernel's resource-owner credential and dispatch contract must enforce scope and unresolved-operation fencing independently of Pi's mutable local state. That new complete combination is awaiting qualification; earlier SDK-only runs do not prove this boundary.
 
 ## Version combination
 
 - Pi: `@earendil-works/pi-coding-agent@0.85.1`, upstream `d981de1229ef899957bbe968bc8dcda02a21f477`.
 - Plugin: `@chio/pi-plugin@0.1.0` candidate.
 - Bridge: `@chio/bridge@0.3.0` candidate, embedded in the release tarball. Its exact SDK is bundled too.
-- Node: 22.19.0 or later; tested with 25.5.0 on macOS arm64.
+- Node: 25.5.0 tested on macOS 25.4.0 arm64. The package's upstream engine floor is 22.19.0; other versions are not qualified here.
 - Kernel: the execution-evidence/context candidate identified in the acceptance record. The public CLI 0.1.0 cannot substitute for it.
 
 ## Install the candidate artifact
@@ -27,15 +27,15 @@ npm install --ignore-scripts --install-strategy=nested /absolute/chio-pi-plugin-
 ./node_modules/.bin/chio-pi --help
 ```
 
-Use a dedicated operator profile and a disposable local working directory. The kernel tool server must not mount the profile, plugin installation, model credentials, or kernel administrative state. The tested filesystem resource server exposes only its designated Docker volume. Its process has no agent-accessible shell or direct route to the host filesystem.
+Use an empty private profile and a separate disposable local working directory. The launcher marks the profile as belonging to its retained kernel session and refuses an unmarked nonempty directory. Configuration, installed code and profile must occupy separate paths. The kernel tool server must not mount the profile, plugin installation, model credentials, or kernel administrative state. The tested filesystem resource server exposes only its designated Docker volume. Its process has no agent-accessible shell or direct route to the host filesystem.
 
 ## Configure and run
 
-The operator prepares a retained kernel session with `chio-prepare-gateway`, shipped in the bridge artifact. It obtains the actual caller/capability context and tool schemas from the kernel. Its input and output are private mode-0600 files. Supply explicit bearer authority, trusted signer, server ID, allowed tools, and logical session ID; never ask the model to supply them. See the shared kernel/bridge runbook for provisioning authority and the resource server.
+The operator prepares a retained kernel session with `chio-prepare-gateway`, shipped in the bridge artifact. It obtains the actual caller/capability context and tool schemas, then exchanges operator authority for a credential restricted to that session. Its input and output are private mode-0600 files. Keep the operator input outside Pi's profile and supply only the delegated output to Pi. Supply explicit trusted signer, server ID, allowed tools, and logical session ID; never ask the model to supply them. See the shared kernel/bridge runbook for provisioning authority and the resource server.
 
-The resulting configuration must include `execution.endpoint`, `execution.bearerToken`, `execution.trustedSigners`, `execution.subjectKey`, `execution.capabilityId`, `execution.serverId`, `execution.sessionId`, a logical `sessionId`, and the explicit `tools` inventory. The plugin refuses missing retained sessions or executable transport configuration.
+The resulting configuration must include `execution.endpoint`, the delegated `execution.bearerToken`, `execution.trustedSigners`, `execution.subjectKey`, `execution.capabilityId`, `execution.serverId`, `execution.sessionId`, a logical `sessionId`, and the explicit `tools` inventory. The protected launcher also requires matching `sessionCredential` metadata with schema `chio.mcp.session-credential.v1`. That metadata is a format check; the kernel validates the actual token. Older operator-bearer configurations are refused. The selected kernel endpoint is HTTP on an explicit `127.0.0.1` port.
 
-Provide the model provider's supported API key through the environment. The runner uses a separate Pi credential/cache location and does not read the normal Pi configuration.
+Provide `OPENAI_API_KEY` to the operator launcher. Its child receives a random relay credential, not the provider key, and may contact only the local relay and the configured kernel port. This mode supports `openai/gpt-4.1-mini` and text/function history only; image/file inputs, provider-side item references, hosted tools, background provider jobs and other API routes are refused. The runner uses a separate Pi credential/cache location and does not read the normal Pi configuration.
 
 ```sh
 ./node_modules/.bin/chio-pi \
@@ -51,6 +51,8 @@ The output is JSONL containing actual Pi messages, tool results, and the retaine
 The terminal `chio_session` record includes an explicit outcome. Unresolved resource outcomes exit 2, provider/runtime failures or incomplete generation exit 1, and cancellation exits 130 (SIGINT) or 143 (SIGTERM). Token truncation is `incomplete`, never completed. A task that completes after intermediate recoverable tool errors is labeled `completed_with_tool_errors`; inspect its actual tool results. A normal model explanation cannot erase a retained uncertainty interlock.
 
 The runner deliberately exposes print/SDK execution only. It does not pass arbitrary flags, file attachments, raw RPC requests, interactive shell commands, or third-party extension loading to Pi. The [action inventory](docs/ACTION-INVENTORY.md) defines the complete supported surface.
+
+Only the installed `chio-pi` launcher defines the protected mode. Direct invocation of `dist/cli.js` or embedding the exported SDK helpers is a development surface requiring its own process boundary; earlier evidence identifies those runs explicitly. The protected launcher refuses source-checkout execution and has no flag to disable its sandbox.
 
 ## Resume, recover, upgrade, remove
 
