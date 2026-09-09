@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-import { mkdir, realpath } from "node:fs/promises";
+import { lstat, mkdir, realpath } from "node:fs/promises";
 import { join, resolve, sep } from "node:path";
 import { ModelRuntime, SessionManager } from "@earendil-works/pi-coding-agent";
 import { configuredExecutor, readPreparedConfig } from "./configured.js";
 import { createChioPiSession } from "./session.js";
+import { terminalState } from "./terminal.js";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -31,6 +32,8 @@ async function main() {
   const controlled = await configuredExecutor(config, agentDir);
   let session;
   let stop: (() => void) | undefined;
+  let termination: "SIGINT" | "SIGTERM" | undefined;
+  let toolErrors = 0;
   try {
     const modelRuntime = await ModelRuntime.create({ authPath: join(agentDir, "auth.json"), modelsPath: null, modelsStorePath: join(agentDir, "models-cache.json"), allowModelNetwork: false });
     ({ session } = await createChioPiSession({ cwd, agentDir, modelRuntime, provider: values.get("--provider")!, model: values.get("--model")!, executor: controlled.executor,
@@ -38,16 +41,26 @@ async function main() {
       toolInventory: config.tools,
     }));
     const current = session;
-    stop = () => { void current.abort(); };
-    process.on("SIGINT", stop);
-    process.on("SIGTERM", stop);
+    const interrupt = () => { termination = "SIGINT"; void current.abort(); };
+    const terminate = () => { termination = "SIGTERM"; void current.abort(); };
+    stop = () => { process.off("SIGINT", interrupt); process.off("SIGTERM", terminate); };
+    process.on("SIGINT", interrupt);
+    process.on("SIGTERM", terminate);
     session.subscribe(event => {
+      if (event.type === "tool_execution_end" && event.isError) toolErrors++;
       if (event.type === "tool_execution_start" || event.type === "tool_execution_end" || event.type === "message_end") process.stdout.write(JSON.stringify(event) + "\n");
     });
     await session.prompt(values.get("--prompt")!, { expandPromptTemplates: false });
-    process.stdout.write(JSON.stringify({ type: "chio_session", sessionFile: session.sessionFile, sessionId: session.sessionId }) + "\n");
+    const assistant = session.messages.findLast(message => message.role === "assistant");
+    const providerStopReason = assistant && "stopReason" in assistant ? assistant.stopReason : undefined;
+    let unresolved = false;
+    try { await lstat(join(agentDir, "chio", "unresolved-kernel-operation.json")); unresolved = true; }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") unresolved = true; }
+    const { outcome, exitCode } = terminalState({ unresolved, termination, providerStopReason, toolErrors });
+    process.exitCode = exitCode;
+    process.stdout.write(JSON.stringify({ type: "chio_session", sessionFile: session.sessionFile, sessionId: session.sessionId, outcome, toolErrors, providerStopReason }) + "\n");
   } finally {
-    if (stop) { process.off("SIGINT", stop); process.off("SIGTERM", stop); }
+    stop?.();
     session?.dispose();
     await controlled.close();
   }

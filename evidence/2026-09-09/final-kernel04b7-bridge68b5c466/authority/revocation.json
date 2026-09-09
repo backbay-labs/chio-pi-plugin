@@ -1,0 +1,16 @@
+{
+  "revocation": {
+    "action": "revoke",
+    "result": {
+      "capabilityId": "cap-01a086ea-590a-7c82-9b35-7da9e2786a99",
+      "newlyRevoked": true,
+      "revoked": true
+    }
+  },
+  "host": {
+    "exitCode": 2,
+    "configPath": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-authority-IL4uh3/revoked-gateway.json",
+    "capabilityId": "cap-01a086ea-590a-7c82-9b35-7da9e2786a99",
+    "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-authority-IL4uh3/revoked-profile"
+  }
+}

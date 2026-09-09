@@ -1,0 +1,17 @@
+{
+  "code": 130,
+  "signal": null,
+  "elapsedMs": 3365.6520410000003,
+  "sentSignal": "SIGINT",
+  "signalDelayMs": 3000,
+  "terminal": {
+    "type": "chio_session",
+    "sessionFile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-terminal-cancel-mp0STV/sessions/2026-09-09T16-11-24-353Z_01a086f0-3540-70d3-959e-533e20c63826.jsonl",
+    "sessionId": "01a086f0-3540-70d3-959e-533e20c63826",
+    "outcome": "cancelled",
+    "toolErrors": 0,
+    "providerStopReason": "aborted"
+  },
+  "toolCalls": 0,
+  "scope": "Actual Pi/provider cancellation exit semantics. No resource operation was requested; separate tool-cancellation evidence is required."
+}

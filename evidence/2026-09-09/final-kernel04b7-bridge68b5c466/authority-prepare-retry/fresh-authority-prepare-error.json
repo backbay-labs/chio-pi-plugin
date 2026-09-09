@@ -1,0 +1,5 @@
+{
+  "exitCode": 1,
+  "stdout": "",
+  "stderr": "Gateway preparation failed; config must not be used and no protected tool was dispatched.\n"
+}

@@ -1,0 +1,25 @@
+{
+  "host": {
+    "exitCode": 0,
+    "configPath": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-authority-IL4uh3/budget-gateway.json",
+    "capabilityId": "cap-01a086ea-bd90-7472-b712-edce54048bcf",
+    "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-authority-IL4uh3/budget-profile"
+  },
+  "budgetState": {
+    "action": "budget",
+    "result": {
+      "backend": "sqlite",
+      "capabilityId": "cap-01a086ea-bd90-7472-b712-edce54048bcf",
+      "configured": true,
+      "count": 1,
+      "usages": [
+        {
+          "capabilityId": "cap-01a086ea-bd90-7472-b712-edce54048bcf",
+          "grantIndex": 0,
+          "invocationCount": 63,
+          "updatedAt": 1788969978
+        }
+      ]
+    }
+  }
+}

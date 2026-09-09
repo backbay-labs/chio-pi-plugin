@@ -50,14 +50,19 @@ for (const variant of ["substituted-output", "substituted-request", "lost-respon
   await writeFile(configPath, JSON.stringify(config), { mode: 0o600 });
   const profile = join(directory, `${variant}-profile`);
   const prompt = `Call chio_execute exactly once with tool write_file and arguments ${JSON.stringify({ path: `/workspace/pi-${variant}.txt`, content: variant })}. Report the actual result. Do not retry.`;
-  const stdout = []; const stderr = [];
-  const child = spawn(process.execPath, [cli, "--config", configPath, "--profile", profile, "--cwd", join(directory, "workspace"), "--provider", "openai", "--model", "gpt-4.1-mini", "--prompt", prompt], { stdio: ["ignore", "pipe", "pipe"] });
-  child.stdout.on("data", data => stdout.push(data)); child.stderr.on("data", data => stderr.push(data));
-  const timeout = setTimeout(() => child.kill("SIGTERM"), 60_000);
-  const exitCode = await new Promise(resolve => child.on("exit", resolve)); clearTimeout(timeout);
+  async function runHost(suffix, text) {
+    const stdout = []; const stderr = [];
+    const child = spawn(process.execPath, [cli, "--config", configPath, "--profile", profile, "--cwd", join(directory, "workspace"), "--provider", "openai", "--model", "gpt-4.1-mini", "--prompt", text], { stdio: ["ignore", "pipe", "pipe"] });
+    child.stdout.on("data", data => stdout.push(data)); child.stderr.on("data", data => stderr.push(data));
+    const timeout = setTimeout(() => child.kill("SIGTERM"), 60_000);
+    const exitCode = await new Promise(resolve => child.on("exit", resolve)); clearTimeout(timeout);
+    await writeFile(join(evidence, `live-${variant}${suffix}.jsonl`), Buffer.concat(stdout));
+    if (stderr.length) await writeFile(join(evidence, `live-${variant}${suffix}.stderr.txt`), Buffer.concat(stderr));
+    return exitCode;
+  }
+  const exitCode = await runHost("", prompt);
+  const restartExitCode = await runHost("-restart", `Call chio_execute exactly once with tool write_file and arguments ${JSON.stringify({ path: `/workspace/pi-${variant}-retry.txt`, content: "must not redispatch" })}. Report the actual result. Do not retry.`);
   proxy.closeAllConnections(); await new Promise(resolve => proxy.close(resolve));
-  await writeFile(join(evidence, `live-${variant}.jsonl`), Buffer.concat(stdout));
-  if (stderr.length) await writeFile(join(evidence, `live-${variant}.stderr.txt`), Buffer.concat(stderr));
-  await writeFile(join(evidence, `${variant}-fault-observer.json`), JSON.stringify({ variant, recordedAt: new Date().toISOString(), exitCode, observations, profile, outcome: "verify host rejection and independent resource state; committed effects may exist" }, null, 2) + "\n");
-  console.log(JSON.stringify({ variant, exitCode, observations }));
+  await writeFile(join(evidence, `${variant}-fault-observer.json`), JSON.stringify({ variant, recordedAt: new Date().toISOString(), exitCode, restartExitCode, observations, profile, outcome: "verify host rejection, single upstream dispatch, and independent resource state; committed effects may exist" }, null, 2) + "\n");
+  console.log(JSON.stringify({ variant, exitCode, restartExitCode, observations }));
 }

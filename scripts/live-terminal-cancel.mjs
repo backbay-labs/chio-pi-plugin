@@ -1,0 +1,27 @@
+import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { spawn } from "node:child_process";
+
+const config = process.argv[2];
+if (!config) throw new Error("Usage: node scripts/live-terminal-cancel.mjs /absolute/private/gateway.json");
+const evidence = resolve(process.env.CHIO_PI_EVIDENCE_DIR ?? "evidence/2026-09-09/final-kernel04b7-bridge68b5c466");
+await mkdir(evidence, { recursive: true });
+const profile = await mkdtemp(join(tmpdir(), "chio-pi-terminal-cancel-"));
+const cli = resolve(process.env.CHIO_PI_CANDIDATE_CLI ?? "dist/cli.js");
+const child = spawn(process.execPath, [cli, "--config", config, "--profile", profile, "--cwd", join(profile, "workspace"), "--provider", "openai", "--model", "gpt-4.1-mini", "--prompt", "Do not use tools. Write a detailed 2000-word explanation of alphabetic ordering, with many examples."], { stdio: ["ignore", "pipe", "pipe"] });
+const stdout = []; const stderr = [];
+child.stdout.on("data", data => stdout.push(data)); child.stderr.on("data", data => stderr.push(data));
+const began = performance.now();
+const signalTimer = setTimeout(() => child.kill("SIGINT"), 3000);
+const exit = await new Promise(resolve => child.on("exit", (code, signal) => resolve({ code, signal })));
+clearTimeout(signalTimer);
+const text = Buffer.concat(stdout).toString();
+await writeFile(join(evidence, "live-terminal-cancel.jsonl"), text);
+if (stderr.length) await writeFile(join(evidence, "live-terminal-cancel.stderr.txt"), Buffer.concat(stderr));
+const events = text.trim().split("\n").filter(Boolean).map(JSON.parse);
+const terminal = events.findLast(event => event.type === "chio_session");
+const record = { ...exit, elapsedMs: performance.now() - began, sentSignal: "SIGINT", signalDelayMs: 3000, terminal, toolCalls: events.filter(event => event.type === "tool_execution_start").length, scope: "Actual Pi/provider cancellation exit semantics. No resource operation was requested; separate tool-cancellation evidence is required." };
+await writeFile(join(evidence, "live-terminal-cancel-observer.json"), JSON.stringify(record, null, 2) + "\n");
+console.log(JSON.stringify({ code: exit.code, signal: exit.signal, outcome: terminal?.outcome, toolCalls: record.toolCalls }));
+if (exit.code !== 130 || terminal?.outcome !== "cancelled" || record.toolCalls !== 0) process.exitCode = 1;

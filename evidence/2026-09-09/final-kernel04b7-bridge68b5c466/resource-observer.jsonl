@@ -1,0 +1,13 @@
+{"name":"final-one","present":true,"content":"one","observer":"independent read-only Docker volume"}
+{"name":"final-two","present":true,"content":"two","observer":"independent read-only Docker volume"}
+{"name":"wrong-subject","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"name":"wrong-capability","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"name":"wrong-session","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"name":"kernel-unreachable","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"name":"kernel-malformed","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"name":"wrong-signer","present":true,"content":"Pi wrong-signer probe\n","observer":"independent read-only Docker volume"}
+{"name":"wrong-signer-retry","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"name":"substituted-output","present":true,"content":"substituted-output","observer":"independent read-only Docker volume"}
+{"name":"substituted-request","present":true,"content":"substituted-request","observer":"independent read-only Docker volume"}
+{"name":"lost-response","present":true,"content":"lost-response","observer":"independent read-only Docker volume"}
+{"name":"cancelled","present":false,"content":null,"observer":"independent read-only Docker volume"}

@@ -13,7 +13,7 @@ The SDK's explicit tool allowlist filters its complete registry, including subse
 | Surface in selected Pi release | Ordinary Pi behavior / resource owner | Protected-mode disposition | Current evidence |
 | --- | --- | --- | --- |
 | `read` | Host process reads local files, including sensitive content | Absent from tool registry | Stock dispatcher rejects forced call; file baseline unchanged |
-| `write`, `edit` | Host process mutates files | Absent from registry; use kernel-owned file tools when qualified | Forced `write` rejects; kernel useful writes unresolved |
+| `write`, `edit` | Host process mutates files | Absent from registry; use kernel-owned file tools when qualified | Forced native `write` rejects; actual kernel write/read through Pi and independent bytes observed |
 | `grep`, `find`, `ls` | Host reads paths and may use search subprocesses | Absent from registry | Activation attempts leave them unavailable |
 | `bash`, `powershell` | Host spawns shell; descendants inherit local resource access | Absent from registry | Forced shell/Node descendant call rejected before execution |
 | Shell indirection, `curl`, git, tmux | Available through ordinary shell, with network/credential implications | No shell dispatch path | Dispatcher absence tested; real kernel-side shell isolation remains outside this host adapter |
@@ -29,7 +29,7 @@ The SDK's explicit tool allowlist filters its complete registry, including subse
 | RPC `bash`, credentials, extension commands | Operator-facing RPC can invoke paths outside LLM tool registry | Raw Pi RPC is not exposed | Protected runner accepts only prompt/config/resume options |
 | File attachments (`@path`) | CLI expands local file content | Raw CLI argument parser is not exposed; prompts remain literal strings | SDK surface selection; attachment probes pending |
 | Session resume / retry | Pi persists messages, models, and tool results | Same tool allowlist reapplied; client operation interlock retained in dedicated profile | Real same-ID resume and unknown-outcome host restart observed; full cutpoint matrix pending |
-| Operator configuration | Trusted operator selects model, resource authority, endpoint, signer, profile | Outside agent resource scope | Tampering through local agent tools unavailable; resource-side profile exclusion must be tested |
+| Operator configuration | Trusted operator selects model, resource authority, endpoint, signer, profile | Outside agent resource scope | Local agent tools unavailable; actual attempt to write private config through the resource server returned outside-root error and config identity remained unchanged |
 | Tool cancellation | Pi supplies AbortSignal | Propagated to bridge; uncertain dispatch locks profile | Real host pre-dispatch cancellation observed; response-loss cutpoint exercised separately |
 
 Model-emitted sibling calls use Pi's supported sequential tool-execution mode, preserving the one-operation client interlock without rejecting useful batches. A real model emitted two writes in one assistant message and two reads in its next message; all completed through the kernel.

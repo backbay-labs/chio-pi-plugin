@@ -4,6 +4,8 @@ This candidate runs the real Pi SDK with a native Chio extension. Pi can perform
 
 **Acceptance is incomplete.** [Acceptance](docs/ACCEPTANCE.md) records the real host observations and every remaining gate. This is a qualified development candidate, not an announced accepted release.
 
+The Pi SDK process and operator profile are trusted in this candidate. There is no OS sandbox around that process: it can read its prepared credential and contact the kernel. The tested restriction applies to model-reachable tools, with the protected filesystem owned by a separate resource container. Arbitrary host process compromise and a hostile same-UID program are not covered by the current evidence.
+
 ## Version combination
 
 - Pi: `@earendil-works/pi-coding-agent@0.85.1`, upstream `d981de1229ef899957bbe968bc8dcda02a21f477`.
@@ -45,6 +47,8 @@ Provide the model provider's supported API key through the environment. The runn
 ```
 
 The output is JSONL containing actual Pi messages, tool results, and the retained session path. Kernel receipts are included with verified successful results. Keep this output private when task inputs or results are sensitive. The model calls `chio_execute` with the operator-listed tool name and arguments.
+
+The terminal `chio_session` record includes an explicit outcome. Unresolved resource outcomes exit 2, provider/runtime failures or incomplete generation exit 1, and cancellation exits 130 (SIGINT) or 143 (SIGTERM). Token truncation is `incomplete`, never completed. A task that completes after intermediate recoverable tool errors is labeled `completed_with_tool_errors`; inspect its actual tool results. A normal model explanation cannot erase a retained uncertainty interlock.
 
 The runner deliberately exposes print/SDK execution only. It does not pass arbitrary flags, file attachments, raw RPC requests, interactive shell commands, or third-party extension loading to Pi. The [action inventory](docs/ACTION-INVENTORY.md) defines the complete supported surface.
 
