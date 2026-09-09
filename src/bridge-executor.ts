@@ -26,7 +26,8 @@ export function bridgeExecutor(client: McpExecutionClient): KernelExecutor {
       }
       if (outcome.state === "denied") return { outcome: "denied", content: outcome.reason ?? "Kernel denied the operation; consult receipt for the decision phase", evidence: outcome.receipt };
       if (outcome.state !== "completed" || outcome.result === undefined) throw new Error("No verified completed result; external outcome unknown");
-      return { outcome: "completed", content: JSON.stringify(outcome.result), evidence: outcome.receipt };
+      const toolError = typeof outcome.result === "object" && outcome.result !== null && "isError" in outcome.result && outcome.result.isError === true;
+      return { outcome: "completed", content: JSON.stringify(outcome.result), evidence: outcome.receipt, toolError };
     },
   };
 }

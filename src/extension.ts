@@ -18,6 +18,7 @@ export interface KernelResult {
   outcome: "completed" | "denied" | "not_dispatched";
   content: string;
   evidence?: unknown;
+  toolError?: boolean;
 }
 
 export const CHIO_TOOL_NAME = "chio_execute";
@@ -51,6 +52,7 @@ export function chioExtension(executor: KernelExecutor | undefined) {
           throw new Error("Kernel evidence missing; external outcome unknown, do not redispatch");
         }
         if (result.outcome === "denied") throw new Error(`Chio denied operation: ${result.content}`);
+        if (result.toolError) throw new Error(`Chio tool completed with an error: ${result.content}`);
         return { content: [{ type: "text", text: result.content }], details: { evidence: result.evidence, outcome: result.outcome } };
       },
     });

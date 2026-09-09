@@ -20,6 +20,7 @@ export interface ChioPiOptions {
   model: string;
   executor?: KernelExecutor;
   sessionManager?: SessionManager;
+  toolInventory?: { name: string; description?: string; inputSchema: Record<string, unknown> }[];
 }
 
 /** Construct only the selected inline extension. No project/global packages,
@@ -52,7 +53,7 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
     noPromptTemplates: true,
     noThemes: true,
     noContextFiles: true,
-    systemPrompt: "You are Pi using Chio kernel tools. Complete useful tasks through chio_execute. Treat kernel errors as failures, and uncertain external outcomes as unresolved. Never claim a resource effect without its result. There are no native local tools in this profile.",
+    systemPrompt: "You are Pi using Chio kernel tools. Complete useful tasks through chio_execute. Treat kernel errors as failures, and uncertain external outcomes as unresolved. Never claim a resource effect without its result. There are no native local tools in this profile." + (options.toolInventory ? `\nOperator-configured kernel tool inventory:\n${JSON.stringify(options.toolInventory)}` : ""),
     appendSystemPrompt: [],
     extensionFactories: extension ? [extension] : [],
   });
@@ -72,6 +73,9 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
     settingsManager,
     sessionManager: options.sessionManager ?? SessionManager.inMemory(options.cwd),
   });
+  // The profile has one durable in-flight interlock. Ask the stock host to
+  // serialize model-emitted sibling calls instead of creating false conflicts.
+  result.session.agent.toolExecution = "sequential";
   if (result.session.agent.state.tools.some(tool => tool.name !== CHIO_TOOL_NAME)) {
     result.session.dispose();
     throw new Error("Unexpected native tool in protected profile");

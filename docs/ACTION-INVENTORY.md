@@ -20,7 +20,7 @@ The SDK's explicit tool allowlist filters its complete registry, including subse
 | Model network | Pi provider implementation uses operator-selected model authentication | Fixed operator-selected provider/model; model cannot set endpoint | OpenAI live-model call executed; credential values not retained |
 | Agent-chosen network | Usually shell or custom extension tool | Only explicitly kernel-owned tools | Local shell/custom tool route blocked; external network-tool acceptance unresolved |
 | Custom tools | Native extension or SDK `customTools` registration | Only `chio_execute` is allowed | Filtered from registry even on later activation |
-| MCP | Supplied through extensions rather than a native built-in MCP client | Only Chio bridge MCP execution | Shared bridge 0.3.0 candidate required |
+| MCP | Supplied through extensions rather than a native built-in MCP client | Only Chio bridge MCP execution | Real write/read and forbidden-path denial through bridge 0.3.0 |
 | Delegation / subagents | User-installed extensions or shell-spawned Pi processes | No third-party extensions, shell, or delegation tool | Forced `delegate` call rejected |
 | Background work | Ordinary shell/tmux or extension-created jobs | No local background job surface | Underlying shell/custom routes absent; no independent background promise |
 | Project/global extensions | Arbitrary trusted JavaScript at load time | Discovery disabled; one in-memory factory only | Malicious `.pi/extensions` and settings injection did not execute |
@@ -28,8 +28,10 @@ The SDK's explicit tool allowlist filters its complete registry, including subse
 | User `!` / `!!` shell | Interactive mode executes user bash | Interactive mode not exposed by protected runner | Source inventory only; unsupported mode cannot be selected by runner |
 | RPC `bash`, credentials, extension commands | Operator-facing RPC can invoke paths outside LLM tool registry | Raw Pi RPC is not exposed | Protected runner accepts only prompt/config/resume options |
 | File attachments (`@path`) | CLI expands local file content | Raw CLI argument parser is not exposed; prompts remain literal strings | SDK surface selection; attachment probes pending |
-| Session resume / retry | Pi persists messages, models, and tool results | Same tool allowlist reapplied; client operation interlock retained in dedicated profile | Unknown interlock recreation tested; live crash/resume matrix pending |
+| Session resume / retry | Pi persists messages, models, and tool results | Same tool allowlist reapplied; client operation interlock retained in dedicated profile | Real same-ID resume and unknown-outcome host restart observed; full cutpoint matrix pending |
 | Operator configuration | Trusted operator selects model, resource authority, endpoint, signer, profile | Outside agent resource scope | Tampering through local agent tools unavailable; resource-side profile exclusion must be tested |
-| Tool cancellation | Pi supplies AbortSignal | Propagated to bridge; uncertain dispatch locks profile | Pre-dispatch cancellation and post-dispatch uncertainty distinguishable; real cutpoint tests pending |
+| Tool cancellation | Pi supplies AbortSignal | Propagated to bridge; uncertain dispatch locks profile | Real host pre-dispatch cancellation observed; response-loss cutpoint exercised separately |
+
+Model-emitted sibling calls use Pi's supported sequential tool-execution mode, preserving the one-operation client interlock without rejecting useful batches. A real model emitted two writes in one assistant message and two reads in its next message; all completed through the kernel.
 
 Consequential kernel tools must have their own scoped resource and authority enforcement. A remote shell that can edit this profile, obtain credentials, or reach a second route to the protected resource invalidates the proposed mode. The current host tests do not establish that resource-side boundary.

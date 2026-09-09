@@ -49,6 +49,10 @@ export function withUncertaintyInterlock(executor: KernelExecutor, stateDir: str
         const retainedDirectory = await open(stateDir, "r");
         try { await retainedDirectory.sync(); } finally { await retainedDirectory.close(); }
       }
+      // A signed denial can originate after a tool effect (for example an
+      // output guard). Until the shared contract proves its phase, preserve
+      // the interlock rather than treating it as a safe retry permission.
+      if (result.outcome === "denied") return result;
       // The executor contract requires trusted request/caller/result verification
       // before returning. Removal acknowledges a known outcome, not permission
       // to redispatch the original operation.

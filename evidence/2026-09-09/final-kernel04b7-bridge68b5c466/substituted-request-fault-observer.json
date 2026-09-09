@@ -1,0 +1,16 @@
+{
+  "variant": "substituted-request",
+  "recordedAt": "2026-09-09T15:44:04.663Z",
+  "exitCode": 0,
+  "observations": [
+    {
+      "method": "tools/call",
+      "requestId": "pi:5c8e38fada1a172e0eb5a40c38d4479f3885be9a1137037d6bddd9d2cf7d9e9f",
+      "upstreamStatus": 200,
+      "responseBytes": 3637,
+      "variant": "substituted-request"
+    }
+  ],
+  "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-evidence-fault-xHpwsY/substituted-request-profile",
+  "outcome": "verify host rejection and independent resource state; committed effects may exist"
+}

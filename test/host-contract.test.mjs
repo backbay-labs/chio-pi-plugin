@@ -107,3 +107,61 @@ test("unknown outcome survives executor recreation and blocks subsequent dispatc
   assert.equal(calls, 1);
   assert.equal(JSON.parse(await readFile(join(stateDir, "unresolved-kernel-operation.json"), "utf8")).state, "dispatch_pending_or_unknown");
 });
+
+test("retained completed results replay without redispatch and changed semantics conflict", async () => {
+  const f = await fixture();
+  let calls = 0;
+  const result = { outcome: "completed", content: "contract-control", evidence: { fixture: true } };
+  const executor = { async execute() { calls++; return result; } };
+  const request = { sessionId: "session", toolCallId: "call", tool: "write", arguments: { path: "one" } };
+  const stateDir = join(f.agentDir, "chio");
+  assert.deepEqual(await withUncertaintyInterlock(executor, stateDir).execute(request), result);
+  assert.deepEqual(await withUncertaintyInterlock(executor, stateDir).execute(request), result);
+  await assert.rejects(withUncertaintyInterlock(executor, stateDir).execute({ ...request, arguments: { path: "two" } }), /changed request/);
+  assert.equal(calls, 1);
+});
+
+test("pre-dispatch cancellation and known non-dispatch allow later legitimate work", async () => {
+  const f = await fixture();
+  let calls = 0;
+  const executor = { async execute() { calls++; return { outcome: "not_dispatched", content: "transport unavailable" }; } };
+  const request = { sessionId: "session", toolCallId: "call", tool: "write", arguments: {} };
+  const wrapped = withUncertaintyInterlock(executor, join(f.agentDir, "chio"));
+  await assert.rejects(wrapped.execute(request, AbortSignal.abort()), /Cancelled before/);
+  assert.equal(calls, 0);
+  assert.equal((await wrapped.execute(request)).outcome, "not_dispatched");
+  assert.equal((await wrapped.execute({ ...request, toolCallId: "second" })).outcome, "not_dispatched");
+  assert.equal(calls, 2);
+});
+
+test("denial preserves fence because it may follow an external effect", async () => {
+  const f = await fixture();
+  let calls = 0;
+  const executor = { async execute() { calls++; return { outcome: "denied", content: "output denied", evidence: { fixture: true } }; } };
+  const request = { sessionId: "session", toolCallId: "call", tool: "write", arguments: {} };
+  const stateDir = join(f.agentDir, "chio");
+  assert.equal((await withUncertaintyInterlock(executor, stateDir).execute(request)).outcome, "denied");
+  await assert.rejects(withUncertaintyInterlock(executor, stateDir).execute({ ...request, toolCallId: "second" }), /unresolved operation/);
+  assert.equal(calls, 1);
+});
+
+test("stock Pi serializes model-emitted sibling kernel calls", async () => {
+  const f = await fixture();
+  let inFlight = 0; let maximum = 0; let completed = 0;
+  const executor = { async execute() {
+    inFlight++; maximum = Math.max(maximum, inFlight);
+    await new Promise(resolve => setTimeout(resolve, 5));
+    inFlight--; completed++;
+    return { outcome: "completed", content: "contract fixture", evidence: { fixture: true } };
+  } };
+  const { session } = await createChioPiSession({ ...f, executor });
+  scriptedTools(session, [
+    { name: "chio_execute", arguments: { tool: "one", arguments: {} } },
+    { name: "chio_execute", arguments: { tool: "two", arguments: {} } },
+  ]);
+  await session.prompt("Execute both calls");
+  assert.equal(maximum, 1);
+  assert.equal(completed, 2);
+  assert.ok(session.messages.filter(message => message.role === "toolResult").every(message => !message.isError));
+  session.dispose();
+});
