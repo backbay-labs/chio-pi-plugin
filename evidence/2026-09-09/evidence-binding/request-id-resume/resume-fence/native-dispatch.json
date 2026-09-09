@@ -1,0 +1,21 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_SsEgf5pvS3k0IUQqfilzXfmO|fc_0992138f4a7bb465016aa1e7c96cfc87d2b3d107a0b7c9caf9",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-must-stay-fenced.txt",
+          "content": "must never dispatch after unknown outcome"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_SsEgf5pvS3k0IUQqfilzXfmO|fc_0992138f4a7bb465016aa1e7c96cfc87d2b3d107a0b7c9caf9"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

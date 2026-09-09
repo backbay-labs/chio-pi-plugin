@@ -1,0 +1,9 @@
+{
+  "host": "pi",
+  "archiveSha256": "b6f38bfb2c129e00d6e8c5c74b5b92ec4d527d26a81683316683abc690afac2c",
+  "sourceRevision": "047e1851e25b118e73d2cbd6a44bbf252a4f4f56",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "nativeRuns": 6,
+  "skips": 0,
+  "claim": "bounded real native host and actual OpenAI evidence binding and fencing; full acceptance remains open"
+}

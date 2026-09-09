@@ -1,0 +1,23 @@
+[
+  {
+    "case": "resume-fence",
+    "exitCode": 3,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-f9f4ae61555d456fa6e82a123ed26b9b/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-22e868822ce24b34a1c388c2ed241883/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-22e868822ce24b34a1c388c2ed241883/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-must-stay-fenced.txt\", \"content\": \"must never dispatch after unknown outcome\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  }
+]
