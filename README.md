@@ -16,7 +16,7 @@ The Pi SDK process and operator profile are trusted in this candidate. There is 
 
 ## Install the candidate artifact
 
-Obtain the matching release tarball, SHA256 file, kernel artifact, and private operator-prepared configuration from the candidate distribution. Verify the artifact hash before installation. The release tarball contains the unpublished Chio bridge and SDK; npm installs the exact public Pi and TypeBox versions. It needs registry access and no private sibling checkout.
+Obtain the matching release tarball, SHA256 and provenance files, kernel artifact, and private operator-prepared configuration from the candidate distribution. Verify the artifact hash before installation. The provenance identifies the source commit, source cleanliness, dependency lock and bridge artifact hashes, and host version. The release tarball contains the unpublished Chio bridge and SDK; npm installs the exact public Pi and TypeBox versions. It needs registry access and no private sibling checkout.
 
 ```sh
 shasum -a 256 -c chio-pi-plugin-0.1.0.tgz.sha256

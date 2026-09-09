@@ -86,6 +86,19 @@ try {
   const artifact = join(destination, basename(packed.filename));
   const sha256 = createHash("sha256").update(readFileSync(artifact)).digest("hex");
   writeFileSync(`${artifact}.sha256`, `${sha256}  ${basename(artifact)}\n`);
+  const digest = path => createHash("sha256").update(readFileSync(path)).digest("hex");
+  const bridgeSource = manifest.dependencies["@chio/bridge"];
+  const provenance = {
+    name: manifest.name, version: manifest.version,
+    sourceCommit: run("git", ["rev-parse", "HEAD"], root, true).trim(),
+    sourceDirty: Boolean(run("git", ["status", "--porcelain"], root, true).trim()),
+    artifact: basename(artifact), sha256,
+    packageLockSha256: digest(join(root, "package-lock.json")),
+    bridgeArtifactSha256: bridgeSource.startsWith("file:") ? digest(resolve(root, bridgeSource.slice(5))) : undefined,
+    piVersion: manifest.peerDependencies["@earendil-works/pi-coding-agent"],
+    node: process.version, platform: process.platform, architecture: process.arch,
+  };
+  writeFileSync(`${artifact}.provenance.json`, `${JSON.stringify(provenance, null, 2)}\n`);
   process.stdout.write(`${JSON.stringify({name:manifest.name,version:manifest.version,artifact,sha256,bundled:production})}\n`);
 } finally {
   rmSync(stage, {recursive:true,force:true});
