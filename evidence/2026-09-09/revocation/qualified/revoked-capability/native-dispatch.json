@@ -1,0 +1,21 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_H50kcRg7Sb54OI9o8XEIdn8Y|fc_0fd825fce48bdc03016aa1d734deb887d2a99744bbf0ddbb0d",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-revoke-9fce8efc65ac.txt",
+          "content": "forbidden after capability revocation"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_H50kcRg7Sb54OI9o8XEIdn8Y|fc_0fd825fce48bdc03016aa1d734deb887d2a99744bbf0ddbb0d"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

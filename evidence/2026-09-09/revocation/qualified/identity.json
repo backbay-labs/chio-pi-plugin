@@ -1,0 +1,13 @@
+{
+  "host": "pi",
+  "suite": "revocation",
+  "cases": 3,
+  "skips": 0,
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "resourceImage": "sha256:188cb84d5d0bb4063d4ce5a3b9c3832445a5acda5604911cda80a9136d1850a0",
+  "hostImage": null,
+  "packageDirectory": "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin",
+  "privateConfiguration": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-0f673dc9f3fe4300a1489fce8efc65ac/gateway.json",
+  "configurationSha256": "e7b3661a3cc675cb3a874cc16d0314d0089dc2925446eaf747f350fe905af72a",
+  "claim": "bounded real-host authority and explicit launcher refusal cases; full acceptance remains open"
+}

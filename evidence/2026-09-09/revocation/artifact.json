@@ -1,0 +1,6 @@
+{
+  "host": "pi",
+  "artifactSha256": "b6f38bfb2c129e00d6e8c5c74b5b92ec4d527d26a81683316683abc690afac2c",
+  "driverSha256": "240f69138eadc5f8fde1f449027850e82f514b1feee6661373ee37f6eb2bcb88",
+  "acceptance": "unresolved"
+}
