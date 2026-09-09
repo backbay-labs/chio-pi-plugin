@@ -1,0 +1,137 @@
+{
+  "execution": {
+    "endpoint": "http://127.0.0.1:58500",
+    "bearerToken": "[REDACTED]",
+    "trustedSigners": [
+      "ea42c2aba07f5c40fbe2c962704f8b62271133c7485fbf197a0c603446edfdcd"
+    ],
+    "serverId": "fs",
+    "subjectKey": "dbfcad5f7de50313e694b96e5434bf619c80e8bae29b34316ba5bbb79555cb79",
+    "capabilityId": "cap-01a08818-dd33-7b30-8d38-40a0347b8950",
+    "sessionId": "291f0cc7803bbb4a58524bce588c9eec82d636ae2c0f0848948fc86713931e66"
+  },
+  "sessionId": "4af81129-c323-4b82-8f29-0d24f795034b",
+  "journalDir": "/Users/connor/.local/share/chio-required-operators/budget3-hosts-20260909/pi-aggregate-budget-ae41d5fc9f4a42219ee35725d690a212/journal",
+  "tools": [
+    {
+      "name": "read_text_file",
+      "description": "Read Text File\n\nRead the complete contents of a file from the file system as text. Handles various text encodings and provides detailed error messages if the file cannot be read. Use this tool when you need to examine the contents of a single file. Use the 'head' parameter to read only the first N lines of a file, or the 'tail' parameter to read only the last N lines of a file. Operates on the file as text regardless of extension. Only works within allowed directories.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+          "head": {
+            "description": "If provided, returns only the first N lines of the file",
+            "type": "number"
+          },
+          "path": {
+            "type": "string"
+          },
+          "tail": {
+            "description": "If provided, returns only the last N lines of the file",
+            "type": "number"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Write File\n\nCreate a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "edit_file",
+      "description": "Edit File\n\nMake line-based edits to a text file. Each edit replaces exact line sequences with new content. Returns a git-style diff showing the changes made. Only works within allowed directories.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+          "dryRun": {
+            "default": false,
+            "description": "Preview changes using git-style diff format",
+            "type": "boolean"
+          },
+          "edits": {
+            "items": {
+              "properties": {
+                "newText": {
+                  "description": "Text to replace with",
+                  "type": "string"
+                },
+                "oldText": {
+                  "description": "Text to search for - must match exactly",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "oldText",
+                "newText"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "edits"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "list_directory",
+      "description": "List Directory\n\nGet a detailed listing of all files and directories in a specified path. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is essential for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      }
+    }
+  ],
+  "sessionCredential": {
+    "schema": "chio.mcp.session-credential.v1",
+    "sessionId": "291f0cc7803bbb4a58524bce588c9eec82d636ae2c0f0848948fc86713931e66",
+    "subjectKey": "dbfcad5f7de50313e694b96e5434bf619c80e8bae29b34316ba5bbb79555cb79",
+    "capabilityIds": [
+      "cap-01a08818-dd33-7b30-8d38-40a0347b8950"
+    ],
+    "serverId": "fs",
+    "endpointPath": "/mcp",
+    "allowedTools": [
+      "edit_file",
+      "list_directory",
+      "read_text_file",
+      "write_file"
+    ],
+    "issuedAt": 1788989726,
+    "expiresAt": 1788990626
+  }
+}

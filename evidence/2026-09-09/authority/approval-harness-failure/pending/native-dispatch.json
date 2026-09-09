@@ -1,0 +1,48 @@
+{
+  "calls": [
+    {
+      "id": "call_KNZzSmXGc89ZY0HW7UZXqOJC|fc_03e487395abdda6b016aa1d159f5cc87d2813aae5385ee5a52",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-approved-eab2a4df0b0e.txt",
+          "content": "exact operator-approved effect"
+        }
+      }
+    },
+    {
+      "id": "call_UY4NAH0n4Z3Jitpp0teOoq31|fc_071a671552b39a67016aa1d15bec3887d2aa499f58191011de",
+      "name": "chio_execute",
+      "arguments": {
+        "requestId": "63884f94-c60a-4edf-b9b6-81b0439f165d:4534fc00fbb01dcf9dab198c926c3bde264aee3eac20166c6c7d9da587c73703",
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-approved-eab2a4df0b0e.txt",
+          "content": "exact operator-approved effect"
+        }
+      }
+    },
+    {
+      "id": "call_k9ybzv8S6dBWlVtikcB7NVml|fc_07580695017bb009016aa1d15dc78087d2a4e9da1399cb020b",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "chio_resume",
+        "arguments": {
+          "requestId": "63884f94-c60a-4edf-b9b6-81b0439f165d:4534fc00fbb01dcf9dab198c926c3bde264aee3eac20166c6c7d9da587c73703",
+          "tool": "write_file",
+          "arguments": {
+            "path": "/workspace/pi-approved-eab2a4df0b0e.txt",
+            "content": "exact operator-approved effect"
+          }
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_KNZzSmXGc89ZY0HW7UZXqOJC|fc_03e487395abdda6b016aa1d159f5cc87d2813aae5385ee5a52",
+    "call_UY4NAH0n4Z3Jitpp0teOoq31|fc_071a671552b39a67016aa1d15bec3887d2aa499f58191011de",
+    "call_k9ybzv8S6dBWlVtikcB7NVml|fc_07580695017bb009016aa1d15dc78087d2a4e9da1399cb020b"
+  ],
+  "exactExpectedAttempt": false
+}

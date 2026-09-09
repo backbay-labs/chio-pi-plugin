@@ -1,0 +1,59 @@
+[
+  {
+    "case": "aggregate-budget",
+    "passed": true,
+    "exitCode": 3,
+    "terminal": [
+      {
+        "type": "chio_session",
+        "sessionFile": "/private/tmp/chio-pi-qualified-ce4542259917441190f8adc042a4826e/profile/sessions/2026-09-09T21-35-29-144Z_01a08818-e977-7048-ba0e-451565edeeed.jsonl",
+        "sessionId": "01a08818-e977-7048-ba0e-451565edeeed",
+        "outcome": "completed_with_tool_errors",
+        "toolErrors": 1,
+        "providerStopReason": "stop"
+      }
+    ],
+    "newDispatchRows": 3,
+    "operatorConfigUnchanged": true,
+    "acknowledgements": [
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": true,
+        "acknowledged": true
+      },
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": true,
+        "acknowledged": true
+      },
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": true,
+        "acknowledged": true
+      },
+      {
+        "state": "denied",
+        "hostDeliveryConfirmed": null,
+        "acknowledged": false
+      }
+    ],
+    "privateState": "/Users/connor/.local/share/chio-required-operators/budget3-hosts-20260909/pi-aggregate-budget-ae41d5fc9f4a42219ee35725d690a212",
+    "runtime": "/tmp/chio-pi-qualified-ce4542259917441190f8adc042a4826e",
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/budget3-hosts-20260909/pi-aggregate-budget-ae41d5fc9f4a42219ee35725d690a212/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-qualified-ce4542259917441190f8adc042a4826e/profile",
+      "--cwd",
+      "/tmp/chio-pi-qualified-ce4542259917441190f8adc042a4826e/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Use chio_execute only. Preserve remote paths exactly. Write /workspace/pi-qualified-5725d690a212.txt with content \"Pi HTTP verified\". Edit HTTP to kernel, read the file, then list /workspace. Stop on any unsuccessful or uncertain result."
+    ]
+  }
+]

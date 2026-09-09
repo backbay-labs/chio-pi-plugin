@@ -72,10 +72,12 @@ async function main() {
       confirmations = confirmations.then(async () => {
         for (const raw of outcomes) {
           const outcome = raw as {state?: string; evidence?: string; requestId?: string};
-          if (outcome?.state !== "completed" || outcome.evidence !== "verified" || typeof outcome.requestId !== "string" || confirmed.has(outcome.requestId)) continue;
+          if (outcome?.state !== "completed" || outcome.evidence !== "verified" || typeof outcome.requestId !== "string") continue;
+          const identity = createHash("sha256").update(JSON.stringify(outcome)).digest("hex");
+          if (confirmed.has(identity)) continue;
           const result = await transport.acknowledgeReceivedOutcome(outcome);
           if (!result.acknowledged) throw new Error("Native host result delivery remains unconfirmed; no next model turn");
-          confirmed.add(outcome.requestId);
+          confirmed.add(identity);
         }
       });
       await confirmations;

@@ -1,0 +1,24 @@
+{
+  "calls": [
+    {
+      "id": "call_6Cq8M0tMo0hmAGxRJ9J8Y9k4|fc_0c24dc07bc5ba0cf016aa1d1e9043c87d29e88b10489a0c89b",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "chio_resume",
+        "arguments": {
+          "requestId": "705d3d8a-88bb-4ca9-8495-1d398e2c6275:9aeb13452cf1ce34c4d3e23e007b0ba2942819b393cd10a15b7af24a925af656",
+          "tool": "write_file",
+          "arguments": {
+            "path": "/workspace/pi-approved-8bb974cccef7.txt",
+            "content": "exact operator-approved effect"
+          }
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_6Cq8M0tMo0hmAGxRJ9J8Y9k4|fc_0c24dc07bc5ba0cf016aa1d1e9043c87d29e88b10489a0c89b"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

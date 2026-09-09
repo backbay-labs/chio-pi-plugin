@@ -1,0 +1,149 @@
+[
+  {
+    "case": "pending",
+    "exitCode": 4,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-9874032ebd3f4914944b8bb974cccef7/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-c927df79f3964ffdb25309ad6642b735/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-c927df79f3964ffdb25309ad6642b735/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-8bb974cccef7.txt\", \"content\": \"exact operator-approved effect\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "missing-decision",
+    "exitCode": 4,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-9874032ebd3f4914944b8bb974cccef7/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-245e09c50c5646a09b619d67098ff695/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-245e09c50c5646a09b619d67098ff695/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"705d3d8a-88bb-4ca9-8495-1d398e2c6275:9aeb13452cf1ce34c4d3e23e007b0ba2942819b393cd10a15b7af24a925af656\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-8bb974cccef7.txt\", \"content\": \"exact operator-approved effect\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "substituted-arguments",
+    "exitCode": 3,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-9874032ebd3f4914944b8bb974cccef7/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-7a517e59a2814391a4b9b83c6f6ea425/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-7a517e59a2814391a4b9b83c6f6ea425/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"705d3d8a-88bb-4ca9-8495-1d398e2c6275:9aeb13452cf1ce34c4d3e23e007b0ba2942819b393cd10a15b7af24a925af656\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-8bb974cccef7.txt\", \"content\": \"substituted forbidden effect\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "approved-resume",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-9874032ebd3f4914944b8bb974cccef7/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-af5f5bedd63b46f8b85d682870910911/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-af5f5bedd63b46f8b85d682870910911/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"705d3d8a-88bb-4ca9-8495-1d398e2c6275:9aeb13452cf1ce34c4d3e23e007b0ba2942819b393cd10a15b7af24a925af656\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-8bb974cccef7.txt\", \"content\": \"exact operator-approved effect\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 1
+  },
+  {
+    "case": "completed-replay",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-9874032ebd3f4914944b8bb974cccef7/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-7197d2411d9b424888c942b257dba3c2/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-7197d2411d9b424888c942b257dba3c2/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"705d3d8a-88bb-4ca9-8495-1d398e2c6275:9aeb13452cf1ce34c4d3e23e007b0ba2942819b393cd10a15b7af24a925af656\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-8bb974cccef7.txt\", \"content\": \"exact operator-approved effect\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "pending-rejection",
+    "exitCode": 4,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-9874032ebd3f4914944b8bb974cccef7/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-03c828526a584e429035132a24b10d6e/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-03c828526a584e429035132a24b10d6e/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-rejected-8bb974cccef7.txt\", \"content\": \"must never appear\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "rejected-resume",
+    "exitCode": 3,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-9874032ebd3f4914944b8bb974cccef7/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-b6f16047649349ecb026cee057dbb95f/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-b6f16047649349ecb026cee057dbb95f/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"705d3d8a-88bb-4ca9-8495-1d398e2c6275:805ae7ab04fa85e5407abf178f53ad506a83ffef59e7665621256e960cca19f9\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-rejected-8bb974cccef7.txt\", \"content\": \"must never appear\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  }
+]

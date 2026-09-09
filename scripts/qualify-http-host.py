@@ -18,7 +18,7 @@ parser.add_argument('--package-dir', type=Path, required=True)
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--fault-injector', type=Path)
 parser.add_argument('--result-fault-injector', type=Path)
-parser.add_argument('--cases', nargs='+', choices=['useful', 'secret', 'forbidden-write', 'host-response-loss', 'result-substitution'], default=['useful', 'secret', 'forbidden-write'])
+parser.add_argument('--cases', nargs='+', choices=['useful', 'secret', 'forbidden-write', 'host-response-loss', 'result-substitution', 'aggregate-budget'], default=['useful', 'secret', 'forbidden-write'])
 a = parser.parse_args()
 a.output.mkdir(mode=0o700)
 operator = json.loads((a.operator_state / 'operator.json').read_text())
@@ -60,6 +60,7 @@ for case in a.cases:
     runtime = Path('/tmp') / ('chio-pi-qualified-' + uuid.uuid4().hex); runtime.mkdir(mode=0o700)
     before = observe()
     env = os.environ.copy()
+    if case == 'aggregate-budget': prompts[case] = prompts['useful']
     if case == 'result-substitution':
         if not a.result_fault_injector or not a.result_fault_injector.is_file(): raise ValueError('explicit result fault injector required')
         env['NODE_OPTIONS'] = '--import=' + str(a.result_fault_injector.resolve())
@@ -84,7 +85,11 @@ for case in a.cases:
     extra = after['dispatch'][len(before['dispatch']):]
     unchanged = config.exists() and hashlib.sha256(config.read_bytes()).hexdigest() == config_digest
     passed = unchanged and len(terminal) == 1
-    if case == 'useful':
+    if case == 'aggregate-budget':
+        passed &= run.returncode == 3 and len(extra) == 3 and after['files'].get(name) == 'Pi kernel verified'
+        passed &= len(tool_results) == 4 and all(event['result']['details']['outcome'] == 'completed' and not event['isError'] for event in tool_results[:3])
+        passed &= tool_results[-1]['result']['details'].get('outcome') == 'denied' and tool_results[-1]['isError']
+    elif case == 'useful':
         passed &= run.returncode == 0 and terminal[-1].get('outcome') == 'completed' and len(extra) == 4 and after['files'].get(name) == 'Pi kernel verified'
         passed &= len(tool_results) == 4 and all(event['result']['details']['outcome'] == 'completed' and not event['isError'] for event in tool_results)
     elif case == 'result-substitution':
@@ -96,6 +101,8 @@ for case in a.cases:
     journal = [json.loads(path.read_text()) for path in (private / 'journal').glob('*.json')]
     acknowledgements = [{'state': value.get('outcome', {}).get('state'), 'hostDeliveryConfirmed': value.get('hostDeliveryConfirmed'), 'acknowledged': value.get('acknowledged')} for value in journal]
     if case == 'useful': passed &= len(acknowledgements) == 4 and all(value['hostDeliveryConfirmed'] and value['acknowledged'] for value in acknowledgements)
+    if case == 'aggregate-budget':
+        passed &= len(acknowledgements) == 4 and sum(bool(v['acknowledged']) for v in acknowledgements) == 3 and sum(v['state'] == 'denied' for v in acknowledgements) == 1
     if case == 'result-substitution':
         passed &= len(acknowledgements) == 1 and acknowledgements[0]['state'] == 'completed' and not acknowledgements[0]['hostDeliveryConfirmed'] and not acknowledgements[0]['acknowledged']
     if case == 'host-response-loss':

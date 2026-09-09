@@ -1,0 +1,6 @@
+{
+  "error": "actual host did not execute the exact expected tool call; no acceptance claim",
+  "type": "RuntimeError",
+  "privateConfiguration": "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-047208061d6342679ff3eab2a4df0b0e/gateway.json",
+  "claim": "unresolved; never counted as acceptance"
+}
