@@ -15,7 +15,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "dependencies": {
-    "@chio/bridge": "file:vendor/chio-bridge-0.3.0-68b5c46638449710.tgz",
+    "@chio/bridge": "file:vendor/chio-bridge-0.3.0-c22c8dd094e3.tgz",
     "typebox": "1.3.7"
   },
   "devDependencies": {

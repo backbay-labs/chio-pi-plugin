@@ -72,3 +72,24 @@ The real shared MCP edge now supplies the execution-evidence projection and reta
 Earlier SDK host runs trusted the process and had no OS sandbox. The new protected launcher adds a default-deny macOS process boundary and operator-owned model relay. [Process qualification](SANDBOX-QUALIFICATION.md) records an actual model completion and exact-policy hostile-process probes: operator/cross-host file reads and aliases, immutable config/code writes and hardlinks, Node/shell subprocesses and unrelated network access were denied, with independent positive controls. That probe used a deliberately non-authorizing kernel bearer and cannot close the final kernel gates. The guest's own journal remains mutable, so acceptance requires the shared resource-owner completed-unacknowledged/acknowledgement contract and authenticated delegated-credential validation.
 
 No claim is made that the client uncertainty interlock is a transactional kernel dispatch ledger, that a verified denial proves absence of an earlier effect, or that a fresh host profile may automatically retry an uncertain operation. These distinctions remain required in the final acceptance matrix.
+
+
+## Launcher-owned HTTP transport candidate
+
+Artifact `8ef1de6bcb55e5c96ace55d1c56d0ede4d01e2c5d6cf8dda9d44c4d517b00812`
+installed through an empty-cache public npm path with bundled Chio dependencies.
+The actual Pi 0.85.1 AgentSession and OpenAI gpt-4.1-mini completed write, edit,
+read and list against kernel `33dd1dea21a4...`. An independent Docker observer
+found `Pi kernel verified` and exactly those four dispatches. The guest had
+only ephemeral launcher transport authority. The exact launched Seatbelt policy
+also denied direct operator/config/cross-host reads, aliases, writes, hardlinks,
+Node/shell descendants, the kernel port and an unrelated live local listener.
+Independent read/listener controls succeeded outside the sandbox. These are
+separate real host and injected OS process observations, not a model bypass claim.
+Thirteen component tests passed. Raw evidence is in `evidence/2026-09-09/http-transport`.
+
+The previous worker's `scoped-preack-25d5717` evidence remains historical and
+explicitly cannot establish downstream response-loss protection. Current real
+negative actions, delivery loss across all transport stages, approval, budget,
+revocation, restart and remaining I01-I08 gates are still open. No host acceptance
+or publication is claimed.

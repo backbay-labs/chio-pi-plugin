@@ -4,14 +4,14 @@ This candidate runs the real Pi SDK with a native Chio extension. Pi can perform
 
 **Acceptance is incomplete.** [Acceptance](docs/ACCEPTANCE.md) records the real host observations and every remaining gate. This is a qualified development candidate, not an announced accepted release.
 
-The `chio-pi` launcher confines the Pi process with a macOS sandbox. It can read the installed code and its own delegated session configuration, and write only its dedicated profile. Operator and other hosts' credentials are excluded. A small operator-owned model relay keeps the provider key outside Pi and permits only text/function requests to the selected model. The kernel's resource-owner credential and dispatch contract must enforce scope and unresolved-operation fencing independently of Pi's mutable local state. That new complete combination is awaiting qualification; earlier SDK-only runs do not prove this boundary.
+The `chio-pi` launcher confines the Pi process with a macOS sandbox. It can read the installed code and write only its dedicated profile. The launcher owns the Chio HTTP transport and authoritative operation journal. The guest receives an ephemeral local transport token, with no direct kernel credential or kernel network access. Operator and other hosts' credentials are excluded. A small operator-owned model relay keeps the provider key outside Pi and permits only text/function requests to the selected model. The kernel's resource-owner credential and dispatch contract must enforce scope and unresolved-operation fencing independently of Pi's mutable local state. That new complete combination is awaiting qualification; earlier SDK-only runs do not prove this boundary.
 
 ## Version combination
 
 - Pi: `@earendil-works/pi-coding-agent@0.85.1`, upstream `d981de1229ef899957bbe968bc8dcda02a21f477`.
 - Plugin: `@chio/pi-plugin@0.1.0` candidate.
 - Bridge: `@chio/bridge@0.3.0` candidate, embedded in the release tarball. Its exact SDK is bundled too.
-- Node: 25.5.0 tested on macOS 25.4.0 arm64. The package's upstream engine floor is 22.19.0; other versions are not qualified here.
+- Node: 25.5.0 tested on macOS 26.4 arm64. The package's upstream engine floor is 22.19.0; other versions are not qualified here.
 - Kernel: the execution-evidence/context candidate identified in the acceptance record. The public CLI 0.1.0 cannot substitute for it.
 
 ## Install the candidate artifact
@@ -31,11 +31,11 @@ Use an empty private profile and a separate disposable local working directory. 
 
 ## Configure and run
 
-The operator prepares a retained kernel session with `chio-prepare-gateway`, shipped in the bridge artifact. It obtains the actual caller/capability context and tool schemas, then exchanges operator authority for a credential restricted to that session. Its input and output are private mode-0600 files. Keep the operator input outside Pi's profile and supply only the delegated output to Pi. Supply explicit trusted signer, server ID, allowed tools, and logical session ID; never ask the model to supply them. See the shared kernel/bridge runbook for provisioning authority and the resource server.
+The operator prepares a retained kernel session with `chio-prepare-gateway`, shipped in the bridge artifact. It obtains the actual caller/capability context and tool schemas, then exchanges operator authority for a credential restricted to that session. Its input and output are private mode-0600 files. Keep both operator input and delegated gateway output outside Pi's profile and installation. Supply the delegated output only to the trusted launcher. Supply explicit trusted signer, server ID, allowed tools, and logical session ID; never ask the model to supply them. See the shared kernel/bridge runbook for provisioning authority and the resource server.
 
 The resulting configuration must include `execution.endpoint`, the delegated `execution.bearerToken`, `execution.trustedSigners`, `execution.subjectKey`, `execution.capabilityId`, `execution.serverId`, `execution.sessionId`, a logical `sessionId`, and the explicit `tools` inventory. The protected launcher also requires matching `sessionCredential` metadata with schema `chio.mcp.session-credential.v1`. That metadata is a format check; the kernel validates the actual token. Older operator-bearer configurations are refused. The selected kernel endpoint is HTTP on an explicit `127.0.0.1` port.
 
-Provide `OPENAI_API_KEY` to the operator launcher. Its child receives a random relay credential, not the provider key, and may contact only the local relay and the configured kernel port. This mode supports `openai/gpt-4.1-mini` and text/function history only; image/file inputs, provider-side item references, hosted tools, background provider jobs and other API routes are refused. The runner uses a separate Pi credential/cache location and does not read the normal Pi configuration.
+Provide `OPENAI_API_KEY` to the operator launcher. Its child receives a random relay credential, not the provider key, and may contact only the local model relay and launcher-owned MCP transport. The kernel port is excluded from its sandbox. This mode supports `openai/gpt-4.1-mini` and text/function history only; image/file inputs, provider-side item references, hosted tools, background provider jobs and other API routes are refused. The runner uses a separate Pi credential/cache location and does not read the normal Pi configuration.
 
 ```sh
 ./node_modules/.bin/chio-pi \
@@ -48,7 +48,7 @@ Provide `OPENAI_API_KEY` to the operator launcher. Its child receives a random r
 
 The output is JSONL containing actual Pi messages, tool results, and the retained session path. Kernel receipts are included with verified successful results. Keep this output private when task inputs or results are sensitive. The model calls `chio_execute` with the operator-listed tool name and arguments.
 
-The terminal `chio_session` record includes an explicit outcome. Unresolved resource outcomes exit 2, provider/runtime failures or incomplete generation exit 1, and cancellation exits 130 (SIGINT) or 143 (SIGTERM). Token truncation is `incomplete`, never completed. A task that completes after intermediate recoverable tool errors is labeled `completed_with_tool_errors`; inspect its actual tool results. A normal model explanation cannot erase a retained uncertainty interlock.
+The terminal `chio_session` record includes an explicit outcome. Unresolved resource outcomes exit 2, provider/runtime failures or incomplete generation exit 1, and cancellation exits 130 (SIGINT) or 143 (SIGTERM). Token truncation is `incomplete`, never completed. A task that completes after intermediate tool errors is labeled `completed_with_tool_errors` and exits 3. Pending operator approval exits 4; inspect its actual tool results. A normal model explanation cannot erase a retained uncertainty interlock.
 
 The runner deliberately exposes print/SDK execution only. It does not pass arbitrary flags, file attachments, raw RPC requests, interactive shell commands, or third-party extension loading to Pi. The [action inventory](docs/ACTION-INVENTORY.md) defines the complete supported surface.
 
@@ -58,9 +58,25 @@ Only the installed `chio-pi` launcher defines the protected mode. Direct invocat
 
 To resume, use the same config/profile/cwd/model options and add `--resume` with the retained `sessionFile` printed by the previous run. The path must be inside that profile's sessions directory. A changed authority, signer, retained kernel session, or tool allowlist refuses reuse of the existing profile.
 
-The plugin durably records an operation before dispatch. A lost response, invalid evidence, interruption, or denial leaves an interlock at `PROFILE/chio/unresolved-kernel-operation.json`. Subsequent protected calls refuse dispatch. A signed denial can originate after an effect, so it is also held for review. Completed results are retained under their original Pi session/tool-call identity and can be replayed without repeating an effect.
+The launcher-owned gateway durably records each original operation before
+kernel dispatch. It verifies the receipt and exact result, persists completion,
+and acknowledges delivery to the kernel. Unknown and denied operations remain
+fenced in the private gateway journal. Pi's mutable profile cannot erase that
+authoritative state. The HTTP transport closes with its launcher process.
 
-Do not clear an uncertain record or switch to a fresh profile merely to retry. The operator must reconcile the original request with the kernel receipt/admission record and independently observe the resource. Archive the evidence and resolve through the kernel's supported recovery procedure before authorizing new work. If no authoritative outcome is available, retain the unknown state. A crash may leave `PROFILE/chio/pi.lock`; verify its recorded process has exited and resolve outstanding operations before removing that stale process lock. Removing a lock alone does not clear the operation interlock.
+Do not delete a journal, change request IDs or switch to new authority to retry
+an uncertain operation. Use `chio-gateway-operator status CONFIG` to inspect
+retained outcomes. `chio-gateway-operator recover-lock CONFIG` checks the dead
+process identity and preserves operation records; it does not resolve uncertainty.
+Reconcile the kernel admission/receipt and independent resource first. Retained
+MCP sessions expire after 15 idle minutes by default, potentially before the
+delegated credential expires. Expiry must not silently initialize fresh authority.
+
+A configured approval mode adds `chio_resume` to the inventory exposed through
+`chio_execute`. Pending proposals perform no resource action. The operator uses
+the bridge approval submit/decision commands, then Pi resumes the exact original
+request ID, tool and arguments. Real Pi approval and full restart/fault
+qualification remain required; this source support alone does not accept them.
 
 For an upgrade, stop the runner and let in-flight calls settle. Archive the private config, session files, operation records, artifact hashes, and receipts. Install the next pinned artifact into a new directory, verify it, and reuse the retained profile only with compatible authority/configuration. Repeat the useful-work and failure checks in a disposable resource environment before moving the workload. Do not overwrite or discard unresolved operations during upgrade or rollback.
 

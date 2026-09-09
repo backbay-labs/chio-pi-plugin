@@ -1,8 +1,9 @@
-import { createMcpExecutionClient, type McpExecutionOptions } from "@chio/bridge";
+import { createMcpExecutionClient, verifyCompletedOutcome, verifyBoundReceipt, type ExecutionOutcome as BridgeOutcome, type McpExecutionOptions } from "@chio/bridge";
 import { createHash } from "node:crypto";
 import { lstat, mkdir, open, readFile, unlink } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { bridgeExecutor } from "./bridge-executor.js";
+import { recoverPendingAcknowledgement } from "./uncertainty.js";
 import type { KernelExecutor } from "./extension.js";
 
 export interface PreparedPiConfig {
@@ -51,10 +52,14 @@ export async function configuredExecutor(config: PreparedPiConfig, profile: stri
     }
     const dir = await open(directory, "r");
     try { await dir.sync(); } finally { await dir.close(); }
-    const client = bridgeExecutor(createMcpExecutionClient(config.execution));
+    const client = bridgeExecutor(createMcpExecutionClient(config.execution),
+      (outcome, request) => verifyCompletedOutcome(outcome as BridgeOutcome, config.execution, request),
+      (outcome, request) => outcome.state === "denied" && outcome.evidence === "verified" && verifyBoundReceipt(outcome.receipt,
+        {...config.execution, tool: request.tool, parameters: request.arguments, requestId: request.requestId}));
+    await recoverPendingAcknowledgement(client, directory);
     const tools = new Set(config.tools.map(tool => tool.name));
     return {
-      executor: { execute(request, signal) {
+      executor: { ...client, execute(request, signal) {
         if (!tools.has(request.tool)) return Promise.resolve({ outcome: "not_dispatched", content: "Tool is outside operator allowlist" });
         return client.execute(request, signal);
       } },

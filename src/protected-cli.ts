@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { constants } from "node:fs";
+import { startGatewayHttp } from "@chio/bridge";
 import { readPreparedConfig } from "./configured.js";
 import { startModelRelay } from "./model-relay.js";
 import { buildSandboxPolicy, isWithin, requireSessionCredential } from "./sandbox.js";
@@ -58,10 +59,20 @@ async function main() {
   await mkdir(requestedCwd, { recursive: true, mode: 0o700 });
   const cwd = await realpath(requestedCwd);
   if (isWithin(cwd, profile) || isWithin(cwd, configPath) || isWithin(cwd, installation)) throw new Error("Disposable workspace cannot contain private state or installed code");
+  const journal = resolve(config.journalDir);
+  if (journal !== config.journalDir || isWithin(profile, journal) || isWithin(installation, journal)
+    || isWithin(journal, profile) || isWithin(journal, installation) || isWithin(journal, configPath)) throw new Error("Authoritative gateway journal must be outside guest-readable and writable state");
   values.set("--config", configPath); values.set("--profile", profile); values.set("--cwd", cwd);
-  const relay = await startModelRelay(process.env.OPENAI_API_KEY, "gpt-4.1-mini");
+  const transport = await startGatewayHttp(config);
+  let relay: Awaited<ReturnType<typeof startModelRelay>> | undefined;
   try {
-    const policy = await buildSandboxPolicy({ executable, installation, config: configPath, profile, cwd, kernelPort: Number(endpoint.port), modelPort: relay.port });
+    relay = await startModelRelay(process.env.OPENAI_API_KEY, "gpt-4.1-mini");
+    const guestConfig = join(profile, "gateway-transport.json");
+    await writeFile(guestConfig, JSON.stringify({schema: "chio.pi.transport.v1", sessionId: config.sessionId,
+      transport: {url: transport.url, token: transport.token}, tools: config.tools, approvals: Boolean(config.approval),
+      binding: {subjectKey: config.execution.subjectKey, capabilityId: config.execution.capabilityId, serverId: config.execution.serverId, trustedSigners: config.execution.trustedSigners}}), {mode: 0o600});
+    values.set("--config", guestConfig);
+    const policy = await buildSandboxPolicy({ executable, installation, profile, cwd, gatewayPort: transport.port, modelPort: relay.port });
     const control = await mkdtemp(join(tmpdir(), "chio-pi-sandbox-"));
     const policyPath = join(control, "profile.sb");
     await writeFile(policyPath, policy, { mode: 0o600 });
@@ -69,14 +80,14 @@ async function main() {
     process.stdout.write(JSON.stringify({ type: "chio_protected_runtime", policyPath, policySha256: createHash("sha256").update(policy).digest("hex"), node: executable, installation, sessionId: config.execution.sessionId }) + "\n");
     const child = spawn("/usr/bin/sandbox-exec", ["-f", policyPath, executable, join(packageRoot, "dist", "cli.js"), ...[...values].flat()], {
       cwd, stdio: ["ignore", "inherit", "inherit"],
-      env: { PATH: dirname(executable), LANG: "en_US.UTF-8", TMPDIR: temporary, PI_CODING_AGENT_DIR: profile, OPENSSL_CONF: "/dev/null", OPENAI_API_KEY: relay.token, CHIO_PI_MODEL_BASE_URL: `http://127.0.0.1:${relay.port}/v1` },
+      env: { PATH: dirname(executable), LANG: "en_US.UTF-8", TMPDIR: temporary, PI_CODING_AGENT_DIR: profile, OPENSSL_CONF: "/dev/null", OPENAI_API_KEY: relay.token, CHIO_PI_GATEWAY_TRANSPORT: "1", CHIO_PI_MODEL_BASE_URL: `http://127.0.0.1:${relay.port}/v1` },
     });
     const interrupt = () => child.kill("SIGINT"); const terminate = () => child.kill("SIGTERM");
     process.on("SIGINT", interrupt); process.on("SIGTERM", terminate);
     try {
       process.exitCode = await new Promise<number>((resolve, reject) => { child.once("error", reject); child.once("exit", (code, signal) => resolve(code ?? (signal === "SIGINT" ? 130 : signal === "SIGTERM" ? 143 : 1))); });
     } finally { process.off("SIGINT", interrupt); process.off("SIGTERM", terminate); }
-  } finally { await relay.close(); }
+  } finally { await transport.close(); await relay?.close(); }
 }
 
 main().catch(error => { process.stderr.write(`Chio Pi protected launch refused: ${error instanceof Error ? error.message : "unknown failure"}\n`); process.exitCode = 1; });

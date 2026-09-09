@@ -21,6 +21,8 @@ export interface ChioPiOptions {
   /** Operator-owned local model relay in the sandboxed launcher. */
   modelBaseUrl?: string;
   executor?: KernelExecutor;
+  /** The launcher-owned gateway supplies durable outcome handling. */
+  trustedGatewayTransport?: boolean;
   sessionManager?: SessionManager;
   toolInventory?: { name: string; description?: string; inputSchema: Record<string, unknown> }[];
 }
@@ -29,7 +31,7 @@ export interface ChioPiOptions {
  * context files, prompt templates, themes, or skills can introduce executable
  * code. Explicit tool allowlisting also filters later tool activation. */
 export async function createChioPiSession(options: ChioPiOptions) {
-  const executor = options.executor ? withUncertaintyInterlock(options.executor, join(options.agentDir, "chio")) : undefined;
+  const executor = options.trustedGatewayTransport ? options.executor : options.executor ? withUncertaintyInterlock(options.executor, join(options.agentDir, "chio")) : undefined;
   return createRestrictedSession(options, chioExtension(executor));
 }
 

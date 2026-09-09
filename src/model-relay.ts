@@ -32,11 +32,12 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
  * synchronous function-calling response route, never arbitrary proxying. */
 export async function startModelRelay(apiKey: string, model: string) {
   const token = randomBytes(32).toString("hex");
+  let port = 0;
   const server = createServer(async (request, response) => {
     const controller = new AbortController();
     response.on("close", () => controller.abort());
     try {
-      if (request.method !== "POST" || request.url !== "/v1/responses" || request.headers.authorization !== `Bearer ${token}`) {
+      if (request.method !== "POST" || request.url !== "/v1/responses" || request.headers.authorization !== `Bearer ${token}` || request.headers.origin || request.headers.host !== `127.0.0.1:${port}`) {
         response.writeHead(403); response.end("Model route refused"); return;
       }
       const chunks: Buffer[] = []; let bytes = 0;
@@ -62,5 +63,6 @@ export async function startModelRelay(apiKey: string, model: string) {
   await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", resolve); });
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("Model relay failed to bind");
-  return { port: address.port, token, async close() { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); } };
+  port = address.port;
+  return { port, token, async close() { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); } };
 }

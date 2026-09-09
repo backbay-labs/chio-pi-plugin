@@ -8,7 +8,7 @@ test("only a normal provider stop can report conversation completion", () => {
     assert.notEqual(result.exitCode, 0, String(reason));
     assert.equal(result.outcome, "incomplete");
   }
-  assert.deepEqual(terminalState({ providerStopReason: "stop", unresolved: false, toolErrors: 1 }), { outcome: "completed_with_tool_errors", exitCode: 0 });
+  assert.deepEqual(terminalState({ providerStopReason: "stop", unresolved: false, toolErrors: 1 }), { outcome: "completed_with_tool_errors", exitCode: 3 });
 });
 
 test("resource uncertainty survives provider completion, failure and cancellation", () => {

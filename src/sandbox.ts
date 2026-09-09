@@ -31,7 +31,7 @@ async function runtimeLibraries(executable: string): Promise<string[]> {
   return [...files];
 }
 
-export async function buildSandboxPolicy(options: { executable: string; installation: string; config: string; profile: string; cwd: string; kernelPort: number; modelPort: number }) {
+export async function buildSandboxPolicy(options: { executable: string; installation: string; profile: string; cwd: string; gatewayPort: number; modelPort: number }) {
   const libraries = await runtimeLibraries(options.executable);
   // Broad metadata permits dynamic module lookup but does not read file data.
   // Runtime code is read-only; the only writable tree is this agent's profile.
@@ -43,12 +43,12 @@ export async function buildSandboxPolicy(options: { executable: string; installa
 (allow file-read-data (require-all (literal ${JSON.stringify(options.cwd)}) (vnode-type DIRECTORY)))
 (allow file-read* (subpath "/System/Library") (subpath "/System/Volumes/Preboot/Cryptexes/OS") (subpath "/usr/lib") (subpath "/Library/Apple/System") (subpath "/private/var/db/dyld")
   (literal "/dev/null") (literal "/dev/random") (literal "/dev/urandom")
-  (subpath ${JSON.stringify(options.installation)}) (literal ${JSON.stringify(options.config)})
+  (subpath ${JSON.stringify(options.installation)})
   ${libraries.map(path => `(literal ${JSON.stringify(path)})`).join("\n  ")})
 (allow file-read* file-write* (subpath ${JSON.stringify(options.profile)}) (literal "/dev/null"))
 (allow process-exec (literal ${JSON.stringify(options.executable)}))
 (allow mach-lookup (global-name "com.apple.system.logger") (global-name "com.apple.system.opendirectoryd.libinfo"))
-(allow network-outbound (remote tcp "localhost:${options.kernelPort}") (remote tcp "localhost:${options.modelPort}"))
+(allow network-outbound (remote tcp "localhost:${options.gatewayPort}") (remote tcp "localhost:${options.modelPort}"))
 (deny file-link process-fork)
 `;
 }

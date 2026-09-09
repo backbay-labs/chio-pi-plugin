@@ -4,6 +4,7 @@ import { join, resolve, sep } from "node:path";
 import { ModelRuntime, SessionManager } from "@earendil-works/pi-coding-agent";
 import { configuredExecutor, readPreparedConfig } from "./configured.js";
 import { createChioPiSession } from "./session.js";
+import { gatewayExecutor, readTransportConfig } from "./http-executor.js";
 import { terminalState } from "./terminal.js";
 
 async function main() {
@@ -20,7 +21,8 @@ async function main() {
     values.set(name, value);
   }
   for (const name of [...names].filter(name => name !== "--resume")) if (!values.has(name)) throw new Error(`Required argument ${name}`);
-  const config = await readPreparedConfig(values.get("--config")!);
+  const transportConfig = process.env.CHIO_PI_GATEWAY_TRANSPORT === "1" ? await readTransportConfig(values.get("--config")!) : undefined;
+  const config = transportConfig ? undefined : await readPreparedConfig(values.get("--config")!);
   const agentDir = resolve(values.get("--profile")!);
   const cwd = resolve(values.get("--cwd")!);
   await mkdir(agentDir, { recursive: true, mode: 0o700 });
@@ -29,7 +31,8 @@ async function main() {
   await mkdir(sessions, { recursive: true, mode: 0o700 });
   const resume = values.get("--resume");
   if (resume && !(await realpath(resume)).startsWith((await realpath(sessions)) + sep)) throw new Error("Resume must reference this profile's retained session");
-  const controlled = await configuredExecutor(config, agentDir);
+  const gateway = transportConfig ? await gatewayExecutor(transportConfig) : undefined;
+  const controlled = gateway ?? await configuredExecutor(config!, agentDir);
   let session;
   let stop: (() => void) | undefined;
   let termination: "SIGINT" | "SIGTERM" | undefined;
@@ -39,7 +42,7 @@ async function main() {
     ({ session } = await createChioPiSession({ cwd, agentDir, modelRuntime, provider: values.get("--provider")!, model: values.get("--model")!, executor: controlled.executor,
       modelBaseUrl: process.env.CHIO_PI_MODEL_BASE_URL,
       sessionManager: resume ? SessionManager.open(await realpath(resume), sessions, cwd) : SessionManager.create(cwd, sessions),
-      toolInventory: config.tools,
+      toolInventory: gateway?.tools ?? config!.tools, trustedGatewayTransport: Boolean(gateway),
     }));
     const current = session;
     const interrupt = () => { termination = "SIGINT"; void current.abort(); };
@@ -57,7 +60,8 @@ async function main() {
     let unresolved = false;
     try { await lstat(join(agentDir, "chio", "unresolved-kernel-operation.json")); unresolved = true; }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") unresolved = true; }
-    const { outcome, exitCode } = terminalState({ unresolved, termination, providerStopReason, toolErrors });
+    unresolved ||= gateway?.state.unresolved ?? false;
+    const { outcome, exitCode } = terminalState({ unresolved, termination, providerStopReason, toolErrors, awaitingApproval: gateway?.state.awaitingApproval });
     process.exitCode = exitCode;
     process.stdout.write(JSON.stringify({ type: "chio_session", sessionFile: session.sessionFile, sessionId: session.sessionId, outcome, toolErrors, providerStopReason }) + "\n");
   } finally {

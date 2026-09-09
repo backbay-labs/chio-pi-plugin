@@ -5,6 +5,9 @@ import { Type } from "typebox";
  * adapter seam, not a new network protocol or an evidence verifier. */
 export interface KernelExecutor {
   execute(request: KernelRequest, signal?: AbortSignal): Promise<KernelResult>;
+  verifyCached?(request: KernelRequest, result: KernelResult): boolean | Promise<boolean>;
+  /** Called only after the verified outcome has been durably retained. */
+  acknowledge?(request: KernelRequest, result: KernelResult): Promise<void>;
 }
 
 export interface KernelRequest {
@@ -15,10 +18,12 @@ export interface KernelRequest {
 }
 
 export interface KernelResult {
-  outcome: "completed" | "denied" | "not_dispatched";
+  outcome: "completed" | "denied" | "not_dispatched" | "awaiting_approval";
   content: string;
   evidence?: unknown;
   toolError?: boolean;
+  /** Opaque verified bridge outcome for durable recovery, not model input. */
+  retainedOutcome?: unknown;
 }
 
 export const CHIO_TOOL_NAME = "chio_execute";
@@ -44,6 +49,7 @@ export function chioExtension(executor: KernelExecutor | undefined) {
           tool: params.tool,
           arguments: params.arguments,
         }, signal);
+        if (result.outcome === "awaiting_approval") return {content: [{type: "text", text: result.content}], details: {outcome: result.outcome}};
         if (result.outcome === "not_dispatched") throw new Error(`Chio did not dispatch operation: ${result.content}`);
         if (result.outcome !== "completed" && result.outcome !== "denied") {
           throw new Error("Invalid kernel outcome; external outcome unknown, do not redispatch");
