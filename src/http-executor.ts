@@ -1,5 +1,6 @@
 import { lstat, readFile } from "node:fs/promises";
-import { verifyBoundReceipt } from "@chio/bridge";
+import { createHash } from "node:crypto";
+import { verifyBoundReceipt, verifyReceivedOutcome } from "@chio/bridge";
 import type { KernelExecutor } from "./extension.js";
 
 export interface PiTransportConfig {
@@ -52,9 +53,13 @@ export async function gatewayExecutor(config: PiTransportConfig) {
       if (!names.includes(request.tool)) return {outcome: "not_dispatched", content: "Tool is outside operator allowlist"};
       if (signal?.aborted) return {outcome: "not_dispatched", content: "Cancelled before transport dispatch"};
       try {
-        const raw = await rpc(JSON.stringify([request.sessionId, request.toolCallId]), "tools/call", {name: request.tool, arguments: request.arguments}, signal);
+        const rpcId = JSON.stringify([request.sessionId, request.toolCallId]);
+        const expectedId = request.tool === "chio_resume" ? String(request.arguments.requestId)
+          : `${config.sessionId}:${createHash("sha256").update(JSON.stringify({id: `${session}:${JSON.stringify(rpcId)}`})).digest("hex")}`;
+        const raw = await rpc(rpcId, "tools/call", {name: request.tool, arguments: request.arguments}, signal);
         if (raw.content?.length !== 1 || raw.content[0].type !== "text") throw new Error("Missing verified gateway outcome");
         const outcome = JSON.parse(raw.content[0].text);
+        if (outcome.requestId !== expectedId) throw new Error("Gateway result belongs to another host operation");
         if (outcome.state === "awaiting_approval") {
           state.awaitingApproval = true;
           return {outcome: "awaiting_approval", content: JSON.stringify(outcome)};
@@ -65,6 +70,7 @@ export async function gatewayExecutor(config: PiTransportConfig) {
         if (request.tool === "chio_resume" && original.requestId !== outcome.requestId) throw new Error("Approval resume identity mismatch");
         if (!verifyBoundReceipt(outcome.receipt, {...config.binding, tool: String(original.tool), parameters: original.arguments, requestId: outcome.requestId})) throw new Error("Receipt binding differs from requested caller, resource, tool or arguments");
         if (outcome.state === "completed") {
+          if (!verifyReceivedOutcome(outcome, {...config.binding, tool: String(original.tool), parameters: original.arguments, requestId: expectedId})) throw new Error("Received output differs from signed terminal result");
           const acknowledged = await rpc(`ack:${outcome.requestId}`, "chio/acknowledge", outcome.delivery, signal);
           if (acknowledged.schema !== "chio.mcp.delivery-ack.v1" || acknowledged.acknowledged !== true
             || acknowledged.requestId !== outcome.requestId || acknowledged.receiptId !== outcome.receipt.id) throw new Error("Host result received but delivery acknowledgement remains unresolved");

@@ -1,0 +1,188 @@
+{
+  "files": {
+    "forbidden.txt": "independent forbidden observer\n",
+    "pi-http.txt": "Pi kernel verified",
+    "pi-qualified-a424f23bbd68.txt": "Pi kernel verified",
+    "pi-qualified-b87d3a7f5064.txt": "original retained effect",
+    "pi-qualified-b9a32105c3a6.txt": "Pi kernel verified",
+    "secret.txt": "sensitive observer\n"
+  },
+  "dispatch": [
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 1,
+      "observedAt": "2026-09-09T18:57:03.549Z",
+      "upstreamRequestId": 3,
+      "tool": "write_file",
+      "path": "/workspace/pi-http.txt",
+      "argumentsSha256": "53e96281720f539bd1fb8fea0f5152b752c7782b626aaa3f41dcbcc5f1e981de",
+      "frameSha256": "2988488cd67ac10e68834a1d469d6292cdc89edc588785653e1e5f08f362dd32"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 2,
+      "observedAt": "2026-09-09T18:57:04.128Z",
+      "upstreamRequestId": 4,
+      "tool": "edit_file",
+      "path": "/workspace/pi-http.txt",
+      "argumentsSha256": "f7ff92bf1459bab4bfbaebf9e1843dfb730da199d5c933c596a233cca8afd037",
+      "frameSha256": "701df813e73c8f57a87c5689a79152dd4b72359d0a5d7e578d8cc08d5b5b1b52"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 3,
+      "observedAt": "2026-09-09T18:57:05.934Z",
+      "upstreamRequestId": 5,
+      "tool": "read_text_file",
+      "path": "/workspace/pi-http.txt",
+      "argumentsSha256": "4b19abba1f43f1bad2bc11db1bfe2e608adffcb5227a135ea34befe6a54a2c20",
+      "frameSha256": "f0b705c80440c3e6332fcbb3636cce847c8c1bfea96f72c311552feb33a83dd0"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 4,
+      "observedAt": "2026-09-09T18:57:08.301Z",
+      "upstreamRequestId": 6,
+      "tool": "list_directory",
+      "path": "/workspace",
+      "argumentsSha256": "acda0d21aae64c6f16c860dce985a6a79157d631474d0be08aa42fc3efa55f9a",
+      "frameSha256": "60f38f5d6335a0f30839e219a880188fbd4ba7df01ecc6c143b58d81f1fdcde8"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 5,
+      "observedAt": "2026-09-09T19:51:08.223Z",
+      "upstreamRequestId": 7,
+      "tool": "write_file",
+      "path": "/workspace/pi-qualified-a424f23bbd68.txt",
+      "argumentsSha256": "c369ecfc83857a057a9bd38b6f320bd6fec6c9ca0006c0b86915e4fc259d1f68",
+      "frameSha256": "00df3ef94af1dc8c33a780accd3c63ca42055be2179a9fae2c9cbc8257846b3f"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 6,
+      "observedAt": "2026-09-09T19:51:10.393Z",
+      "upstreamRequestId": 8,
+      "tool": "edit_file",
+      "path": "/workspace/pi-qualified-a424f23bbd68.txt",
+      "argumentsSha256": "0360f6aec27cc0580219c38efc7b9125cf6940b8799da429685868e86cd6dffa",
+      "frameSha256": "37be3ee1f343619094b890f48dd0f741e99dcfac82acc53b62bca7fbd20fcc9d"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 7,
+      "observedAt": "2026-09-09T19:51:12.897Z",
+      "upstreamRequestId": 9,
+      "tool": "read_text_file",
+      "path": "/workspace/pi-qualified-a424f23bbd68.txt",
+      "argumentsSha256": "d52b964354916aec9e62320a0a6a83d0ab286d6c78288c7b6f608cedd7decb70",
+      "frameSha256": "5c52a2a1636eb30b115e38e0ce97f40ea15d8d1f79c4fe7d8cbdd3305b84e2ab"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 8,
+      "observedAt": "2026-09-09T19:51:17.994Z",
+      "upstreamRequestId": 10,
+      "tool": "list_directory",
+      "path": "/workspace",
+      "argumentsSha256": "acda0d21aae64c6f16c860dce985a6a79157d631474d0be08aa42fc3efa55f9a",
+      "frameSha256": "04d39513b65342bc33815e00b85ab266aae62dce5c0c632f7d8bb2b77701da9c"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 9,
+      "observedAt": "2026-09-09T19:57:15.200Z",
+      "upstreamRequestId": 11,
+      "tool": "write_file",
+      "path": "/workspace/pi-qualified-b9a32105c3a6.txt",
+      "argumentsSha256": "a20d5b43a00a0012c33a1d438d156f39340e349e1496b95da112b054e943ff00",
+      "frameSha256": "b7cce6ee32093b66a91288e9c613e9ad6d3a71526e92cfcbdec8cdbd2614e654"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 10,
+      "observedAt": "2026-09-09T19:57:20.078Z",
+      "upstreamRequestId": 12,
+      "tool": "edit_file",
+      "path": "/workspace/pi-qualified-b9a32105c3a6.txt",
+      "argumentsSha256": "dbf91b8e1fac04d052be974e42e48f273b87bea4316152aacb3bb8c52beb54f0",
+      "frameSha256": "ef83670b40cc46569a8bfda74e0e0020b7dfaff5c262e2e88a79a6dcf6b5d958"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 11,
+      "observedAt": "2026-09-09T19:57:22.045Z",
+      "upstreamRequestId": 13,
+      "tool": "read_text_file",
+      "path": "/workspace/pi-qualified-b9a32105c3a6.txt",
+      "argumentsSha256": "a8a10346662321b1e3da44c86bedec33f5dc0a2f895dcb2cabaddd141fb96672",
+      "frameSha256": "f6d0d48fd8c54e71e50f83626e274095ca578ce598c5d738d1db27b67fe8a3b9"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 12,
+      "observedAt": "2026-09-09T19:57:24.452Z",
+      "upstreamRequestId": 14,
+      "tool": "list_directory",
+      "path": "/workspace",
+      "argumentsSha256": "acda0d21aae64c6f16c860dce985a6a79157d631474d0be08aa42fc3efa55f9a",
+      "frameSha256": "fc5970b041bc85fbbb7a1e95cd841958a5d3761f7bc9687ca23dd2135f1bd83f"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 13,
+      "observedAt": "2026-09-09T20:05:08.264Z",
+      "upstreamRequestId": 15,
+      "tool": "write_file",
+      "path": "/workspace/pi-qualified-b87d3a7f5064.txt",
+      "argumentsSha256": "309e30acd40d09ae69a2bb46d05552807b8e529eb052fcb1248da42e7057b84e",
+      "frameSha256": "671730c71de669d2ea7d3ce64392599771d289344a4a5353df1ddd0532eba632"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 14,
+      "observedAt": "2026-09-09T20:05:22.826Z",
+      "upstreamRequestId": 16,
+      "tool": "read_text_file",
+      "path": "/workspace/pi-qualified-b87d3a7f5064.txt",
+      "argumentsSha256": "018f6af9cad6c66387d934650e184266ab0a78aabf6b773da55140cd3e48d9f8",
+      "frameSha256": "09ee2c5b411edca618ec251f1fbd4f2aa715d63087104e50e32d6e43ef9c015a"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 15,
+      "observedAt": "2026-09-09T20:51:52.582Z",
+      "upstreamRequestId": 17,
+      "tool": "read_text_file",
+      "path": "/workspace/approved.txt",
+      "argumentsSha256": "3bdcef7d8b40727685f08f3558afd8e62e0bda6d7dc41846d8022860da0aebc0",
+      "frameSha256": "645d2e6e6f04635056c13780171300cb3894dafcc68cef963249249e4917a827"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 16,
+      "observedAt": "2026-09-09T20:58:04.433Z",
+      "upstreamRequestId": 18,
+      "tool": "read_text_file",
+      "path": "/workspace/approved.txt",
+      "argumentsSha256": "3bdcef7d8b40727685f08f3558afd8e62e0bda6d7dc41846d8022860da0aebc0",
+      "frameSha256": "29755f2608cec77eda9d450ecedb60d68e06807b25b602703c7454a4cecbd0ad"
+    }
+  ]
+}

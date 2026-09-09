@@ -1,0 +1,11 @@
+{
+  "claim": "bounded real host cases, not I01-I08 acceptance",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "image": "sha256:188cb84d5d0bb4063d4ce5a3b9c3832445a5acda5604911cda80a9136d1850a0",
+  "volume": "chio-required-pi-http-20260909",
+  "auditVolume": "chio-required-pi-http-20260909-audit",
+  "packageDirectory": "/tmp/chio-pi-received-result-cold-consumer-20260909/node_modules/@chio/pi-plugin",
+  "launcherSha256": "2707b2bb14b8f2d3d3f804e803e2755334974a6a81150627216abe739c2fb80a",
+  "cases": 1,
+  "skips": 0
+}
