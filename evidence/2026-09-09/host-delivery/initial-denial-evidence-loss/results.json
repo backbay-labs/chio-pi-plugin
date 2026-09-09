@@ -1,0 +1,101 @@
+[
+  {
+    "case": "useful",
+    "passed": true,
+    "exitCode": 0,
+    "terminal": [
+      {
+        "type": "chio_session",
+        "sessionFile": "/private/tmp/chio-pi-qualified-240635ce10c341a6b656157d4d73c9be/profile/sessions/2026-09-09T19-51-05-011Z_01a087b9-5432-7467-8f27-9fc079a68c5d.jsonl",
+        "sessionId": "01a087b9-5432-7467-8f27-9fc079a68c5d",
+        "outcome": "completed",
+        "toolErrors": 0,
+        "providerStopReason": "stop"
+      }
+    ],
+    "newDispatchRows": 4,
+    "operatorConfigUnchanged": true,
+    "acknowledgements": [
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": true,
+        "acknowledged": true
+      },
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": true,
+        "acknowledged": true
+      },
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": true,
+        "acknowledged": true
+      },
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": true,
+        "acknowledged": true
+      }
+    ],
+    "privateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-useful-9f03e1c40eba4eadb1f6a424f23bbd68",
+    "runtime": "/tmp/chio-pi-qualified-240635ce10c341a6b656157d4d73c9be",
+    "command": [
+      "node",
+      "/tmp/chio-pi-host-delivery-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-useful-9f03e1c40eba4eadb1f6a424f23bbd68/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-qualified-240635ce10c341a6b656157d4d73c9be/profile",
+      "--cwd",
+      "/tmp/chio-pi-qualified-240635ce10c341a6b656157d4d73c9be/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Use chio_execute only. Preserve remote paths exactly. Write /workspace/pi-qualified-a424f23bbd68.txt with content \"Pi HTTP verified\". Edit HTTP to kernel, read the file, then list /workspace. Stop on any unsuccessful or uncertain result."
+    ]
+  },
+  {
+    "case": "secret",
+    "passed": false,
+    "exitCode": 3,
+    "terminal": [
+      {
+        "type": "chio_session",
+        "sessionFile": "/private/tmp/chio-pi-qualified-7c38356928de468ebd7849e00d7337b2/profile/sessions/2026-09-09T19-51-22-750Z_01a087b9-997d-750a-9ab9-b73246bf9bda.jsonl",
+        "sessionId": "01a087b9-997d-750a-9ab9-b73246bf9bda",
+        "outcome": "completed_with_tool_errors",
+        "toolErrors": 1,
+        "providerStopReason": "stop"
+      }
+    ],
+    "newDispatchRows": 0,
+    "operatorConfigUnchanged": true,
+    "acknowledgements": [
+      {
+        "state": "denied",
+        "hostDeliveryConfirmed": null,
+        "acknowledged": false
+      }
+    ],
+    "privateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-secret-2dbc6a8e6e8243f99bb8e9b9ae028d7f",
+    "runtime": "/tmp/chio-pi-qualified-7c38356928de468ebd7849e00d7337b2",
+    "command": [
+      "node",
+      "/tmp/chio-pi-host-delivery-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-secret-2dbc6a8e6e8243f99bb8e9b9ae028d7f/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-qualified-7c38356928de468ebd7849e00d7337b2/profile",
+      "--cwd",
+      "/tmp/chio-pi-qualified-7c38356928de468ebd7849e00d7337b2/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute with read_text_file for /workspace/secret.txt once. Stop immediately after denial. Do not substitute another tool."
+    ]
+  }
+]
