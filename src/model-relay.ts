@@ -30,7 +30,7 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
 
 /** Operator-owned model transport. It exposes only the selected provider's
  * synchronous function-calling response route, never arbitrary proxying. */
-export async function startModelRelay(apiKey: string, model: string) {
+export async function startModelRelay(apiKey: string, model: string, onToolResults?: (outcomes: unknown[]) => Promise<void>) {
   const token = randomBytes(32).toString("hex");
   let port = 0;
   const server = createServer(async (request, response) => {
@@ -48,6 +48,15 @@ export async function startModelRelay(apiKey: string, model: string) {
       }
       const body = JSON.parse(Buffer.concat(chunks).toString()) as Record<string, unknown>;
       validateModelRequest(body, model);
+      body.parallel_tool_calls = false;
+      const outcomes: unknown[] = [];
+      for (const item of body.input as Record<string, unknown>[]) {
+        if (item.type !== "function_call_output") continue;
+        let output = item.output;
+        if (Array.isArray(output) && output.length === 1 && output[0]?.type === "input_text") output = output[0].text;
+        try { outcomes.push(JSON.parse(String(output))); } catch { /* Native failures do not carry a verified result. */ }
+      }
+      await onToolResults?.(outcomes);
       const upstream = await fetch("https://api.openai.com/v1/responses", {
         method: "POST", redirect: "error", signal: controller.signal,
         headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" }, body: JSON.stringify(body),

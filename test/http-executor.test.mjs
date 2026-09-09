@@ -40,7 +40,7 @@ for(const fault of ["none","result","stale-request","signature"]){
    const request={sessionId:"host",toolCallId:"call",tool:"read_text_file",arguments:args};
    if(fault==="none")assert.equal((await client.executor.execute(request)).outcome,"completed");
    else{await assert.rejects(client.executor.execute(request));assert.equal(client.state.unresolved,true);await assert.rejects(client.executor.execute({...request,toolCallId:"replacement"}));}
-   assert.equal(calls,1);assert.equal(acks,fault==="none"?1:0);
+   assert.equal(calls,1);assert.equal(acks,0);
   }finally{globalThis.fetch=original;}
  });
 }

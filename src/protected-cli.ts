@@ -66,7 +66,20 @@ async function main() {
   const transport = await startGatewayHttp(config);
   let relay: Awaited<ReturnType<typeof startModelRelay>> | undefined;
   try {
-    relay = await startModelRelay(process.env.OPENAI_API_KEY, "gpt-4.1-mini");
+    const confirmed = new Set<string>();
+    let confirmations = Promise.resolve();
+    relay = await startModelRelay(process.env.OPENAI_API_KEY, "gpt-4.1-mini", async outcomes => {
+      confirmations = confirmations.then(async () => {
+        for (const raw of outcomes) {
+          const outcome = raw as {state?: string; evidence?: string; requestId?: string};
+          if (outcome?.state !== "completed" || outcome.evidence !== "verified" || typeof outcome.requestId !== "string" || confirmed.has(outcome.requestId)) continue;
+          const result = await transport.acknowledgeReceivedOutcome(outcome);
+          if (!result.acknowledged) throw new Error("Native host result delivery remains unconfirmed; no next model turn");
+          confirmed.add(outcome.requestId);
+        }
+      });
+      await confirmations;
+    });
     const guestConfig = join(profile, "gateway-transport.json");
     await writeFile(guestConfig, JSON.stringify({schema: "chio.pi.transport.v1", sessionId: config.sessionId,
       transport: {url: transport.url, token: transport.token}, tools: config.tools, approvals: Boolean(config.approval),

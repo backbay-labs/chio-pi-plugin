@@ -1,0 +1,44 @@
+{
+  "command": [
+    "node",
+    "/tmp/chio-pi-native-history-cold-consumer-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+    "--config",
+    "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/native-history-ack-cutpoint-bec5ab9c0b424fa29d2320f5e7a6aae4/gateway.json",
+    "--profile",
+    "/tmp/chio-pi-native-history-ack-cutpoint-20260909/profile",
+    "--cwd",
+    "/tmp/chio-pi-native-history-ack-cutpoint-20260909/workspace",
+    "--provider",
+    "openai",
+    "--model",
+    "gpt-4.1-mini",
+    "--prompt",
+    "Use chio_execute write_file exactly once to write /workspace/pi-native-history-ack-cutpoint.txt with content \"verified original effect\". Stop on any unsuccessful or uncertain result."
+  ],
+  "exitCode": 0,
+  "passed": true,
+  "guestAcknowledgementResponses": 0,
+  "journal": [
+    {
+      "state": "completed",
+      "acknowledged": true,
+      "hostDeliveryConfirmed": true
+    }
+  ],
+  "resource": {
+    "content": "verified original effect",
+    "dispatch": [
+      {
+        "schema": "chio.resource-dispatch-observation.v1",
+        "processId": 1,
+        "sequence": 33,
+        "observedAt": "2026-09-09T21:17:23.245Z",
+        "upstreamRequestId": 35,
+        "tool": "write_file",
+        "path": "/workspace/pi-native-history-ack-cutpoint.txt",
+        "argumentsSha256": "9ccb437b06271db5b7f65833193ce425d94933fa0aad9a12f712e788f39e69ca",
+        "frameSha256": "b0834394de2fbdd36482c8b4be438486fbbc89382eb22cf7ed9317e590b05c85"
+      }
+    ]
+  }
+}

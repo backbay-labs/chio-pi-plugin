@@ -59,9 +59,13 @@ Only the installed `chio-pi` launcher defines the protected mode. Direct invocat
 To resume, use the same config/profile/cwd/model options and add `--resume` with the retained `sessionFile` printed by the previous run. The path must be inside that profile's sessions directory. A changed authority, signer, retained kernel session, or tool allowlist refuses reuse of the existing profile.
 
 The launcher-owned gateway durably records each original operation before
-kernel dispatch. It verifies the receipt and exact result, persists completion,
-and acknowledges delivery to the kernel. Unknown and denied operations remain
-fenced in the private gateway journal. Pi's mutable profile cannot erase that
+kernel dispatch. It verifies the receipt and exact result and persists completion.
+The trusted model relay acknowledges only after stock Pi includes the complete
+verified outcome in native tool history, before the next model turn. The guest
+does not send an acknowledgement RPC. Provider requests enforce one tool per
+turn. Unknown and unconfirmed operations remain fenced in the private gateway
+journal; known pre-dispatch denials do not invent an external effect.
+Pi's mutable profile cannot erase that
 authoritative state. The HTTP transport closes with its launcher process.
 
 Do not delete a journal, change request IDs or switch to new authority to retry

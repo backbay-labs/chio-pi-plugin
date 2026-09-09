@@ -24,8 +24,9 @@ export async function readTransportConfig(path: string): Promise<PiTransportConf
 
 /** The trusted launcher owns verification, the durable journal, and kernel ACK.
  * This guest adapter has only an ephemeral HTTP token and no kernel authority.
- * It returns the exact received delivery proof to the launcher, which owns the
- * kernel acknowledgement. It never retries an effecting operation itself. */
+ * It returns the complete verified outcome to stock Pi. The launcher observes
+ * that result in native model history before acknowledging it at the kernel.
+ * It never retries an effecting operation itself. */
 export async function gatewayExecutor(config: PiTransportConfig) {
   let session = "";
   const state = { unresolved: false, awaitingApproval: false };
@@ -71,12 +72,11 @@ export async function gatewayExecutor(config: PiTransportConfig) {
         if (!verifyBoundReceipt(outcome.receipt, {...config.binding, tool: String(original.tool), parameters: original.arguments, requestId: outcome.requestId})) throw new Error("Receipt binding differs from requested caller, resource, tool or arguments");
         if (outcome.state === "completed") {
           if (!verifyReceivedOutcome(outcome, {...config.binding, tool: String(original.tool), parameters: original.arguments, requestId: expectedId})) throw new Error("Received output differs from signed terminal result");
-          const acknowledged = await rpc(`ack:${outcome.requestId}`, "chio/acknowledge", outcome.delivery, signal);
-          if (acknowledged.schema !== "chio.mcp.delivery-ack.v1" || acknowledged.acknowledged !== true
-            || acknowledged.requestId !== outcome.requestId || acknowledged.receiptId !== outcome.receipt.id) throw new Error("Host result received but delivery acknowledgement remains unresolved");
+          // Return the complete verified result to stock Pi first. The trusted
+          // model relay acknowledges only after Pi includes it in native history.
         }
         state.awaitingApproval = false;
-        return {outcome: outcome.state, content: outcome.state === "completed" ? JSON.stringify(outcome.result) : outcome.reason,
+        return {outcome: outcome.state, content: outcome.state === "completed" ? JSON.stringify(outcome) : outcome.reason,
           evidence: outcome.receipt, toolError: outcome.result?.isError === true};
       } catch (error) { state.unresolved = true; throw error; }
     },
