@@ -23,7 +23,8 @@ export async function readTransportConfig(path: string): Promise<PiTransportConf
 
 /** The trusted launcher owns verification, the durable journal, and kernel ACK.
  * This guest adapter has only an ephemeral HTTP token and no kernel authority.
- * It never acknowledges or retries an operation itself. */
+ * It returns the exact received delivery proof to the launcher, which owns the
+ * kernel acknowledgement. It never retries an effecting operation itself. */
 export async function gatewayExecutor(config: PiTransportConfig) {
   let session = "";
   const state = { unresolved: false, awaitingApproval: false };
@@ -40,7 +41,8 @@ export async function gatewayExecutor(config: PiTransportConfig) {
     if (body.jsonrpc !== "2.0" || body.id !== id || body.error || !body.result) throw new Error("Invalid transport response");
     return body.result;
   }
-  await rpc("initialize", "initialize", {protocolVersion: "2025-11-25"});
+  const initialized = await rpc("initialize", "initialize", {protocolVersion: "2025-11-25"});
+  if (initialized.capabilities?.experimental?.chioDeliveryAcknowledgement !== "1") throw new Error("Host delivery acknowledgement transport required");
   const inventory = await rpc("inventory", "tools/list", {});
   const names = [...config.tools.map(tool => tool.name), ...(config.approvals ? ["chio_resume"] : [])].sort();
   if (!Array.isArray(inventory.tools) || JSON.stringify(inventory.tools.map((tool: {name: string}) => tool.name).sort()) !== JSON.stringify(names)) throw new Error("Transport inventory differs from pinned operator tools");
@@ -62,6 +64,11 @@ export async function gatewayExecutor(config: PiTransportConfig) {
         const original = request.tool === "chio_resume" ? request.arguments : {tool: request.tool, arguments: request.arguments};
         if (request.tool === "chio_resume" && original.requestId !== outcome.requestId) throw new Error("Approval resume identity mismatch");
         if (!verifyBoundReceipt(outcome.receipt, {...config.binding, tool: String(original.tool), parameters: original.arguments, requestId: outcome.requestId})) throw new Error("Receipt binding differs from requested caller, resource, tool or arguments");
+        if (outcome.state === "completed") {
+          const acknowledged = await rpc(`ack:${outcome.requestId}`, "chio/acknowledge", outcome.delivery, signal);
+          if (acknowledged.schema !== "chio.mcp.delivery-ack.v1" || acknowledged.acknowledged !== true
+            || acknowledged.requestId !== outcome.requestId || acknowledged.receiptId !== outcome.receipt.id) throw new Error("Host result received but delivery acknowledgement remains unresolved");
+        }
         state.awaitingApproval = false;
         return {outcome: outcome.state, content: outcome.state === "completed" ? JSON.stringify(outcome.result) : outcome.reason,
           evidence: outcome.receipt, toolError: outcome.result?.isError === true};
