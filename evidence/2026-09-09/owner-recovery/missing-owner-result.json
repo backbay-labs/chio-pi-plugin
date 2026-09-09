@@ -1,0 +1,11 @@
+{
+  "host": "pi",
+  "priorNativeEvidence": "/tmp/chio-pi-kernel-malformed-20260909",
+  "requestId": "128f5984-3c58-42f6-b2f7-6b8bf6b909c1:1068b42dc1df03177137579298e44acbb4dc8217a5f90c49c3526392caac205e",
+  "exitCode": 1,
+  "reason": "no retained signed completion for this original unknown operation",
+  "originalJournalSha256": "3ff414f4f5686e4400d1f0c63f768944528a119e7c8ddcfbc6b7f494a74cae26",
+  "journalUnchanged": true,
+  "outputCreated": false,
+  "protectedDispatch": false
+}
