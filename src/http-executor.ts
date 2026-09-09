@@ -42,7 +42,7 @@ export async function gatewayExecutor(config: PiTransportConfig) {
     return body.result;
   }
   const initialized = await rpc("initialize", "initialize", {protocolVersion: "2025-11-25"});
-  if (initialized.capabilities?.experimental?.chioDeliveryAcknowledgement !== "1") throw new Error("Host delivery acknowledgement transport required");
+  if (initialized.capabilities?.experimental?.chioDeliveryAcknowledgement?.version !== "1") throw new Error("Host delivery acknowledgement transport required");
   const inventory = await rpc("inventory", "tools/list", {});
   const names = [...config.tools.map(tool => tool.name), ...(config.approvals ? ["chio_resume"] : [])].sort();
   if (!Array.isArray(inventory.tools) || JSON.stringify(inventory.tools.map((tool: {name: string}) => tool.name).sort()) !== JSON.stringify(names)) throw new Error("Transport inventory differs from pinned operator tools");
