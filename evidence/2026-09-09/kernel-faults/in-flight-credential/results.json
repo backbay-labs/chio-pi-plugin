@@ -1,0 +1,23 @@
+[
+  {
+    "case": "in-flight-credential",
+    "exitCode": 2,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-d5fe10ae91c145578bb4b558e176366b/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-04340590986548a280f47b1542fdff38/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-04340590986548a280f47b1542fdff38/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "First call chio_execute with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-b558e176366b.txt\", \"content\": \"authorized before in-flight revocation\"}}. Wait for its successful result. Then Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-b558e176366b.txt\", \"content\": \"forbidden after in-flight revocation\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 1
+  }
+]

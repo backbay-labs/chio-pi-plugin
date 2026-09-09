@@ -1,0 +1,23 @@
+[
+  {
+    "case": "wrong-resource",
+    "exitCode": 1,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-ef1bf8eec3a54c438204ef20a700c385/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-9c115d9a8616419fae0f9799f49fca5d/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-9c115d9a8616419fae0f9799f49fca5d/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-preflight-forbidden.txt\", \"content\": \"must never dispatch with invalid authority\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  }
+]
