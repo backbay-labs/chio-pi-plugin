@@ -1,0 +1,7 @@
+{
+  "host": "pi",
+  "artifactSha256": "b6f38bfb2c129e00d6e8c5c74b5b92ec4d527d26a81683316683abc690afac2c",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "faultInjectorSha256": "c14ad2e7263781beb5cc516d77cfe188fba89cd50ce89b95a84d8b53c519400a",
+  "claim": "bounded real-host forced gateway crash and original-authority recovery; full acceptance unresolved"
+}
