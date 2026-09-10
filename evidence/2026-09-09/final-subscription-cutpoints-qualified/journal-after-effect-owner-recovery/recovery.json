@@ -1,0 +1,33 @@
+{
+  "originalState": "pending",
+  "sourceRequestId": "2aaff217-d87a-43ae-ab33-de2d9c7c830b:92b6c5f383459b6e3d35222ee23ebaa3421e6e5fd8bcd449f853e76af75cd36f",
+  "signedOwnerImportVerified": true,
+  "operatorAcknowledged": true,
+  "originalOperationRedispatches": 0,
+  "subsequentNativeReadDispatches": 1,
+  "nativeSessionPreserved": true,
+  "originalAuthorityPreserved": true,
+  "hostExitCode": 0,
+  "command": [
+    "node",
+    "/private/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+    "--config",
+    "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-cutpoint-2b92b0ae385f456fb58c6e89e9a08e08/gateway.json",
+    "--profile",
+    "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-cutpoint-dkmpogtd/profile",
+    "--cwd",
+    "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-cutpoint-dkmpogtd/workspace",
+    "--provider",
+    "openai-codex",
+    "--model",
+    "gpt-5.5",
+    "--codex-auth",
+    "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json",
+    "--prompt",
+    "The operator has recovered and acknowledged the original completed result without redispatch. Call chio_execute read_text_file exactly once for /workspace/pi-cutpoint-40f99672dd0d484996d0600701586b7b.txt. Do not write anything.",
+    "--resume",
+    "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-cutpoint-dkmpogtd/profile/sessions/2026-09-10T02-45-47-815Z_01a08935-02a6-70a2-a404-69746c3f951d.jsonl"
+  ],
+  "operatorCliSha256": "ddf27ade390c2f318019f9210ef8c4da0a4a978d2a997eff790035870406bc9d",
+  "exporterSha256": "b795973deadfa255768a4e4eb07e9755decc4de1f75746e49f6a19f2f4ba12fb"
+}

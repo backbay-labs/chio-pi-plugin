@@ -1,0 +1,8 @@
+{
+  "scope": "Operator-injected fault in isolated installed extension copy; not a normal archive mutation",
+  "originalModuleSha256": "3ffb98586471618d94b07522a712b3b59d7ced0d032b3a36b54ec40b0701274b",
+  "faultModuleSha256": "61687f39f918d46f82ef2737965a0494e99cc9bd055d2ca9eb39630f885123d3",
+  "fault": "omitted",
+  "outsideExtensionCodeUnchanged": true,
+  "resourceUnchanged": true
+}

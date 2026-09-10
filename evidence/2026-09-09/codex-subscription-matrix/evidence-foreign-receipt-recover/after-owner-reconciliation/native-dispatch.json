@@ -1,0 +1,20 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_PNdhKXPmJrc84PGFL10mnCAk|fc_094f1e3421e67284016aa20ff6287887d0b5338118497d32c1",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "read_text_file",
+        "arguments": {
+          "path": "/workspace/pi-inflight-81ba20ebbed7.txt"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_PNdhKXPmJrc84PGFL10mnCAk|fc_094f1e3421e67284016aa20ff6287887d0b5338118497d32c1"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

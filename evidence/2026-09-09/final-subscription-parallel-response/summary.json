@@ -1,0 +1,68 @@
+{
+  "acceptance": false,
+  "supplementalOnly": true,
+  "liveModel": false,
+  "passed": true,
+  "exit": {
+    "code": 3,
+    "signal": null
+  },
+  "timedOut": false,
+  "classification": "native-serialized-second-call-fenced-before-effect",
+  "injectedTwoCallResponse": true,
+  "outboundParallelDisabled": true,
+  "providerRequests": 2,
+  "exactNativeCalls": true,
+  "nativeSerialized": true,
+  "nativeToolStarts": 2,
+  "nativeToolEnds": 2,
+  "noHiddenRetries": true,
+  "kernelAttempts": 1,
+  "resourceDispatches": 1,
+  "unrelatedDispatches": 0,
+  "unrelatedFilesUnchanged": true,
+  "parentOnlyFixture": true,
+  "deliveryConfirmed": true,
+  "operatorConfigUnchanged": true,
+  "hostCalls": [
+    {
+      "path": "/workspace/pi-forced-parallel-31087a9d-ad5f-499f-a5af-c84cff625afe-a.txt",
+      "toolCallId": "call_pi_parallel_0|fc_pi_parallel_0",
+      "startedIndex": 3,
+      "completedIndex": 4,
+      "state": "completed",
+      "evidence": "verified",
+      "requestId": "1b48e31c-ecec-4941-bdfb-536280be0a0e:98460fe371c82e7b6812db4bc315d54f6d1d3532de817fbe3e6a22e1ba2ef320",
+      "isError": false,
+      "explicitNonDispatch": false,
+      "refusedForUnacknowledgedOutcome": false,
+      "dispatches": 1,
+      "expectedContentSha256": "96489f2a21011cdff75318b19fa0503808db3fc6e6104efc83400fa36f820f57",
+      "actualContentSha256": "96489f2a21011cdff75318b19fa0503808db3fc6e6104efc83400fa36f820f57"
+    },
+    {
+      "path": "/workspace/pi-forced-parallel-31087a9d-ad5f-499f-a5af-c84cff625afe-b.txt",
+      "toolCallId": "call_pi_parallel_1|fc_pi_parallel_1",
+      "startedIndex": 6,
+      "completedIndex": 7,
+      "isError": true,
+      "explicitNonDispatch": true,
+      "refusedForUnacknowledgedOutcome": true,
+      "dispatches": 0,
+      "expectedContentSha256": "3ed295cdf1f37129c986bba5562a0dbe3981669eb625d82ec23f044e20862b75",
+      "actualContentSha256": null
+    }
+  ],
+  "terminal": [
+    {
+      "type": "chio_session",
+      "sessionFile": "/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-parallel-fixture-rqKiO9/profile/sessions/2026-09-10T02-52-12-598Z_01a0893a-e1b5-74dc-8229-95e8e15ef078.jsonl",
+      "sessionId": "01a0893a-e1b5-74dc-8229-95e8e15ef078",
+      "outcome": "completed_with_tool_errors",
+      "toolErrors": 1,
+      "providerStopReason": "stop"
+    }
+  ],
+  "elapsedMs": 7024.489791999999,
+  "timingClaim": "Fixture wallclock only; no live-model or incremental overhead claim"
+}

@@ -1,0 +1,5 @@
+{
+  "reason": "shared harness required unknown; actual journal is pending after completed-record persistence EIO",
+  "protectedDispatch": false,
+  "claim": "not a recovery failure in operator contract; no import attempted"
+}

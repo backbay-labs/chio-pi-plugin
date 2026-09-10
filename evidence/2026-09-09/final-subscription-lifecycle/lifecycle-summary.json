@@ -1,0 +1,12 @@
+{
+  "pluginFaultCases": 4,
+  "upgradeOriginalAuthorityPreserved": true,
+  "retainedNativeSession": "/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-lifecycle-zm49p4p2/upgrade-runtime/profile/sessions/2026-09-10T02-28-12-991Z_01a08924-ea3e-76d7-a0e0-8860d044f30b.jsonl",
+  "removalInstallationAbsent": true,
+  "removalProfileAbsent": true,
+  "privateAuthorityJournalPreserved": true,
+  "normalUserProfilesModified": false,
+  "archiveSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "claim": "Bounded real-host fault and lifecycle observations; complete acceptance ledger remains separate"
+}

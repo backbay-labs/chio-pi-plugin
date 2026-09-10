@@ -1,0 +1,11 @@
+{
+  "extensionMarkerAbsent": true,
+  "credentialCommandMarkerAbsent": true,
+  "legitimateNativeKernelReadCompleted": true,
+  "originalAuthorityPreserved": true,
+  "injectedSettings": [
+    "extensions",
+    "defaultTools",
+    "auth.json"
+  ]
+}

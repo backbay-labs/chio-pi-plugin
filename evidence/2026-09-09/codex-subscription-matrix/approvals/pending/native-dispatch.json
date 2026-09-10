@@ -1,0 +1,21 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_oZkk3AYEfImFEwCUGjmkI8F9|fc_08ab06d3db670752016aa20eeb33e487d2964d1aa5a312a88c",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-approved-b95b38564f2c.txt",
+          "content": "exact operator-approved effect"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_oZkk3AYEfImFEwCUGjmkI8F9|fc_08ab06d3db670752016aa20eeb33e487d2964d1aa5a312a88c"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

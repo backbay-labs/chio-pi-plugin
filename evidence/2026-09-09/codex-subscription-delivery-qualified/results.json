@@ -1,0 +1,90 @@
+[
+  {
+    "case": "host-response-loss",
+    "passed": true,
+    "exitCode": 2,
+    "terminal": [
+      {
+        "type": "chio_session",
+        "sessionFile": "/private/tmp/chio-pi-qualified-af5745330fbf4ba481f800791e43dd6b/profile/sessions/2026-09-10T02-06-28-333Z_01a08911-01ec-71c1-8810-d1f0bbafe976.jsonl",
+        "sessionId": "01a08911-01ec-71c1-8810-d1f0bbafe976",
+        "outcome": "unresolved",
+        "toolErrors": 1,
+        "providerStopReason": "stop"
+      }
+    ],
+    "newDispatchRows": 1,
+    "operatorConfigUnchanged": true,
+    "acknowledgements": [
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": null,
+        "acknowledged": false
+      }
+    ],
+    "privateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-host-response-loss-55e734f2bbf9473fbba970900d385085",
+    "runtime": "/tmp/chio-pi-qualified-af5745330fbf4ba481f800791e43dd6b",
+    "command": [
+      "node",
+      "/private/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-host-response-loss-55e734f2bbf9473fbba970900d385085/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-qualified-af5745330fbf4ba481f800791e43dd6b/profile",
+      "--cwd",
+      "/tmp/chio-pi-qualified-af5745330fbf4ba481f800791e43dd6b/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json",
+      "--prompt",
+      "Use chio_execute write_file once to write /workspace/pi-qualified-70900d385085.txt with content \"original retained effect\". Stop immediately on unsuccessful or uncertain result. Never infer success from a transport error."
+    ]
+  },
+  {
+    "case": "result-substitution",
+    "passed": true,
+    "exitCode": 2,
+    "terminal": [
+      {
+        "type": "chio_session",
+        "sessionFile": "/private/tmp/chio-pi-qualified-da802cb4c4cb42808cc131cd493a9451/profile/sessions/2026-09-10T02-06-57-434Z_01a08911-7399-746a-93d2-a58588f129fd.jsonl",
+        "sessionId": "01a08911-7399-746a-93d2-a58588f129fd",
+        "outcome": "unresolved",
+        "toolErrors": 1,
+        "providerStopReason": "stop"
+      }
+    ],
+    "newDispatchRows": 1,
+    "operatorConfigUnchanged": true,
+    "acknowledgements": [
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": null,
+        "acknowledged": false
+      }
+    ],
+    "privateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-result-substitution-1aee0370c309495c8bd8941990b3b226",
+    "runtime": "/tmp/chio-pi-qualified-da802cb4c4cb42808cc131cd493a9451",
+    "command": [
+      "node",
+      "/private/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-result-substitution-1aee0370c309495c8bd8941990b3b226/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-qualified-da802cb4c4cb42808cc131cd493a9451/profile",
+      "--cwd",
+      "/tmp/chio-pi-qualified-da802cb4c4cb42808cc131cd493a9451/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json",
+      "--prompt",
+      "Use chio_execute read_text_file exactly once for /workspace/approved.txt. Report its exact content. Stop on any unverified result. Do not write anything."
+    ]
+  }
+]

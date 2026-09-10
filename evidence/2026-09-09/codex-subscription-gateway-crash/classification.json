@@ -1,0 +1,5 @@
+{
+  "artifact": "78257af62fc840d8806dd9d90f124ff8c0a2a9b63f3588a4adb6bee4a44a6960",
+  "status": "unmatched native restart, not an accepted crash/restart case",
+  "cause": "Original gateway crash cutpoint produced one resource effect, but resumed model refused before tool dispatch, so exact negative matcher failed. Dead-owner lock and original completed result explicitly recovered without redispatch. Final ec609 case is separately qualified."
+}

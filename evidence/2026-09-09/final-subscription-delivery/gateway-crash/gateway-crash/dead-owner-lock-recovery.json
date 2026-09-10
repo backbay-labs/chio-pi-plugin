@@ -1,0 +1,19 @@
+{
+  "schema": "chio.gateway.status.v1",
+  "sessionId": "4d06b437-d22e-4946-8419-fa1aa67eaaa5",
+  "lock": {
+    "state": "recovered-dead-owner"
+  },
+  "operations": [
+    {
+      "requestId": "4d06b437-d22e-4946-8419-fa1aa67eaaa5:65161c3a0aba3f368bc4567178cd743472b4a11338a3fe80a0ff5b47c8b1ad3e",
+      "state": "completed",
+      "acknowledged": false,
+      "hostDeliveryRequired": true,
+      "hostDeliveryConfirmed": false
+    }
+  ],
+  "fenced": true,
+  "recovered": true,
+  "journalsRetained": true
+}

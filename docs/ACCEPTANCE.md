@@ -1,6 +1,10 @@
 # Pi integration acceptance record
 
-Status: **not accepted**. No entire I01-I08 gate is closed. All six program integrations remain independently required.
+Current status is recorded in [FINAL-QUALIFICATION.md](FINAL-QUALIFICATION.md)
+for frozen archive `ec609539...`. The sections below preserve historical
+baselines and incomplete intermediate gates, not the current test inventory.
+Pi is not yet a published, fully accepted I01-I08 release. All six program
+integrations remain independently required.
 
 ## Qualified baseline
 

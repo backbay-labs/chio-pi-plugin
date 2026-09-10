@@ -1,0 +1,94 @@
+[
+  {
+    "case": "budget-write",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/budget3-hosts-20260909/pi-approvals-b60892ccdc7e496c9c1a2fa03d9f33a3/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-f97bd95339844d21bddd2bd27ce1591c/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-f97bd95339844d21bddd2bd27ce1591c/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-budget-2fa03d9f33a3.txt\", \"content\": \"native aggregate original\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 1
+  },
+  {
+    "case": "budget-edit",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/budget3-hosts-20260909/pi-approvals-b60892ccdc7e496c9c1a2fa03d9f33a3/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-01c1696ada61429fa8905baf54dee78d/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-01c1696ada61429fa8905baf54dee78d/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"edit_file\", \"arguments\": {\"path\": \"/workspace/pi-budget-2fa03d9f33a3.txt\", \"edits\": [{\"oldText\": \"original\", \"newText\": \"edited\"}]}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 1
+  },
+  {
+    "case": "budget-read",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/budget3-hosts-20260909/pi-approvals-b60892ccdc7e496c9c1a2fa03d9f33a3/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-0638294bc28e4d8daf8432488ec27411/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-0638294bc28e4d8daf8432488ec27411/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"read_text_file\", \"arguments\": {\"path\": \"/workspace/pi-budget-2fa03d9f33a3.txt\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 1
+  },
+  {
+    "case": "budget-exhausted",
+    "exitCode": 3,
+    "command": [
+      "node",
+      "/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/budget3-hosts-20260909/pi-approvals-b60892ccdc7e496c9c1a2fa03d9f33a3/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-7ba471790cdf475a821b310ca359e644/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-7ba471790cdf475a821b310ca359e644/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"list_directory\", \"arguments\": {\"path\": \"/workspace\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 0
+  }
+]

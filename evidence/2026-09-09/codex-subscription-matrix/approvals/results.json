@@ -1,0 +1,163 @@
+[
+  {
+    "case": "pending",
+    "exitCode": 4,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-ce2926a42d6249df84c4b95b38564f2c/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-e30b456a70624523a17e854c34f8416f/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-e30b456a70624523a17e854c34f8416f/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-b95b38564f2c.txt\", \"content\": \"exact operator-approved effect\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "missing-decision",
+    "exitCode": 4,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-ce2926a42d6249df84c4b95b38564f2c/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-3efbac708302447a8c27b52a36067caf/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-3efbac708302447a8c27b52a36067caf/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"a83ac153-e18f-43b5-9735-ee26f25c146f:da576193f66596f79fa81344b676bd904153178cf832725f5e1ee8c25afea323\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-b95b38564f2c.txt\", \"content\": \"exact operator-approved effect\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "substituted-arguments",
+    "exitCode": 3,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-ce2926a42d6249df84c4b95b38564f2c/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-7c47da5eb4484c53976a4d2e1cdaff1b/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-7c47da5eb4484c53976a4d2e1cdaff1b/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"a83ac153-e18f-43b5-9735-ee26f25c146f:da576193f66596f79fa81344b676bd904153178cf832725f5e1ee8c25afea323\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-b95b38564f2c.txt\", \"content\": \"revised test sample\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "approved-resume",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-ce2926a42d6249df84c4b95b38564f2c/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-55d42c9aa00c4d548ed0bc64cb7e9c28/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-55d42c9aa00c4d548ed0bc64cb7e9c28/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"a83ac153-e18f-43b5-9735-ee26f25c146f:da576193f66596f79fa81344b676bd904153178cf832725f5e1ee8c25afea323\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-b95b38564f2c.txt\", \"content\": \"exact operator-approved effect\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 1
+  },
+  {
+    "case": "completed-replay",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-ce2926a42d6249df84c4b95b38564f2c/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-ce36bad3ef69406c893ce45b8643725e/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-ce36bad3ef69406c893ce45b8643725e/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"a83ac153-e18f-43b5-9735-ee26f25c146f:da576193f66596f79fa81344b676bd904153178cf832725f5e1ee8c25afea323\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-b95b38564f2c.txt\", \"content\": \"exact operator-approved effect\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "pending-rejection",
+    "exitCode": 4,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-ce2926a42d6249df84c4b95b38564f2c/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-9d87aa5f77bf424f9eeafabad0b12f10/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-9d87aa5f77bf424f9eeafabad0b12f10/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-rejected-b95b38564f2c.txt\", \"content\": \"must never appear\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "rejected-resume",
+    "exitCode": 3,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-ce2926a42d6249df84c4b95b38564f2c/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-bed76ce265bb4e29ace1a7760a8bb7dc/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-bed76ce265bb4e29ace1a7760a8bb7dc/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"chio_resume\", \"arguments\": {\"requestId\": \"a83ac153-e18f-43b5-9735-ee26f25c146f:375cdea75008273853926de10c95001523c33346f75d496c8814aba66ba93e08\", \"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-rejected-b95b38564f2c.txt\", \"content\": \"must never appear\"}}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 0
+  }
+]

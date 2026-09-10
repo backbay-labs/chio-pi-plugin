@@ -1,0 +1,78 @@
+{
+  "runtimeSource": "2ccc027b42b837f3df2889863273df2c1e2d5669",
+  "archiveSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1",
+  "collections": [
+    {
+      "path": "evidence/2026-09-09/final-subscription-alternate-filesystem",
+      "fileCount": 27,
+      "bytes": 711730,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-budget",
+      "fileCount": 27,
+      "bytes": 268254,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-capability-expiry",
+      "fileCount": 12,
+      "bytes": 6339,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-cold",
+      "fileCount": 32,
+      "bytes": 529714,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-cutpoints",
+      "fileCount": 10,
+      "bytes": 195347,
+      "status": "retained failed matching attempt, not accepted"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-cutpoints-qualified",
+      "fileCount": 56,
+      "bytes": 781908,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-delivery",
+      "fileCount": 61,
+      "bytes": 860871,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-disabled-route",
+      "fileCount": 12,
+      "bytes": 357345,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-lifecycle",
+      "fileCount": 38,
+      "bytes": 833885,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-matrix",
+      "fileCount": 386,
+      "bytes": 4426715,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-parallel-response",
+      "fileCount": 9,
+      "bytes": 161423,
+      "status": "qualified finite observations; see per-case classifications"
+    }
+  ],
+  "currentOpenRequirements": [
+    "kernel receipt-store and signing failure cutpoints (parent journal EIO is separately tested)",
+    "isolated incremental integration overhead (whole-process elapsed times recorded)",
+    "publication of compatible accepted version combination after release gates"
+  ],
+  "scope": "Pinned native Pi0.85.1 subscription provider in protected macOS four-tool mode; no six-host completion or independent adoption claim"
+}

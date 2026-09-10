@@ -1,6 +1,8 @@
 # Native Codex subscription qualification
 
-Status: bounded real-host observations, not complete Pi I01-I08 acceptance.
+Historical candidate record for archive `78257af6...`, superseded by
+[FINAL-QUALIFICATION.md](FINAL-QUALIFICATION.md) for archive `ec609539...`.
+The original artifact identities and failed attempts below remain unchanged.
 
 The supported provider is the pinned Pi 0.85.1 native `openai-codex` provider,
 using `openai-codex-responses` and exact model `gpt-5.5`. Pi documents ChatGPT

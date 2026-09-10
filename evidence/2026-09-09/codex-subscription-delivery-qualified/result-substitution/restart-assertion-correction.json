@@ -1,0 +1,13 @@
+{
+  "reason": "Initial ad hoc observer incorrectly required exit2. Actual terminal completed_with_tool_errors maps to exit3 for known non-dispatch refusal; exact native attempt returned error and resource remained unchanged. No host code changed.",
+  "terminal": {
+    "type": "chio_session",
+    "sessionFile": "/private/tmp/chio-pi-qualified-da802cb4c4cb42808cc131cd493a9451/profile/sessions/2026-09-10T02-06-57-434Z_01a08911-7399-746a-93d2-a58588f129fd.jsonl",
+    "sessionId": "01a08911-7399-746a-93d2-a58588f129fd",
+    "outcome": "completed_with_tool_errors",
+    "toolErrors": 1,
+    "providerStopReason": "stop"
+  },
+  "expectedErrorExitCode": 3,
+  "actualProcessExitCodeCaptured": false
+}

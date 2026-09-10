@@ -1,0 +1,25 @@
+[
+  {
+    "case": "evidence-wrong-signer",
+    "exitCode": 2,
+    "command": [
+      "node",
+      "/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-bb805d1c366043d38bd50c44e8931e0f/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-ffc1fb2fea814e8f9f7db2ae6b45b9c6/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-ffc1fb2fea814e8f9f7db2ae6b45b9c6/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. First call chio_execute with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-0c44e8931e0f.txt\", \"content\": \"authorized before in-flight revocation\"}}. Wait for its successful result. Then Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-0c44e8931e0f.txt\", \"content\": \"second legitimate effect requiring its own evidence\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 2
+  }
+]

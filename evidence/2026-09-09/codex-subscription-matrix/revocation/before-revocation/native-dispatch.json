@@ -1,0 +1,21 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_oIiGbe0Upi7h8kJ9ZH2FPeGb|fc_04445e805b03eccd016aa20f2b814887d2b2465389aab7a907",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-revoke-8f7ae611bc2f.txt",
+          "content": "authorized before revocation"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_oIiGbe0Upi7h8kJ9ZH2FPeGb|fc_04445e805b03eccd016aa20f2b814887d2b2465389aab7a907"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

@@ -1,0 +1,22 @@
+{
+  "hostVersion": "0.85.1",
+  "pluginDist": {
+    "dist/bridge-executor.js": "c7abddbc370710f698ffd24966dc481c2dbdc44ce3f38723bb99bc45d6c36018",
+    "dist/cli.js": "4ab06dedbb463ff82defc470dbede8c1f918c8bde87bda21d3e59a681b45ed00",
+    "dist/configured.js": "d34e47f26c84ecbe09a912ae1377fb5b1d4e55edd8385586b73fdec2a47c07b7",
+    "dist/extension.js": "3ffb98586471618d94b07522a712b3b59d7ced0d032b3a36b54ec40b0701274b",
+    "dist/http-executor.js": "3f21e9f3daef70f9bdee18ac5b2070d8b82e973cf630864c4c40ccca55485141",
+    "dist/index.js": "b34ce5e0548ffcf111afd0375e5a78b73450ecc12c3e815f73c1929c1ebe44f9",
+    "dist/model-credentials.js": "dcca879aba04d309e831f8fe01273cc3bd7f146763adc2f4ee94ddad92f60119",
+    "dist/model-relay.js": "b9efde11ec82159c9b0c0f474e6e35d4bd7f953addb1d8c2e9f69ca39013a358",
+    "dist/protected-cli.js": "f49ba53cb044aa42dfba49eef229a6c2badaa4238d146d7b5cb1c6716ff2b0c1",
+    "dist/sandbox.js": "de28bcc3882fdab240a7d45d478feffa0dfffdb38b92398fc5322bb4ad89b47c",
+    "dist/session.js": "305d4451d75171342e0515c99c90fd23abf522eba659f920854e9046d94f5b9c",
+    "dist/terminal.js": "a9f4afefc993f1fbff1e93695edcbf789100d4d8eb806cfbd0e61f9b30cf50e7",
+    "dist/uncertainty.js": "62604307472ff749f29866780f4d986a7e33071a5c5730120f83852098b28d7e"
+  },
+  "installationLockSha256": "06eb02f1eda487f082166a7e0261cdea51f8a6d924d4ee6dbe9bd8e894b47e74",
+  "archiveSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1",
+  "sourceCommit": "2ccc027",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25"
+}

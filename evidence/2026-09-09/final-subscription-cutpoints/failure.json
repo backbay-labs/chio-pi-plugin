@@ -1,0 +1,5 @@
+{
+  "scope": "Failed native restart matching attempt; not promoted to completed cutpoint suite",
+  "cause": "Cancellation prevented dispatch, but resumed model refused before native tool invocation. Exact matcher rejected this as enforcement evidence. Raw responses retained.",
+  "runtimeArtifactSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1"
+}

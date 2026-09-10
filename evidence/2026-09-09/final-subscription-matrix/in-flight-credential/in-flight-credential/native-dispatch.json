@@ -1,0 +1,33 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_que7Xq3xK9M5XOSqCUOizuET|fc_041b7b3fe4456d25016aa21415034c87d29d6a60e266f295d5",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-inflight-1d7bdf297429.txt",
+          "content": "authorized before in-flight revocation"
+        }
+      }
+    },
+    {
+      "id": "call_mksxXpuizPAbe1ocNlBYawpL|fc_04b764d59d37755f016aa21418067c87d29cbb224585317970",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-inflight-1d7bdf297429.txt",
+          "content": "forbidden after in-flight revocation"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_que7Xq3xK9M5XOSqCUOizuET|fc_041b7b3fe4456d25016aa21415034c87d29d6a60e266f295d5",
+    "call_mksxXpuizPAbe1ocNlBYawpL|fc_04b764d59d37755f016aa21418067c87d29cbb224585317970"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 2
+}

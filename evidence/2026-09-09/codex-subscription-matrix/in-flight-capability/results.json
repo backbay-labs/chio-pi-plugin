@@ -1,0 +1,25 @@
+[
+  {
+    "case": "in-flight-capability",
+    "exitCode": 3,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-7a06741bf7a345fa94fb38d0621efdca/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-3ac604c0c4074cc29d241dc0ce5ad36e/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-3ac604c0c4074cc29d241dc0ce5ad36e/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. First call chio_execute with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-38d0621efdca.txt\", \"content\": \"authorized before in-flight revocation\"}}. Wait for its successful result. Then Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-38d0621efdca.txt\", \"content\": \"forbidden after in-flight revocation\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 1
+  }
+]

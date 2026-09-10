@@ -1,0 +1,17 @@
+{
+  "claim": "Bounded real-host and separately identified launcher refusal cases; not full integration acceptance",
+  "host": "pi",
+  "provider": "openai-codex",
+  "model": "gpt-5.5",
+  "artifactSha256": "78257af62fc840d8806dd9d90f124ff8c0a2a9b63f3588a4adb6bee4a44a6960",
+  "bridgeArtifactSha256": "7d9e34f7408a316e35125982a23faaecfd2f31f4da6b50ca8eab287c2c918f67",
+  "kernelBinarySha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "suites": 26,
+  "nativeProcessesWithExactExpectedToolAndReturn": 28,
+  "explicitLauncherRefusals": 8,
+  "nativeToolCalls": 36,
+  "nativeToolReturns": 36,
+  "skips": 0,
+  "failures": 0,
+  "sourceCommit": "70557f47efa38772e5cd600b5ce689a8c78706e3"
+}

@@ -1,0 +1,25 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_zn5GpuENCZaMOFckTJ3ZCwPN|fc_02b112d73f10fa89016aa213e120ec87d285942228bc6411ff",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "chio_resume",
+        "arguments": {
+          "requestId": "9721379a-3b05-4b26-95f7-a576f79f7ea9:c940b838285c4df5df1f8ea6aa3d302408163ca4c1fdcf188e21a275708965b3",
+          "tool": "write_file",
+          "arguments": {
+            "path": "/workspace/pi-rejected-5a3fa4409d1e.txt",
+            "content": "must never appear"
+          }
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_zn5GpuENCZaMOFckTJ3ZCwPN|fc_02b112d73f10fa89016aa213e120ec87d285942228bc6411ff"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

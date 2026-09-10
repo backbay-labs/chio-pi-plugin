@@ -1,0 +1,127 @@
+{
+  "requestId": "0a445249-a97d-4bf4-bef4-0b290fd7adc1:451a5cb8a141185e25635305de827591dabd5a6ea0dc355be49854acd4bb07d8",
+  "digest": "0568b2357e4d071505613af2e4e01ae72385d71e356df0eb2b39c7eb33b0ab12",
+  "state": "completed",
+  "outcome": {
+    "state": "completed",
+    "evidence": "verified",
+    "requestId": "0a445249-a97d-4bf4-bef4-0b290fd7adc1:451a5cb8a141185e25635305de827591dabd5a6ea0dc355be49854acd4bb07d8",
+    "receipt": {
+      "action": {
+        "parameter_hash": "393ff2311d0e423431265d6bdc6741d7b1530f82701451567a5ec8f4e38b61a2",
+        "parameters": {
+          "content": "second legitimate effect requiring its own evidence",
+          "path": "/workspace/pi-inflight-0c44e8931e0f.txt"
+        }
+      },
+      "boundary_class": "prevent",
+      "capability_id": "cap-01a08921-69f2-7922-99dd-6739ec8c4831",
+      "content_hash": "850ef0c54eee34b505ea4d2973c0afb7e15d49e27f4dfce35351e8d51d8222f6",
+      "decision": {
+        "verdict": "allow"
+      },
+      "id": "77455440d8b30d8c109f92c11006b57dde6cd426e33133c6eb746b64896e0104",
+      "kernel_key": "0e3a3a96933670f35d269f4d1572f563e5ef15806c364233c7da36568125c01d",
+      "metadata": {
+        "admission_operation": {
+          "compensation_status": "not_compensated",
+          "coordinator_lease_epoch": 7,
+          "coordinator_lease_id": "01a08920-675e-74b1-8da6-17924c5e2cd9",
+          "operation_id": "6bd0b582d1da968b4cd928484948c4f1209ed516f6452248ed490fe1ed00ddc5",
+          "projected_dispatch_state": "terminal",
+          "projected_operation_version": 8,
+          "projected_state": "completed",
+          "request_binding_hash": "17801969867d372e334f3d5ae394457ebe3ec002f60a7aa1391edea41c9771d2",
+          "request_id": "0a445249-a97d-4bf4-bef4-0b290fd7adc1:451a5cb8a141185e25635305de827591dabd5a6ea0dc355be49854acd4bb07d8",
+          "request_namespace_digest": "e5f94fa64ff1d5ed1049e644f253c65c4891e54f68919a4d990952841d404dcc",
+          "retained_dispatch_commit": {
+            "committed_version": 6,
+            "coordinator_lease_epoch": 7,
+            "coordinator_lease_id": "01a08920-675e-74b1-8da6-17924c5e2cd9",
+            "provider_attempt": {
+              "attempt_id": "attempt:6bd0b582d1da968b4cd928484948c4f1209ed516f6452248ed490fe1ed00ddc5",
+              "operation_id": "6bd0b582d1da968b4cd928484948c4f1209ed516f6452248ed490fe1ed00ddc5",
+              "transport_id": "kernel-tool-server:fs",
+              "transport_key_epoch": 7
+            },
+            "store_fence": {
+              "lease_id": "01a08920-675e-74b1-8da6-17924c5e2cd9",
+              "owner_epoch": 7,
+              "store_uuid": "01a08786-9848-7741-80f7-c0655d51ab8e"
+            }
+          },
+          "schema": "chio.admission-receipt.v1",
+          "store_fence": {
+            "lease_id": "01a08920-675e-74b1-8da6-17924c5e2cd9",
+            "owner_epoch": 7,
+            "store_uuid": "01a08786-9848-7741-80f7-c0655d51ab8e"
+          },
+          "tool_outcome_id": "ecaf0f6b68e70c4dedfa9d19251588592895856bfae780b7456cef91991d85fc",
+          "tool_outcome_version": 2,
+          "trusted_time_unix_ms": 1789007071959
+        },
+        "attribution": {
+          "delegation_depth": 0,
+          "grant_index": 0,
+          "issuer_key": "15799534b682024d1830531a01ab4dc676e6ab28d04791bb9f32e7c3ec9db555",
+          "subject_key": "b523217541de59cb04b0438f253f10589e9b7d4340ffd27aa04225fa91c444ea"
+        },
+        "chio_receipt_signing_nonce": "rcpt-01a08921-8b57-7c82-8cf2-f72510355cb1",
+        "receipt_context": {
+          "request_id": "0a445249-a97d-4bf4-bef4-0b290fd7adc1:451a5cb8a141185e25635305de827591dabd5a6ea0dc355be49854acd4bb07d8"
+        }
+      },
+      "policy_hash": "057b9a8160375e7d90841325639bdd66050a454f393dae23e8c813b8df74b84e",
+      "receipt_kind": "mediated_decision",
+      "redaction_mode": "none",
+      "signature": "b89ce612630bcc45f749e465a3cdb576e02137596ba11c0c47b981232630a1fc2b9fa69e70d30a6803904d1a419b12c527c959d940a1f641b477a3904746c40d",
+      "timestamp": 1789007071,
+      "tool_name": "write_file",
+      "tool_origin": "caller_executed",
+      "tool_server": "fs",
+      "trust_level": "mediated"
+    },
+    "result": {
+      "content": [
+        {
+          "text": "Successfully wrote to /workspace/pi-inflight-0c44e8931e0f.txt",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "content": "Successfully wrote to /workspace/pi-inflight-0c44e8931e0f.txt"
+      }
+    },
+    "delivery": {
+      "acknowledgement": "bUyWN8wpZmASRVD7vgNBDKrVvgXZY3Iq3qRuZzSDWpU",
+      "receiptId": "77455440d8b30d8c109f92c11006b57dde6cd426e33133c6eb746b64896e0104",
+      "requestHash": "b257bb80fb69f2fb8db3a6f1269f731fb8898031b7706877bf996944e2606ffd",
+      "requestId": "0a445249-a97d-4bf4-bef4-0b290fd7adc1:451a5cb8a141185e25635305de827591dabd5a6ea0dc355be49854acd4bb07d8",
+      "resultHash": "850ef0c54eee34b505ea4d2973c0afb7e15d49e27f4dfce35351e8d51d8222f6",
+      "schema": "chio.mcp.delivery-ack.v1"
+    }
+  },
+  "acknowledged": true,
+  "hostDeliveryRequired": true,
+  "request": {
+    "tool": "write_file",
+    "arguments": {
+      "path": "/workspace/pi-inflight-0c44e8931e0f.txt",
+      "content": "second legitimate effect requiring its own evidence"
+    },
+    "requestId": "0a445249-a97d-4bf4-bef4-0b290fd7adc1:451a5cb8a141185e25635305de827591dabd5a6ea0dc355be49854acd4bb07d8"
+  },
+  "hostDeliveryConfirmed": true,
+  "operatorReconciliation": {
+    "previousState": "unknown",
+    "previousOutcome": {
+      "state": "unknown",
+      "evidence": "unverified",
+      "requestId": "0a445249-a97d-4bf4-bef4-0b290fd7adc1:451a5cb8a141185e25635305de827591dabd5a6ea0dc355be49854acd4bb07d8",
+      "reason": "execution receipt failed trusted request verification"
+    },
+    "ownerRecordSha256": "2cc7be64c31a44ef51e2b7db5e5b9e5bcc664a7b7f6b4e40f80017d84287ed3c",
+    "ownerSignature": "f05620e7d2b895c9b2436361d3e2d165c705b1882415529b7a56d5645bf207ba52ba65dd9f5bcb6387e3001d2c793a6aea8f074cef603a75613a0e7f6f6d9501"
+  }
+}

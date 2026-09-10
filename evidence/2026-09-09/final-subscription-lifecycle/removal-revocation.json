@@ -1,0 +1,8 @@
+{
+  "response": {
+    "revoked": true,
+    "sessionId": "7a8e64eb9f52aaa9e16065c080b155798e38f5aa2abc24bf51576c9e741088fa"
+  },
+  "originalSessionId": "7a8e64eb9f52aaa9e16065c080b155798e38f5aa2abc24bf51576c9e741088fa",
+  "protectedDispatch": false
+}

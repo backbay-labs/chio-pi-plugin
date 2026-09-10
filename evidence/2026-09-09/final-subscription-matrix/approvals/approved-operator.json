@@ -1,0 +1,15 @@
+{
+  "submission": {
+    "output": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-1d58d56d71304f4ea25c5a3fa4409d1e/approved-submission.json",
+    "status": "pending",
+    "approvalId": "approval-f50c2b51298713607bf407f21eaba6daba94bbab41a39a728d7dd27ed14f40a2",
+    "protectedDispatch": false
+  },
+  "decision": {
+    "output": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-1d58d56d71304f4ea25c5a3fa4409d1e/journal/approvals/df50fb6c06b75e63dd725d32a077f83fbcadd70b30b4a3e28819df274c38dcaa.json",
+    "status": "approved",
+    "approvalId": "approval-f50c2b51298713607bf407f21eaba6daba94bbab41a39a728d7dd27ed14f40a2",
+    "protectedDispatch": false
+  },
+  "protectedDispatch": false
+}

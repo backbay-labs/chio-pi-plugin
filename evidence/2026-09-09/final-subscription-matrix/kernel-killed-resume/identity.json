@@ -1,0 +1,13 @@
+{
+  "host": "pi",
+  "suite": "resume-fence",
+  "cases": 1,
+  "skips": 0,
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "resourceImage": "sha256:188cb84d5d0bb4063d4ce5a3b9c3832445a5acda5604911cda80a9136d1850a0",
+  "hostImage": null,
+  "packageDirectory": "/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin",
+  "privateConfiguration": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-352f85bf1d3d4c1b99cb600a70071611/gateway.json",
+  "configurationSha256": "8989be76d6f3c9da2976d9b4c9fbf12f2c6424100714f11f7712cf2e04201f87",
+  "claim": "bounded real-host authority and explicit launcher refusal cases; full acceptance remains open"
+}

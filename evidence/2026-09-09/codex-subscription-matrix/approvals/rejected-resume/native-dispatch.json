@@ -1,0 +1,25 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_4583rSeeexSJJBgEm07ErMJR|fc_09a870886d15b812016aa20f22ed5c87d2923b1bd7fa04d398",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "chio_resume",
+        "arguments": {
+          "requestId": "a83ac153-e18f-43b5-9735-ee26f25c146f:375cdea75008273853926de10c95001523c33346f75d496c8814aba66ba93e08",
+          "tool": "write_file",
+          "arguments": {
+            "path": "/workspace/pi-rejected-b95b38564f2c.txt",
+            "content": "must never appear"
+          }
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_4583rSeeexSJJBgEm07ErMJR|fc_09a870886d15b812016aa20f22ed5c87d2923b1bd7fa04d398"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}
