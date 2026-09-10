@@ -2,6 +2,7 @@
 import { lstat, mkdir, realpath } from "node:fs/promises";
 import { join, resolve, sep } from "node:path";
 import { ModelRuntime, SessionManager } from "@earendil-works/pi-coding-agent";
+import { relayCredentials } from "./model-credentials.js";
 import { configuredExecutor, readPreparedConfig } from "./configured.js";
 import { createChioPiSession } from "./session.js";
 import { gatewayExecutor, readTransportConfig } from "./http-executor.js";
@@ -38,7 +39,9 @@ async function main() {
   let termination: "SIGINT" | "SIGTERM" | undefined;
   let toolErrors = 0;
   try {
-    const modelRuntime = await ModelRuntime.create({ authPath: join(agentDir, "auth.json"), modelsPath: null, modelsStorePath: join(agentDir, "models-cache.json"), allowModelNetwork: false });
+    const relayToken = process.env.CHIO_PI_MODEL_TOKEN;
+    const credentials = relayToken ? relayCredentials(values.get("--provider")!, relayToken) : undefined;
+    const modelRuntime = await ModelRuntime.create({ credentials, authPath: join(agentDir, "auth.json"), modelsPath: null, modelsStorePath: join(agentDir, "models-cache.json"), allowModelNetwork: false });
     ({ session } = await createChioPiSession({ cwd, agentDir, modelRuntime, provider: values.get("--provider")!, model: values.get("--model")!, executor: controlled.executor,
       modelBaseUrl: process.env.CHIO_PI_MODEL_BASE_URL,
       sessionManager: resume ? SessionManager.open(await realpath(resume), sessions, cwd) : SessionManager.create(cwd, sessions),

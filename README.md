@@ -35,7 +35,11 @@ The operator prepares a retained kernel session with `chio-prepare-gateway`, shi
 
 The resulting configuration must include `execution.endpoint`, the delegated `execution.bearerToken`, `execution.trustedSigners`, `execution.subjectKey`, `execution.capabilityId`, `execution.serverId`, `execution.sessionId`, a logical `sessionId`, and the explicit `tools` inventory. The protected launcher also requires matching `sessionCredential` metadata with schema `chio.mcp.session-credential.v1`. That metadata is a format check; the kernel validates the actual token. Older operator-bearer configurations are refused. The selected kernel endpoint is HTTP on an explicit `127.0.0.1` port.
 
-Provide `OPENAI_API_KEY` to the operator launcher. Its child receives a random relay credential, not the provider key, and may contact only the local model relay and launcher-owned MCP transport. The kernel port is excluded from its sandbox. This mode supports `openai/gpt-4.1-mini` and text/function history only; image/file inputs, provider-side item references, hosted tools, background provider jobs and other API routes are refused. The runner uses a separate Pi credential/cache location and does not read the normal Pi configuration.
+For API billing, provide `OPENAI_API_KEY` to the operator launcher and select `openai/gpt-4.1-mini`. For ChatGPT subscription billing, select Pi's native `openai-codex/gpt-5.5` provider and pass `--codex-auth /absolute/private/codex/profile/auth.json`. The auth file must be a private operator-owned native Codex ChatGPT login cache, outside the installation, Pi profile and workspace. The launcher reads its access token and bound account without copying, changing or refreshing them. Native Codex owns login and refresh; if the token expires, refresh it through that native client before restarting Pi with the same kernel configuration and profile.
+
+Pi receives a random relay-only credential in a read-only in-memory credential store. It receives no subscription token, account ID, refresh token or auth-cache path. The native Codex provider uses its actual `openai-codex-responses` contract through SSE, including bounded zstd request decoding and complete inline encrypted reasoning history. There is no alternate-model fallback. The parent relay sends validated requests only to the selected provider's fixed Responses endpoint. Native history verification and durable delivery acknowledgement run before the next provider turn for both modes.
+
+The child may contact only the local model relay and launcher-owned MCP transport. The kernel port is excluded from its sandbox. Image/file inputs, provider-side item references, hosted tools, background provider jobs and other API routes are refused. The runner uses a separate Pi cache location and does not read the normal Pi configuration.
 
 ```sh
 ./node_modules/.bin/chio-pi \
@@ -45,6 +49,15 @@ Provide `OPENAI_API_KEY` to the operator launcher. Its child receives a random r
   --provider openai --model gpt-4.1-mini \
   --prompt 'Write /workspace/note.txt through the kernel, then read it back.'
 ```
+
+For the subscription mode, replace the provider/model line above with:
+
+```sh
+  --provider openai-codex --model gpt-5.5 \
+  --codex-auth /absolute/private/codex/profile/auth.json \
+```
+
+Use the current supported native Codex login procedure to obtain that private cache. The Pi launcher does not run OAuth or store a second refresh token. A successful native login does not prove the selected model is available for an account; provider denial remains an explicit failed session.
 
 The output is JSONL containing actual Pi messages, tool results, and the retained session path. Kernel receipts are included with verified successful results. Keep this output private when task inputs or results are sensitive. The model calls `chio_execute` with the operator-listed tool name and arguments.
 

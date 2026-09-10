@@ -47,6 +47,7 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
     themes: [],
     enableSkillCommands: false,
     retry: { enabled: false },
+    transport: "sse",
   });
   const resourceLoader = new DefaultResourceLoader({
     cwd: options.cwd,
