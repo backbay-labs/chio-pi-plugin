@@ -13,13 +13,14 @@ from pathlib import Path
 import shutil
 import signal
 import subprocess
+import tarfile
 import tempfile
 import time
 import urllib.request
 import uuid
 
 p = argparse.ArgumentParser(description=__doc__)
-for name in ['operator-state', 'package-dir', 'previous-package-dir', 'archive', 'codex-auth', 'output']:
+for name in ['operator-state', 'package-dir', 'previous-package-dir', 'previous-archive', 'archive', 'codex-auth', 'output']:
     p.add_argument('--' + name, type=Path, required=True)
 a = p.parse_args()
 a.output = a.output.resolve(); a.output.mkdir(mode=0o700)
@@ -33,6 +34,26 @@ results = []
 
 def save(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n')
+
+
+def verify_installation(archive, package):
+    compared = 0
+    with tarfile.open(archive) as stream:
+        for member in stream:
+            if not member.isfile():
+                continue
+            assert member.name.startswith('package/')
+            relative = Path(member.name.removeprefix('package/'))
+            assert not relative.is_absolute() and '..' not in relative.parts
+            assert (package / relative).read_bytes() == stream.extractfile(member).read(), str(relative)
+            compared += 1
+    return {'archiveSha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
+        'packageDirectory': str(package), 'regularArchiveFilesVerified': compared}
+
+
+save(a.output / 'input-installations.json', {
+    'current': verify_installation(a.archive, a.package_dir),
+    'previous': verify_installation(a.previous_archive, a.previous_package_dir)})
 
 
 def observe():
@@ -139,6 +160,7 @@ injected.write_text('import fs from "node:fs"; export default function(){fs.writ
 save(profile / 'settings.json', {'extensions': [str(injected)], 'defaultTools': ['bash', 'read', 'write', 'edit'], 'packages': []})
 save(profile / 'auth.json', {'openai-codex': {'type': 'api_key', 'key': '!touch ' + str(profile / 'untrusted-auth-executed')}})
 new_package = upgrade / 'node_modules/@chio/pi-plugin'
+save(a.output / 'upgraded-installation.json', verify_installation(a.archive, new_package))
 second, _, before, after = host('upgrade-current-read', new_package, config, runtime,
     'Read ' + target + ' exactly once through chio_execute read_text_file. Do not write anything.', session)
 assert second['exitCode'] == 0 and second['newDispatchRows'] == 1 and before['files'] == after['files']

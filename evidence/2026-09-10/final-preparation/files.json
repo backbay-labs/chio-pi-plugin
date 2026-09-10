@@ -1,0 +1,296 @@
+[
+  {
+    "path": "attempt-1/driver.py.gz",
+    "sha256": "f30aae31e868795b075629896cc3e25b54cb33b8da0f265fa59aaae0e17a618d",
+    "originalSha256": "b9df759693936ee6668429fbcef6bc5f341732b246ef64e83ff480507d08d405",
+    "originalBytes": 5247,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-20260910/pi/evidence/driver.py"
+  },
+  {
+    "path": "attempt-1/install-previous.stderr.gz",
+    "sha256": "6a1945b10d272e60aee395dcbfc9d792203aa642835ba451fd57b9a4de38c9e9",
+    "originalSha256": "5bbb3a5b5ace87fae42cb6b4751cadf9d282e8804cc90eef7a4be918c56e301b",
+    "originalBytes": 1433,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-20260910/pi/evidence/install-previous.stderr"
+  },
+  {
+    "path": "attempt-1/install-previous.stdout.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-20260910/pi/evidence/install-previous.stdout"
+  },
+  {
+    "path": "attempt-1/public-peer-identity.json.gz",
+    "sha256": "01a4a6ab7b8ca2cf94636fb3d729881d41d8d997ed6b35773fbf59d03643030b",
+    "originalSha256": "309d1b294d5bba2b3b6695ff8574cfb33ea485de6f9ba51b731bcdb95c48ae77",
+    "originalBytes": 110167,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-20260910/pi/evidence/public-peer-identity.json"
+  },
+  {
+    "path": "attempt-1/public-peer-install.stderr.gz",
+    "sha256": "a411ec662bca5bfbcb3b0119c748445a362c4ca3d629e4f4a61d9a3518a1849d",
+    "originalSha256": "ae37762e601d9101114a9e6bcd9e0cac7a62b1f7f215d74b26fd471356db38c4",
+    "originalBytes": 304,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-20260910/pi/evidence/public-peer-install.stderr"
+  },
+  {
+    "path": "attempt-1/public-peer-install.stdout.gz",
+    "sha256": "5f90820a295b7dc6e57f4b696e677354b0ffda8dedf5acff2b771fc56069e91e",
+    "originalSha256": "d34d777a9db66101afe63501fbdb2b14f16d7abfc9e5b0de2cbad0760ecec761",
+    "originalBytes": 27,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-20260910/pi/evidence/public-peer-install.stdout"
+  },
+  {
+    "path": "attempt-1/runs.json.gz",
+    "sha256": "fee781f87d0f7e0ae9d5fa07002b37f6c1d2c8406f26f8b8107bba22b2b22133",
+    "originalSha256": "9cfd160a4875ce520ed236bb3253af92c48b3a24384bc59609553a2a87a90bf2",
+    "originalBytes": 1246,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-20260910/pi/evidence/runs.json"
+  },
+  {
+    "path": "attempt-2/current-help.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/current-help.stderr"
+  },
+  {
+    "path": "attempt-2/current-help.stdout.gz",
+    "sha256": "2fe2c05fcd0a15f5f17e8ab4b3583e19ab29c29b230aa565b821e4a0b5bd611b",
+    "originalSha256": "843989262636cd7089b6b06fa2a114bf87d27d07cd2e8609e2afe66fd02d0c40",
+    "originalBytes": 483,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/current-help.stdout"
+  },
+  {
+    "path": "attempt-2/driver.py.gz",
+    "sha256": "13aa4c975149910122aa5782613390244c5eee36d89420f656da1260b7d902ef",
+    "originalSha256": "9f0ec707f62bebd8eb7e0fca19ac9fcdeaa6aa37e61cc16f172dac95da593c4e",
+    "originalBytes": 5480,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/driver.py"
+  },
+  {
+    "path": "attempt-2/install-previous.stderr.gz",
+    "sha256": "a411ec662bca5bfbcb3b0119c748445a362c4ca3d629e4f4a61d9a3518a1849d",
+    "originalSha256": "ae37762e601d9101114a9e6bcd9e0cac7a62b1f7f215d74b26fd471356db38c4",
+    "originalBytes": 304,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/install-previous.stderr"
+  },
+  {
+    "path": "attempt-2/install-previous.stdout.gz",
+    "sha256": "cd159103eb6228bf8eddc22d746b7d96294b336d8ddeb19d2962272c006c5cfb",
+    "originalSha256": "a39f3f7253f5a52e051092ba916f458af2bdf4bc4688a3993cf51e1c2f0b2f6f",
+    "originalBytes": 51,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/install-previous.stdout"
+  },
+  {
+    "path": "attempt-2/public-peer-identity.json.gz",
+    "sha256": "639269502681353fd682588a9ec0b9f381666265187bd483547dd6f12402d613",
+    "originalSha256": "19d5276086622da17690c464c1f3e2f7f65dc70663bcd48ad659829ae510c95a",
+    "originalBytes": 110665,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/public-peer-identity.json"
+  },
+  {
+    "path": "attempt-2/public-peer-install.stderr.gz",
+    "sha256": "a411ec662bca5bfbcb3b0119c748445a362c4ca3d629e4f4a61d9a3518a1849d",
+    "originalSha256": "ae37762e601d9101114a9e6bcd9e0cac7a62b1f7f215d74b26fd471356db38c4",
+    "originalBytes": 304,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/public-peer-install.stderr"
+  },
+  {
+    "path": "attempt-2/public-peer-install.stdout.gz",
+    "sha256": "9f42dae761cbfa83ca964d89c40b351f4983397ec91222811f0389b72a7e4dd8",
+    "originalSha256": "104e7a85108959daab87d0039a1fbe76c265ea6ac4a6e1bde10d5e1d1f1ebc58",
+    "originalBytes": 27,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/public-peer-install.stdout"
+  },
+  {
+    "path": "attempt-2/remove-current.stderr.gz",
+    "sha256": "27a6a5be1d4c204b0f068fc9709163d6015906ed53db186a0a372370fa0290fb",
+    "originalSha256": "e9149a25da6c2f44ba0f67e21e4aa5bf5ef8ace5d6d6f3b37023bc3287479e90",
+    "originalBytes": 360,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/remove-current.stderr"
+  },
+  {
+    "path": "attempt-2/remove-current.stdout.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/remove-current.stdout"
+  },
+  {
+    "path": "attempt-2/runs.json.gz",
+    "sha256": "8f0171f7ca6712320ccc568f93db2c75ed16049c2a6d4fa7eea35546a696cea5",
+    "originalSha256": "b9e2bdd6359cd90fc85445bab966916e49151667e38adba9ac060955d4a1a2be",
+    "originalBytes": 2970,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/runs.json"
+  },
+  {
+    "path": "attempt-2/runtime-upgrade.json.gz",
+    "sha256": "5cd271702f4c22e5b5e12d830c85a6ff0d09cab9216090af0f49f6b16c1fc93e",
+    "originalSha256": "02f364621b5a1cb46a48f466ff9573a2a52cebf00d6d9e824efa8a25f37f2a98",
+    "originalBytes": 2484,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/runtime-upgrade.json"
+  },
+  {
+    "path": "attempt-2/upgrade-current.stderr.gz",
+    "sha256": "a411ec662bca5bfbcb3b0119c748445a362c4ca3d629e4f4a61d9a3518a1849d",
+    "originalSha256": "ae37762e601d9101114a9e6bcd9e0cac7a62b1f7f215d74b26fd471356db38c4",
+    "originalBytes": 304,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/upgrade-current.stderr"
+  },
+  {
+    "path": "attempt-2/upgrade-current.stdout.gz",
+    "sha256": "c5410f24bb46ea5fcc2a411922cde7445708523e7d360571cbfb1491a267d631",
+    "originalSha256": "fa8432954367596a0b9adcf92a43e7ea9f15ef39d909539646663848b4f3437c",
+    "originalBytes": 29,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r2-20260910/pi/evidence/upgrade-current.stdout"
+  },
+  {
+    "path": "attempt-3/current-help.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/current-help.stderr"
+  },
+  {
+    "path": "attempt-3/current-help.stdout.gz",
+    "sha256": "2fe2c05fcd0a15f5f17e8ab4b3583e19ab29c29b230aa565b821e4a0b5bd611b",
+    "originalSha256": "843989262636cd7089b6b06fa2a114bf87d27d07cd2e8609e2afe66fd02d0c40",
+    "originalBytes": 483,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/current-help.stdout"
+  },
+  {
+    "path": "attempt-3/driver.py.gz",
+    "sha256": "7d82b0c747997a22d283424e7a7ae9ffa0ca935adceaa36fb6d08645a0924c2d",
+    "originalSha256": "36d668995a8e3ab73d18b80c82a70eea906e8420b6e1278f10c466907efc8f58",
+    "originalBytes": 5853,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/driver.py"
+  },
+  {
+    "path": "attempt-3/identity.json.gz",
+    "sha256": "364e269b09fb6cb702e1ef24ed0b8af5876967be619f9b89103098c033a6c167",
+    "originalSha256": "0fc192183fcdb924c08a9cacd9d8b276859228463ccd35ed8cec3105e69ded09",
+    "originalBytes": 1066,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/identity.json"
+  },
+  {
+    "path": "attempt-3/install-previous.stderr.gz",
+    "sha256": "a411ec662bca5bfbcb3b0119c748445a362c4ca3d629e4f4a61d9a3518a1849d",
+    "originalSha256": "ae37762e601d9101114a9e6bcd9e0cac7a62b1f7f215d74b26fd471356db38c4",
+    "originalBytes": 304,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/install-previous.stderr"
+  },
+  {
+    "path": "attempt-3/install-previous.stdout.gz",
+    "sha256": "8a946d668eea24a9def07b69bf69f637abecf8317dc207ca2f6aea1af36294ea",
+    "originalSha256": "f4331b40cda408c0ee5afc1e0b7e34b30dc3409ebd1d1a493d5eae0c10a1c324",
+    "originalBytes": 51,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/install-previous.stdout"
+  },
+  {
+    "path": "attempt-3/public-peer-identity.json.gz",
+    "sha256": "7f196857c28810c784c48ee9e597e99824e8fa573c4617f9c6d0009c889cebe0",
+    "originalSha256": "60d6df9a3215cc0f9f01fdb0ccc2d3f9031fd54ce6a538bf6018a13bedfb0296",
+    "originalBytes": 110665,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/public-peer-identity.json"
+  },
+  {
+    "path": "attempt-3/public-peer-install.stderr.gz",
+    "sha256": "a411ec662bca5bfbcb3b0119c748445a362c4ca3d629e4f4a61d9a3518a1849d",
+    "originalSha256": "ae37762e601d9101114a9e6bcd9e0cac7a62b1f7f215d74b26fd471356db38c4",
+    "originalBytes": 304,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/public-peer-install.stderr"
+  },
+  {
+    "path": "attempt-3/public-peer-install.stdout.gz",
+    "sha256": "a785dd96f9bfd324ac2dbb854bd0fce17b284f5d8c58a2e8db4c3a9d67b782ca",
+    "originalSha256": "001a28e8971e44e5205963cb72857413056079299eaa01b906dc579504bf2126",
+    "originalBytes": 27,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/public-peer-install.stdout"
+  },
+  {
+    "path": "attempt-3/public-peer-reinstall.stderr.gz",
+    "sha256": "a411ec662bca5bfbcb3b0119c748445a362c4ca3d629e4f4a61d9a3518a1849d",
+    "originalSha256": "ae37762e601d9101114a9e6bcd9e0cac7a62b1f7f215d74b26fd471356db38c4",
+    "originalBytes": 304,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/public-peer-reinstall.stderr"
+  },
+  {
+    "path": "attempt-3/public-peer-reinstall.stdout.gz",
+    "sha256": "3f2298e3afeac972de8fce67279244373d3cca92a9bd5033e84cdd1edd97d3fa",
+    "originalSha256": "a89fba226de3ae1780cf9887e67226c8855b86d05d16fb91724ceafd613fd5fe",
+    "originalBytes": 27,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/public-peer-reinstall.stdout"
+  },
+  {
+    "path": "attempt-3/reinstall-current.stderr.gz",
+    "sha256": "a411ec662bca5bfbcb3b0119c748445a362c4ca3d629e4f4a61d9a3518a1849d",
+    "originalSha256": "ae37762e601d9101114a9e6bcd9e0cac7a62b1f7f215d74b26fd471356db38c4",
+    "originalBytes": 304,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/reinstall-current.stderr"
+  },
+  {
+    "path": "attempt-3/reinstall-current.stdout.gz",
+    "sha256": "8a946d668eea24a9def07b69bf69f637abecf8317dc207ca2f6aea1af36294ea",
+    "originalSha256": "f4331b40cda408c0ee5afc1e0b7e34b30dc3409ebd1d1a493d5eae0c10a1c324",
+    "originalBytes": 51,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/reinstall-current.stdout"
+  },
+  {
+    "path": "attempt-3/reinstalled-help.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/reinstalled-help.stderr"
+  },
+  {
+    "path": "attempt-3/reinstalled-help.stdout.gz",
+    "sha256": "2fe2c05fcd0a15f5f17e8ab4b3583e19ab29c29b230aa565b821e4a0b5bd611b",
+    "originalSha256": "843989262636cd7089b6b06fa2a114bf87d27d07cd2e8609e2afe66fd02d0c40",
+    "originalBytes": 483,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/reinstalled-help.stdout"
+  },
+  {
+    "path": "attempt-3/remove-current.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/remove-current.stderr"
+  },
+  {
+    "path": "attempt-3/remove-current.stdout.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/remove-current.stdout"
+  },
+  {
+    "path": "attempt-3/runs.json.gz",
+    "sha256": "00b0e4c0b58b060ede6910a1c56d1f8be59cc518c074189f063a3354030b7efe",
+    "originalSha256": "3441d3db047360703f3b50fbd894b455548a7f4bc9edfc02f95aa234e6cf46b4",
+    "originalBytes": 4536,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/runs.json"
+  },
+  {
+    "path": "attempt-3/runtime-upgrade.json.gz",
+    "sha256": "5cd271702f4c22e5b5e12d830c85a6ff0d09cab9216090af0f49f6b16c1fc93e",
+    "originalSha256": "02f364621b5a1cb46a48f466ff9573a2a52cebf00d6d9e824efa8a25f37f2a98",
+    "originalBytes": 2484,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/runtime-upgrade.json"
+  },
+  {
+    "path": "attempt-3/upgrade-current.stderr.gz",
+    "sha256": "a411ec662bca5bfbcb3b0119c748445a362c4ca3d629e4f4a61d9a3518a1849d",
+    "originalSha256": "ae37762e601d9101114a9e6bcd9e0cac7a62b1f7f215d74b26fd471356db38c4",
+    "originalBytes": 304,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/upgrade-current.stderr"
+  },
+  {
+    "path": "attempt-3/upgrade-current.stdout.gz",
+    "sha256": "28b49bc788d5cf8bad4be25b8482c1d9c25399a0363423be74194ae5a64a49e4",
+    "originalSha256": "04e2a2576bb8119b28a37f43ab80fef756830cc8c2acf15f3c570bfd8a5b6247",
+    "originalBytes": 29,
+    "source": "/tmp/chio-final-codex-pi-artifact-lifecycle-r3-20260910/pi/evidence/upgrade-current.stdout"
+  }
+]
