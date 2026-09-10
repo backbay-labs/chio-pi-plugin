@@ -1,0 +1,25 @@
+[
+  {
+    "case": "after-owner-reconciliation",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-605babd255b1484b991417b64bf9647c/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-f63b5adffa4e488d9578ad61bf7db8f9/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-f63b5adffa4e488d9578ad61bf7db8f9/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"read_text_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-17b64bf9647c.txt\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 1
+  }
+]

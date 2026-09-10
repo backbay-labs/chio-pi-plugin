@@ -1,0 +1,12 @@
+{
+  "host": "pi",
+  "cases": 7,
+  "skips": 0,
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "resourceImage": "sha256:188cb84d5d0bb4063d4ce5a3b9c3832445a5acda5604911cda80a9136d1850a0",
+  "hostImage": null,
+  "packageDirectory": "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin",
+  "privateConfiguration": "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-9874032ebd3f4914944b8bb974cccef7/gateway.json",
+  "configurationSha256": "e7543cec39bba71bce50ca3d1eae0e65fb0e7015142e6e0ec05b352af7485119",
+  "claim": "bounded real-host approval cases; full acceptance remains open"
+}

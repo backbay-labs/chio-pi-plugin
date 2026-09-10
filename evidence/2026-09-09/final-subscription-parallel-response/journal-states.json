@@ -1,0 +1,13 @@
+[
+  {
+    "file": "39857fc864c5dfb4ce4cf6a56c845d1c80508a9cb3511a7b81d0d6705c8ced4a.json",
+    "sha256": "1e25269d0fb690a5031e4fc7b24ee5ef220c27ebc3c574df91df3de8c7c85c49",
+    "requestId": "1b48e31c-ecec-4941-bdfb-536280be0a0e:98460fe371c82e7b6812db4bc315d54f6d1d3532de817fbe3e6a22e1ba2ef320",
+    "state": "completed",
+    "outcomeState": "completed",
+    "evidence": "verified",
+    "path": "/workspace/pi-forced-parallel-31087a9d-ad5f-499f-a5af-c84cff625afe-a.txt",
+    "hostDeliveryConfirmed": true,
+    "acknowledged": true
+  }
+]

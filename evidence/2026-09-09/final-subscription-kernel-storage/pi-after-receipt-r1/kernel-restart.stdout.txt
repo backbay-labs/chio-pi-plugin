@@ -1,0 +1,1 @@
+Kernel process 87944 started. Complete authenticated MCP preparation before use.

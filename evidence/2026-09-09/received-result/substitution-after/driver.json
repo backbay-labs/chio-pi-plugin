@@ -1,0 +1,19 @@
+{
+  "command": [
+    "node",
+    "/tmp/chio-pi-received-result-cold-consumer-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+    "--config",
+    "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/result-substitution-fixed-c893609d1ab9433faade0d85afb659af/gateway.json",
+    "--profile",
+    "/tmp/chio-pi-host-result-substitution-after-20260909/profile",
+    "--cwd",
+    "/tmp/chio-pi-host-result-substitution-after-20260909/workspace",
+    "--provider",
+    "openai",
+    "--model",
+    "gpt-4.1-mini",
+    "--prompt",
+    "Use chio_execute read_text_file exactly once for /workspace/approved.txt. Report its exact content. Stop on any unverified result. Do not write anything."
+  ],
+  "exitCode": 2
+}

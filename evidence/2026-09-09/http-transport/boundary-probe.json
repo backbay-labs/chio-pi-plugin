@@ -1,0 +1,31 @@
+{
+  "code": 0,
+  "policySha256": "48e0f2b6982932e621fbd6a64cd81a768da63478877353fbcc1ff90989b25484",
+  "stdout": "{\"reads\":[{\"path\":\"/Users/connor/.local/share/chio-required-operators/pi-http-20260909/operator.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/Users/connor/.local/share/chio-required-operators/codex-final-http-20260909/operator.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/Users/connor/.local/share/chio-required-operators/pi-http-20260909/useful/gateway.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/System/Volumes/Data/Users/connor/.local/share/chio-required-operators/pi-http-20260909/operator.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/System/Volumes/Data/Users/connor/.local/share/chio-required-operators/codex-final-http-20260909/operator.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/System/Volumes/Data/Users/connor/.local/share/chio-required-operators/pi-http-20260909/useful/gateway.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/tmp/chio-pi-http-profile-20260909/probe-symlink-operator\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/tmp/chio-pi-http-profile-20260909/probe-symlink-config\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/tmp/chio-pi-http-profile-20260909/probe-symlink-installation\",\"allowed\":true,\"bytes\":28}],\"writes\":[{\"path\":\"/Users/connor/.local/share/chio-required-operators/pi-http-20260909/useful/gateway.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/tmp/chio-pi-http-transport-cold-consumer-20260909/node_modules/chio-probe-readonly-control.txt\",\"allowed\":false,\"code\":\"EPERM\"}],\"links\":[{\"path\":\"/Users/connor/.local/share/chio-required-operators/pi-http-20260909/useful/gateway.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/tmp/chio-pi-http-transport-cold-consumer-20260909/node_modules/chio-probe-readonly-control.txt\",\"allowed\":false,\"code\":\"EPERM\"}],\"spawns\":[{\"executable\":\"/opt/homebrew/Cellar/node/25.5.0/bin/node\",\"status\":null,\"error\":\"EPERM\"},{\"executable\":\"/bin/sh\",\"status\":null,\"error\":\"EPERM\"}],\"network\":[{\"url\":\"http://127.0.0.1:54174/\",\"allowed\":false,\"code\":\"EPERM\"},{\"url\":\"http://127.0.0.1:58493\",\"allowed\":false,\"code\":\"EPERM\"}]}\n",
+  "stderr": "",
+  "before": {
+    "config": "3c88a46322a25dbd1a67712d7627f41a11f6b5fa0394833e2b2c880204b66e19",
+    "installationControl": "immutable installation probe"
+  },
+  "after": {
+    "config": "3c88a46322a25dbd1a67712d7627f41a11f6b5fa0394833e2b2c880204b66e19",
+    "installationControl": "immutable installation probe"
+  },
+  "blockedRequests": 0,
+  "positiveControlRequests": 1,
+  "positiveReadControls": [
+    {
+      "path": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/operator.json",
+      "readableOutsideSandbox": true
+    },
+    {
+      "path": "/Users/connor/.local/share/chio-required-operators/codex-final-http-20260909/operator.json",
+      "readableOutsideSandbox": true
+    },
+    {
+      "path": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/useful/gateway.json",
+      "readableOutsideSandbox": true
+    }
+  ],
+  "scope": "Actual Node process under exact launched Pi sandbox policy. Operator injected hostile process probes; no model prompt bypass claimed."
+}

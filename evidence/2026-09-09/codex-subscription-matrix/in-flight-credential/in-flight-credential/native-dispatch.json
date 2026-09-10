@@ -1,0 +1,33 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_fCOMH4EfGQWNlZqOQ6fbq1cP|fc_05b4bf6103b64cb7016aa20f543fb487d299bc813ed590e5b9",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-inflight-59065ec96567.txt",
+          "content": "authorized before in-flight revocation"
+        }
+      }
+    },
+    {
+      "id": "call_YPzHCwPN6YWrieFdFG3dMjEe|fc_0ed07d75c4404146016aa20f5a099c87d2bde2e5802a8a8787",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-inflight-59065ec96567.txt",
+          "content": "forbidden after in-flight revocation"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_fCOMH4EfGQWNlZqOQ6fbq1cP|fc_05b4bf6103b64cb7016aa20f543fb487d299bc813ed590e5b9",
+    "call_YPzHCwPN6YWrieFdFG3dMjEe|fc_0ed07d75c4404146016aa20f5a099c87d2bde2e5802a8a8787"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 2
+}

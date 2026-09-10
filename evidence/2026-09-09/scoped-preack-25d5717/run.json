@@ -1,0 +1,12 @@
+{
+  "exitCode": 0,
+  "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-scoped-preack-profile-282c13f1",
+  "workspace": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-scoped-preack-workspace-98zfugqq",
+  "sourceCommit": "d5197a7",
+  "installation": "disposable source-overlay candidate; not final packed artifact",
+  "bridgeSha256": "68b5c46638449710e3251f41aa1317f364c24138ae6cba3f45aeea51960ef3ff",
+  "kernelSource": "25d5717",
+  "kernelSha256": "d0b87623cb3dd227f79cd3178b32bb04e35b48ddcb9dab63c6598d79b8e13b66",
+  "resourceImage": "sha256:188cb84d5d0bb4063d4ce5a3b9c3832445a5acda5604911cda80a9136d1850a0",
+  "scope": "Actual delegated configuration and sandboxed Pi. Preack kernel cannot close downstream response-loss gate."
+}

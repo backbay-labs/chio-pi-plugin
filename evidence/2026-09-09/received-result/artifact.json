@@ -1,0 +1,13 @@
+{
+  "pluginSha256": "6c994035ef3d3b51f6f4db3859cead726afe9e5dc710642b782be9beeb466bbb",
+  "bridgeSha256": "eb4392bf298595d52d92610ea82c6e64d6f534718fe575bc5ea9a583c5810a4b",
+  "bridgeSource": "b8cef33",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "acceptance": "unresolved",
+  "sourceFiles": {
+    "src/http-executor.ts": "655f901764fcba2c429c2c2b7340fb26edbc791caa9312ce7729ae43b2de2499",
+    "src/protected-cli.ts": "b86948d540c8461609d8af72100f359d2a570eb3237ed6bbd02ee13c94f74e5e",
+    "package.json": "c5ab1a263ae5cf52399d8611f87a1a518f9486ff6124670ea2f0b9f0863a78f8",
+    "package-lock.json": "b72ab443ba5f8e6cf714a3c2b3a79580fab013f9b00a05e22b15115c3260dfbf"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_hS3X7qnXRwbuoXcFIwZDSIIc|fc_054c3d183bbd31de016aa213d8a80c87d2a16620213ec847eb",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-rejected-5a3fa4409d1e.txt",
+          "content": "must never appear"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_hS3X7qnXRwbuoXcFIwZDSIIc|fc_054c3d183bbd31de016aa213d8a80c87d2a16620213ec847eb"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

@@ -1,0 +1,30 @@
+{
+  "command": [
+    "node",
+    "/tmp/chio-pi-received-result-cold-consumer-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+    "--config",
+    "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/ack-confirmation-loss-96c63818f1f64b11a96849b555a0e70b/gateway.json",
+    "--profile",
+    "/tmp/chio-pi-ack-confirmation-loss-20260909/profile",
+    "--cwd",
+    "/tmp/chio-pi-ack-confirmation-loss-20260909/workspace",
+    "--provider",
+    "openai",
+    "--model",
+    "gpt-4.1-mini",
+    "--prompt",
+    "Use chio_execute write_file exactly once for /workspace/pi-ack-confirmation-loss.txt with content \"original effect\". Stop on any unsuccessful or uncertain result."
+  ],
+  "initialExit": 2,
+  "initialTerminal": [
+    {
+      "type": "chio_session",
+      "sessionFile": "/private/tmp/chio-pi-ack-confirmation-loss-20260909/profile/sessions/2026-09-09T21-08-54-949Z_01a08800-9623-753a-af88-5c59f0bae57e.jsonl",
+      "sessionId": "01a08800-9623-753a-af88-5c59f0bae57e",
+      "outcome": "unresolved",
+      "toolErrors": 1,
+      "providerStopReason": "stop"
+    }
+  ],
+  "restartExit": 0
+}

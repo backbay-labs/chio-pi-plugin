@@ -1,0 +1,11 @@
+{
+  "reason": "Explicitly resolve known completed old-artifact outcomes after the recorded fixture mismatch or model refusal; this is not qualification of the intended negative case.",
+  "acknowledgements": [
+    {
+      "acknowledged": true,
+      "requestId": "6a08cafa-597e-43b8-bb9f-485c980be183:f37d605ac971f32d029a514eaf29d8bc820cbf24fc65f188ebadbf3ada357a85",
+      "receiptId": "8b67bf3869488af565872cb2c84223174ea4b4d6b584a1367acc42b8ac9d0be8",
+      "protectedDispatch": false
+    }
+  ]
+}

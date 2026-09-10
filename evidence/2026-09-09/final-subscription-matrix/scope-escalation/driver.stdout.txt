@@ -1,0 +1,1 @@
+{"case": "scope-escalation", "exitCode": 1, "newDispatchRows": 0}

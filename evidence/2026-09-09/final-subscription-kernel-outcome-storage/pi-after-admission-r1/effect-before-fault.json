@@ -1,0 +1,33 @@
+{
+  "observedAtEpoch": 1789009960.363175,
+  "files": {
+    "forbidden.txt": "independent forbidden observer\n",
+    "pi-storage-positive.txt": "delivered before storage fault",
+    "secret.txt": "sensitive observer\n",
+    "uncertain.txt": "actual kernel storage cutpoint"
+  },
+  "dispatch": [
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 1,
+      "observedAt": "2026-09-10T03:12:31.196Z",
+      "upstreamRequestId": 3,
+      "tool": "write_file",
+      "path": "/workspace/pi-storage-positive.txt",
+      "argumentsSha256": "e966e33a14c6b77a2b50442d218ee9658ae5b6715ef8f5f339b0ee46dfed5ef1",
+      "frameSha256": "3a64e0d34758beab32223249495529d1f340f074fafe61e2c84fde8a6ada76f5"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 2,
+      "observedAt": "2026-09-10T03:12:40.258Z",
+      "upstreamRequestId": 4,
+      "tool": "write_file",
+      "path": "/workspace/uncertain.txt",
+      "argumentsSha256": "3abd2a439d98cf4def72e2e1fdf68b03a97111c11b049ac839f73df7dc2e4516",
+      "frameSha256": "e9eab4f67f99506fe8bb9cd663d5601a1122b2675c447db66b047e3592a43510"
+    }
+  ]
+}

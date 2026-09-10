@@ -1,0 +1,23 @@
+[
+  {
+    "case": "pending",
+    "exitCode": 4,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/bridge-host-delivery-approval-20260909/pi-approvals-047208061d6342679ff3eab2a4df0b0e/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-5b620192600942988a7513ce41456d25/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-5b620192600942988a7513ce41456d25/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-approved-eab2a4df0b0e.txt\", \"content\": \"exact operator-approved effect\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  }
+]

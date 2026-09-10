@@ -1,0 +1,83 @@
+[
+  {
+    "pair": 0,
+    "directBridgeMs": 692.317416,
+    "nativePiToolIntervalMs": 3143.198208,
+    "differenceMs": 2450.880792,
+    "runtime": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-timing-_wbs6jjt",
+    "command": [
+      "node",
+      "/private/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-timing-native-29f62de23be242a89229145bfa32771d/gateway.json",
+      "--profile",
+      "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-timing-_wbs6jjt/profile",
+      "--cwd",
+      "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-timing-_wbs6jjt/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json",
+      "--prompt",
+      "Call chio_execute read_text_file exactly once for /workspace/pi-qualified-d948783e73d8.txt. Report the returned content. Do not call any other tool."
+    ],
+    "directPrivateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-timing-direct-506b2f6770a74b69971e10830434d23e",
+    "nativePrivateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-timing-native-29f62de23be242a89229145bfa32771d"
+  },
+  {
+    "pair": 1,
+    "directBridgeMs": 1021.822167,
+    "nativePiToolIntervalMs": 806.145125,
+    "differenceMs": -215.67704200000003,
+    "runtime": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-timing-lphrmcfo",
+    "command": [
+      "node",
+      "/private/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-timing-native-588fcc48c16f4d6e9b605556a0129b2f/gateway.json",
+      "--profile",
+      "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-timing-lphrmcfo/profile",
+      "--cwd",
+      "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-timing-lphrmcfo/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json",
+      "--prompt",
+      "Call chio_execute read_text_file exactly once for /workspace/pi-qualified-d948783e73d8.txt. Report the returned content. Do not call any other tool."
+    ],
+    "directPrivateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-timing-direct-68465f32384942a1b62222d9d8ec5d54",
+    "nativePrivateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-timing-native-588fcc48c16f4d6e9b605556a0129b2f"
+  },
+  {
+    "pair": 2,
+    "directBridgeMs": 962.626583,
+    "nativePiToolIntervalMs": 1226.925708,
+    "differenceMs": 264.299125,
+    "runtime": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-timing-7bmud_mb",
+    "command": [
+      "node",
+      "/private/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-timing-native-d7bda57175634a71add557c9dfb57cd2/gateway.json",
+      "--profile",
+      "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-timing-7bmud_mb/profile",
+      "--cwd",
+      "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-timing-7bmud_mb/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json",
+      "--prompt",
+      "Call chio_execute read_text_file exactly once for /workspace/pi-qualified-d948783e73d8.txt. Report the returned content. Do not call any other tool."
+    ],
+    "directPrivateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-timing-direct-f6acfc24a709455dadb09bc2af36eb14",
+    "nativePrivateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-timing-native-d7bda57175634a71add557c9dfb57cd2"
+  }
+]

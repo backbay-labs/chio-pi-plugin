@@ -1,0 +1,120 @@
+[
+  {
+    "requestId": "storage-fault-pi-after-admission-r1:722f8fa650d344ef735569626b6cf567e28353201a10b8ec6a8f3ccb5757d131",
+    "state": "unknown",
+    "acknowledged": false,
+    "hostDeliveryConfirmed": null,
+    "outcome": {
+      "state": "unknown",
+      "evidence": "unverified",
+      "requestId": "storage-fault-pi-after-admission-r1:722f8fa650d344ef735569626b6cf567e28353201a10b8ec6a8f3ccb5757d131",
+      "reason": "missing or substituted execution evidence"
+    }
+  },
+  {
+    "requestId": "storage-fault-pi-after-admission-r1:f7673a3c1f166e67b3656d6ffd91ad184725dbf204faa7d5d540c04aa47d2937",
+    "state": "completed",
+    "acknowledged": true,
+    "hostDeliveryConfirmed": true,
+    "outcome": {
+      "state": "completed",
+      "evidence": "verified",
+      "requestId": "storage-fault-pi-after-admission-r1:f7673a3c1f166e67b3656d6ffd91ad184725dbf204faa7d5d540c04aa47d2937",
+      "receipt": {
+        "action": {
+          "parameter_hash": "e966e33a14c6b77a2b50442d218ee9658ae5b6715ef8f5f339b0ee46dfed5ef1",
+          "parameters": {
+            "content": "delivered before storage fault",
+            "path": "/workspace/pi-storage-positive.txt"
+          }
+        },
+        "boundary_class": "prevent",
+        "capability_id": "cap-01a0894d-6284-7671-8ff8-8193e1a988ec",
+        "content_hash": "e1ece64ac1d558ffd609add74dac6fec012efbb2c5c05135bb631053ddaa7014",
+        "decision": {
+          "verdict": "allow"
+        },
+        "id": "82963bb3657a327367c545848dcfdffef5cee55e3479d1836b5408f027007504",
+        "kernel_key": "3b8497458a583dd4fa40afbdd41d4e3fdef59f09567f7d44d451fe080e6cbfbf",
+        "metadata": {
+          "admission_operation": {
+            "compensation_status": "not_compensated",
+            "coordinator_lease_epoch": 2,
+            "coordinator_lease_id": "01a0894d-5b39-7111-a282-8b6cfdc09597",
+            "operation_id": "bb238b017137d96f119af7586228875bc64286d0d1ee08423d9bc68d49f509d7",
+            "projected_dispatch_state": "terminal",
+            "projected_operation_version": 8,
+            "projected_state": "completed",
+            "request_binding_hash": "9cf4b51b48359025d5e02b05026da2e5bb738d9f8feda9b60b85a447483e1da5",
+            "request_id": "storage-fault-pi-after-admission-r1:f7673a3c1f166e67b3656d6ffd91ad184725dbf204faa7d5d540c04aa47d2937",
+            "request_namespace_digest": "43fbc82f64447ac171bde28cbda7aeb71762e38bdc71ed9a49cb554c05e8e8ab",
+            "retained_dispatch_commit": {
+              "committed_version": 6,
+              "coordinator_lease_epoch": 2,
+              "coordinator_lease_id": "01a0894d-5b39-7111-a282-8b6cfdc09597",
+              "provider_attempt": {
+                "attempt_id": "attempt:bb238b017137d96f119af7586228875bc64286d0d1ee08423d9bc68d49f509d7",
+                "operation_id": "bb238b017137d96f119af7586228875bc64286d0d1ee08423d9bc68d49f509d7",
+                "transport_id": "kernel-tool-server:fs",
+                "transport_key_epoch": 2
+              },
+              "store_fence": {
+                "lease_id": "01a0894d-5b39-7111-a282-8b6cfdc09597",
+                "owner_epoch": 2,
+                "store_uuid": "01a0894d-53f9-7f61-a84a-d8fe22a33e23"
+              }
+            },
+            "schema": "chio.admission-receipt.v1",
+            "store_fence": {
+              "lease_id": "01a0894d-5b39-7111-a282-8b6cfdc09597",
+              "owner_epoch": 2,
+              "store_uuid": "01a0894d-53f9-7f61-a84a-d8fe22a33e23"
+            },
+            "tool_outcome_id": "6057682d9361f8667726fc54436caa469288895a5463718138f04895a0e6d2e1",
+            "tool_outcome_version": 2,
+            "trusted_time_unix_ms": 1789009951318
+          },
+          "attribution": {
+            "delegation_depth": 0,
+            "grant_index": 0,
+            "issuer_key": "47f87afa47ebb248b651f28acb5a9f908a06016af12b2c875b0a8ee76178575c",
+            "subject_key": "7ad26980e7b70d5f29451ffbefb0855ea9158e97e5c2d2b46361f07143698558"
+          },
+          "chio_receipt_signing_nonce": "rcpt-01a0894d-7b48-7212-bd12-750524737896",
+          "receipt_context": {
+            "request_id": "storage-fault-pi-after-admission-r1:f7673a3c1f166e67b3656d6ffd91ad184725dbf204faa7d5d540c04aa47d2937"
+          }
+        },
+        "policy_hash": "057b9a8160375e7d90841325639bdd66050a454f393dae23e8c813b8df74b84e",
+        "receipt_kind": "mediated_decision",
+        "redaction_mode": "none",
+        "signature": "ef7da773d78c73f29a038ef96aa2ac70ba52897736c86033a4a4d8ae8dd469a68466060f54ce73074c1b431792fa8a943b6aa122603879847df5c4219d8b0404",
+        "timestamp": 1789009951,
+        "tool_name": "write_file",
+        "tool_origin": "caller_executed",
+        "tool_server": "fs",
+        "trust_level": "mediated"
+      },
+      "result": {
+        "content": [
+          {
+            "text": "Successfully wrote to /workspace/pi-storage-positive.txt",
+            "type": "text"
+          }
+        ],
+        "isError": false,
+        "structuredContent": {
+          "content": "Successfully wrote to /workspace/pi-storage-positive.txt"
+        }
+      },
+      "delivery": {
+        "acknowledgement": "sT6E0HXUaLss6O3n8fRxPZoD9uYOUPUZXU0hVsQ4o8M",
+        "receiptId": "82963bb3657a327367c545848dcfdffef5cee55e3479d1836b5408f027007504",
+        "requestHash": "8591f3b711e01e5b3c8a830585b9f0346cc2a0375a5c479a74f7a710213eecb8",
+        "requestId": "storage-fault-pi-after-admission-r1:f7673a3c1f166e67b3656d6ffd91ad184725dbf204faa7d5d540c04aa47d2937",
+        "resultHash": "e1ece64ac1d558ffd609add74dac6fec012efbb2c5c05135bb631053ddaa7014",
+        "schema": "chio.mcp.delivery-ack.v1"
+      }
+    }
+  }
+]

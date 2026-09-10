@@ -1,0 +1,5 @@
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+added 2 packages, changed 165 packages, and audited 174 packages in 7s
+
+found 0 vulnerabilities

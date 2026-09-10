@@ -1,0 +1,57 @@
+{
+  "digest": "4146696eb6322b97b5f78f3d677a1a3c27f4a4b4d2b28234995986576d56dc9f",
+  "result": {
+    "outcome": "denied",
+    "content": "guard denied the request: guard \"guard-pipeline\" denied the request",
+    "evidence": {
+      "action": {
+        "parameter_hash": "2c98b3df041868746630bda0015a842d0df6a47168a98943b2eb4911fbf67e8b",
+        "parameters": {
+          "path": "/workspace/secret.txt"
+        }
+      },
+      "boundary_class": "prevent",
+      "capability_id": "cap-01a086d5-592d-7eb1-a3c1-d03ad28982a5",
+      "content_hash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "decision": {
+        "guard": "kernel",
+        "reason": "guard denied the request: guard \"guard-pipeline\" denied the request",
+        "verdict": "deny"
+      },
+      "evidence": [
+        {
+          "details": "action=deny; reason=guard denied request",
+          "guard_name": "forbidden-path",
+          "verdict": false
+        }
+      ],
+      "id": "38bc5eb20ab5cbcdff8aac15c2cbfd866b52285679424445d09162ecc6e99963",
+      "kernel_key": "3667760322694075a5e31f585dc7f7a3b7656151a338bce1869ec37003f6b0ae",
+      "metadata": {
+        "attribution": {
+          "delegation_depth": 0,
+          "issuer_key": "70b60d8ef16cafe003f88fd986d432a0e4a97a713608da574fd5f4043313500e",
+          "subject_key": "59231a4892458d350576df11774de91c30c4bff0a9363e7bd82f7c2c52eb1010"
+        },
+        "budget_authority": {
+          "authority_profile": "authoritative_hold_event",
+          "guarantee_level": "single_node_atomic",
+          "metering_profile": "max_cost_preauthorize_then_reconcile_actual"
+        },
+        "chio_receipt_signing_nonce": "rcpt-01a086d9-1082-75e0-bd09-92904aa63788",
+        "receipt_context": {
+          "request_id": "pi:1d4b1b9b9b3358e2353c74b0f18b05b282fd1d0ea0d11e5495f800597025a8aa"
+        }
+      },
+      "policy_hash": "057b9a8160375e7d90841325639bdd66050a454f393dae23e8c813b8df74b84e",
+      "receipt_kind": "mediated_decision",
+      "redaction_mode": "none",
+      "signature": "deafdfc2d129d44709c79168cf916b85bbdadf9054f57a6709c1d210079f2acf55a6790eec3ec2d7b22cf741114427a7fb87061753643397c68e36da423b0b04",
+      "timestamp": 1788968767,
+      "tool_name": "read_text_file",
+      "tool_origin": "caller_executed",
+      "tool_server": "fs",
+      "trust_level": "mediated"
+    }
+  }
+}

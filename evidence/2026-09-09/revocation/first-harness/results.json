@@ -1,0 +1,65 @@
+[
+  {
+    "case": "before-revocation",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-3224265206a44e7eaf57b8c469705131/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-64891323c3004e3ba77d054e868880da/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-64891323c3004e3ba77d054e868880da/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-revoke-b8c469705131.txt\", \"content\": \"authorized before revocation\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 1
+  },
+  {
+    "case": "revoked-capability",
+    "exitCode": 3,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-3224265206a44e7eaf57b8c469705131/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-6f8843674f1b4dfb96cf1ebe1219e467/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-6f8843674f1b4dfb96cf1ebe1219e467/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-revoke-b8c469705131.txt\", \"content\": \"forbidden after capability revocation\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "revoked-credential",
+    "exitCode": 1,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-3224265206a44e7eaf57b8c469705131/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-890ba7ddd6ec4e88952ef309af3d5919/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-890ba7ddd6ec4e88952ef309af3d5919/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-revoke-b8c469705131.txt\", \"content\": \"forbidden after credential revocation\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  }
+]

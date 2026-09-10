@@ -1,0 +1,7 @@
+{"file":"pi-substituted-output.txt","present":true,"content":"substituted-output","observer":"independent read-only Docker volume"}
+{"file":"pi-substituted-output-retry.txt","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"file":"pi-substituted-request.txt","present":true,"content":"substituted-request","observer":"independent read-only Docker volume"}
+{"file":"pi-substituted-request-retry.txt","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"file":"pi-lost-response.txt","present":true,"content":"lost-response","observer":"independent read-only Docker volume"}
+{"file":"pi-lost-response-retry.txt","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"file":"pi-cancelled.txt","present":false}

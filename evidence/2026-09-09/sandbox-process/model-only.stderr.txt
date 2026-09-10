@@ -1,0 +1,24 @@
+file:///private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-install-am98roek/node_modules/@earendil-works/pi-coding-agent/dist/config.js:426
+    return join(homedir(), CONFIG_DIR_NAME, "agent");
+                ^
+
+SystemError [ERR_SYSTEM_ERROR]: A system error occurred: uv_os_homedir returned ENOENT (no such file or directory)
+    at getAgentDir (file:///private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-install-am98roek/node_modules/@earendil-works/pi-coding-agent/dist/config.js:426:17)
+    at getBinDir (file:///private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-install-am98roek/node_modules/@earendil-works/pi-coding-agent/dist/config.js:450:17)
+    at file:///private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-install-am98roek/node_modules/@earendil-works/pi-coding-agent/dist/utils/tools-manager.js:9:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:655:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  code: 'ERR_SYSTEM_ERROR',
+  info: {
+    errno: -2,
+    code: 'ENOENT',
+    message: 'no such file or directory',
+    syscall: 'uv_os_homedir'
+  },
+  errno: [Getter/Setter],
+  syscall: [Getter/Setter]
+}
+
+Node.js v25.5.0

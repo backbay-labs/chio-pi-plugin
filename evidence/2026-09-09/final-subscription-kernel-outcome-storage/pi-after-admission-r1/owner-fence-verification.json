@@ -1,0 +1,12 @@
+{
+  "verified": true,
+  "expectedCallerSessionCapabilityServerAndOriginalRequest": true,
+  "state": "fenced",
+  "requestId": "storage-fault-pi-after-admission-r1:722f8fa650d344ef735569626b6cf567e28353201a10b8ec6a8f3ccb5757d131",
+  "canonicalRecordSha256": "a5f23541acaad0f6c98387ac8403cd3d90f674bb643cc8fa98dadb0466f7aa44",
+  "trustedSigners": [
+    "3b8497458a583dd4fa40afbdd41d4e3fdef59f09567f7d44d451fe080e6cbfbf"
+  ],
+  "tamperedStateRejected": true,
+  "scope": "Independent read-only signature/binding verification of this Pi owner latch after actual kernel restart; no protected dispatch"
+}

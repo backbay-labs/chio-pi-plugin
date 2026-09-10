@@ -1,0 +1,3 @@
+{"file":"pi-cold-one.txt","present":true,"content":"one"}
+{"file":"pi-cold-two.txt","present":true,"content":"two"}
+{"file":"pi-cancelled.txt","present":false,"content":null}

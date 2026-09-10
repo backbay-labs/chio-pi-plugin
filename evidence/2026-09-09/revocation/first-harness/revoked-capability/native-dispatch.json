@@ -1,0 +1,20 @@
+{
+  "calls": [
+    {
+      "id": "call_kAIHD7AOESGq6o4ws5j7jFfQ|fc_03bdc70589ad98b8016aa1d6b4ebb487d2b8bfc570db2eafe4",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-revoke-b8c469705131.txt",
+          "content": "forbidden after capability revocation"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_kAIHD7AOESGq6o4ws5j7jFfQ|fc_03bdc70589ad98b8016aa1d6b4ebb487d2b8bfc570db2eafe4"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

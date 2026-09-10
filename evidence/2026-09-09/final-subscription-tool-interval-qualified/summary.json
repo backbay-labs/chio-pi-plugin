@@ -1,0 +1,14 @@
+{
+  "artifactSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "harnessSha256": "d6f2d8c72000347327e5ebaeb68de1383fe04d9e7881280a207d3b05b7d5582b",
+  "pairedSamples": 3,
+  "medianDirectBridgeMs": 962.626583,
+  "medianNativePiToolIntervalMs": 1226.925708,
+  "medianPairedDifferenceMs": 264.299125,
+  "nativeCalls": 3,
+  "baselineOperatorCalls": 3,
+  "independentDispatches": 6,
+  "resourceContentUnchanged": true,
+  "scope": "Small sequential paired observation of Pi native dispatcher, HTTP transport and parent journal overhead over direct bridge execution. Both paths include identical bridge verification/kernel/resource. Native stdout observation adds scheduling/pipe latency. Preparation, model generation, process startup, later ACK and baseline reservation writes excluded. Not a load benchmark, general latency guarantee or independent adoption result. Direct calls are performance-only, not host acceptance."
+}

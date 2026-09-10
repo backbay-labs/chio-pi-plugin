@@ -1,0 +1,15 @@
+{
+  "schema": "chio.pi.parallel-probe.v1",
+  "calls": [
+    {
+      "path": "/workspace/pi-forced-parallel-31087a9d-ad5f-499f-a5af-c84cff625afe-a.txt",
+      "content": "designated Pi parallel fixture 31087a9d-ad5f-499f-a5af-c84cff625afe a"
+    },
+    {
+      "path": "/workspace/pi-forced-parallel-31087a9d-ad5f-499f-a5af-c84cff625afe-b.txt",
+      "content": "designated Pi parallel fixture 31087a9d-ad5f-499f-a5af-c84cff625afe b"
+    }
+  ],
+  "kernelOrigin": "http://127.0.0.1:58493",
+  "log": "/Users/connor/Medica/backbay/standalone/chio-pi-plugin/evidence/2026-09-09/final-subscription-parallel-response/fixture.jsonl"
+}

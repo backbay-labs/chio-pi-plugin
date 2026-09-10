@@ -1,0 +1,238 @@
+{
+  "artifactSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1",
+  "suites": [
+    {
+      "suite": "approvals",
+      "cases": 7,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 7,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "concurrent-owners",
+      "cases": 3,
+      "launchPreflightRefusals": 1,
+      "nativeAttemptRecords": 2,
+      "resourceDispatches": 2
+    },
+    {
+      "suite": "evidence-foreign-receipt",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 2
+    },
+    {
+      "suite": "evidence-foreign-receipt-recover",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "evidence-foreign-receipt-resume",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "evidence-request-id",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 2
+    },
+    {
+      "suite": "evidence-request-id-recover",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "evidence-request-id-resume",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "evidence-wrong-signer",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 2
+    },
+    {
+      "suite": "evidence-wrong-signer-recover",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "evidence-wrong-signer-resume",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "expired-credential",
+      "cases": 1,
+      "launchPreflightRefusals": 1,
+      "nativeAttemptRecords": 0,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "forbidden-read",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "forbidden-write",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "in-flight-capability",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "in-flight-credential",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "kernel-absent",
+      "cases": 1,
+      "launchPreflightRefusals": 1,
+      "nativeAttemptRecords": 0,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "kernel-killed",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "kernel-killed-resume",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "kernel-malformed",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "kernel-malformed-resume",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "kernel-timeout",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "kernel-timeout-resume",
+      "cases": 1,
+      "launchPreflightRefusals": 0,
+      "nativeAttemptRecords": 1,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "revocation",
+      "cases": 3,
+      "launchPreflightRefusals": 1,
+      "nativeAttemptRecords": 2,
+      "resourceDispatches": 1
+    },
+    {
+      "suite": "scope-escalation",
+      "cases": 1,
+      "launchPreflightRefusals": 1,
+      "nativeAttemptRecords": 0,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "wrong-principal",
+      "cases": 1,
+      "launchPreflightRefusals": 1,
+      "nativeAttemptRecords": 0,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "wrong-resource",
+      "cases": 1,
+      "launchPreflightRefusals": 1,
+      "nativeAttemptRecords": 0,
+      "resourceDispatches": 0
+    },
+    {
+      "suite": "wrong-session",
+      "cases": 1,
+      "launchPreflightRefusals": 1,
+      "nativeAttemptRecords": 0,
+      "resourceDispatches": 0
+    }
+  ],
+  "totals": {
+    "cases": 38,
+    "launchPreflightRefusals": 8,
+    "nativeAttemptRecords": 30,
+    "resourceDispatches": 18
+  },
+  "skips": 0,
+  "harnessExitCodes": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+}

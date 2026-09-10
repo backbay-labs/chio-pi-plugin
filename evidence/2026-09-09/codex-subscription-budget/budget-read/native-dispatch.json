@@ -1,0 +1,20 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_JCYp4PojxJuK4LRTsdnYC8Ut|fc_00cb95b945869bf2016aa20fc8f34c87d08f2aac7894441480",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "read_text_file",
+        "arguments": {
+          "path": "/workspace/pi-budget-7238eb260055.txt"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_JCYp4PojxJuK4LRTsdnYC8Ut|fc_00cb95b945869bf2016aa20fc8f34c87d08f2aac7894441480"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

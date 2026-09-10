@@ -1,0 +1,13 @@
+{
+  "claim": "bounded real host cases, not I01-I08 acceptance",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "image": "sha256:188cb84d5d0bb4063d4ce5a3b9c3832445a5acda5604911cda80a9136d1850a0",
+  "volume": "chio-required-pi-http-20260909",
+  "auditVolume": "chio-required-pi-http-20260909-audit",
+  "packageDirectory": "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin",
+  "launcherSha256": "f49ba53cb044aa42dfba49eef229a6c2badaa4238d146d7b5cb1c6716ff2b0c1",
+  "provider": "openai-codex",
+  "model": "gpt-5.5",
+  "cases": 3,
+  "skips": 0
+}

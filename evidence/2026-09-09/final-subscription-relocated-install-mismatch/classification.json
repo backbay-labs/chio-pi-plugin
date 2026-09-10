@@ -1,0 +1,7 @@
+{
+  "artifactSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1",
+  "status": "unsupported installer path failed; not a qualified install",
+  "cause": "Root generic bundle instructions attempted plugin-only npm install --offline with an empty cache and no exact public Pi peer. The plugin archive bundles Chio bridge/SDK but not Pi. npm returned ENOTCACHED while resolving the peer.",
+  "supportedPath": "The archive README requires registry access, direct @earendil-works/pi-coding-agent@0.85.1 installation first, then the plugin tarball; both use --ignore-scripts --install-strategy=nested. This two-step path is independently qualified in final-subscription-cold.",
+  "resolution": "Root corrected generic bundle instructions to the exact supported two-step path and is separately requalifying relocated delivery. No archive repack or --legacy-peer-deps workaround."
+}

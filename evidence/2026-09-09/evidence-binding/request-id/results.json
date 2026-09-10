@@ -1,0 +1,23 @@
+[
+  {
+    "case": "evidence-request-id",
+    "exitCode": 2,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-f9f4ae61555d456fa6e82a123ed26b9b/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-616edb05c74d4bc089da86c1a101e6ab/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-616edb05c74d4bc089da86c1a101e6ab/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "First call chio_execute with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-2a123ed26b9b.txt\", \"content\": \"authorized before in-flight revocation\"}}. Wait for its successful result. Then Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-2a123ed26b9b.txt\", \"content\": \"second legitimate effect requiring its own evidence\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 2
+  }
+]

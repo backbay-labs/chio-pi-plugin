@@ -1,0 +1,27 @@
+{
+  "code": 0,
+  "policySha256": "559ec2783d9b57808fd2904ecc33fe7cdc76c58533e63993b135b7d85fa2f5a0",
+  "stdout": "{\"reads\":[{\"path\":\"/private/tmp/chio-final-resource-20260909/operator.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/tmp/chio-final-resource-20260909/cursor-gateway.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/System/Volumes/Data/private/tmp/chio-final-resource-20260909/operator.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/System/Volumes/Data/private/tmp/chio-final-resource-20260909/cursor-gateway.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-provider-profile-f0b5vz8g/probe-symlink-operator\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-provider-profile-f0b5vz8g/probe-symlink-config\",\"allowed\":true,\"bytes\":3653},{\"path\":\"/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-provider-profile-f0b5vz8g/probe-symlink-installation\",\"allowed\":true,\"bytes\":28}],\"writes\":[{\"path\":\"/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-model-only-251jya2u/config.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-install-am98roek/node_modules/chio-probe-readonly-control.txt\",\"allowed\":false,\"code\":\"EPERM\"}],\"links\":[{\"path\":\"/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-model-only-251jya2u/config.json\",\"allowed\":false,\"code\":\"EPERM\"},{\"path\":\"/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-sandbox-install-am98roek/node_modules/chio-probe-readonly-control.txt\",\"allowed\":false,\"code\":\"EPERM\"}],\"spawns\":[{\"executable\":\"/opt/homebrew/Cellar/node/25.5.0/bin/node\",\"status\":null,\"error\":\"EPERM\"},{\"executable\":\"/bin/sh\",\"status\":null,\"error\":\"EPERM\"}],\"network\":[{\"allowed\":false,\"code\":\"EPERM\"}]}\n",
+  "stderr": "",
+  "before": {
+    "config": "8c4bea5dabe9c0f39b9c23c1c08bdf7552bebebf1568d8018608ebcaff96dc7b",
+    "installationControl": "immutable installation probe"
+  },
+  "after": {
+    "config": "8c4bea5dabe9c0f39b9c23c1c08bdf7552bebebf1568d8018608ebcaff96dc7b",
+    "installationControl": "immutable installation probe"
+  },
+  "blockedRequests": 0,
+  "positiveControlRequests": 1,
+  "positiveReadControls": [
+    {
+      "path": "/private/tmp/chio-final-resource-20260909/operator.json",
+      "readableOutsideSandbox": true
+    },
+    {
+      "path": "/private/tmp/chio-final-resource-20260909/cursor-gateway.json",
+      "readableOutsideSandbox": true
+    }
+  ],
+  "scope": "Actual Node process under exact launched Pi sandbox policy. Operator injected hostile process probes; no model prompt bypass claimed."
+}

@@ -1,0 +1,5 @@
+{
+  "qualifiesEnforcement": false,
+  "reason": "Model refused before calling the tool",
+  "exitCode": 0
+}

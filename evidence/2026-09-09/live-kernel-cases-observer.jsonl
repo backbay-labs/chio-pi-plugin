@@ -1,0 +1,7 @@
+{"case":"wrong-subject","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"case":"wrong-capability","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"case":"wrong-session","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"case":"kernel-unreachable","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"case":"kernel-malformed","present":false,"content":null,"observer":"independent read-only Docker volume"}
+{"case":"wrong-signer","present":true,"content":"Pi wrong-signer probe\n","observer":"independent read-only Docker volume"}
+{"case":"wrong-signer-retry","present":false,"content":null,"observer":"independent read-only Docker volume"}

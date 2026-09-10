@@ -1,0 +1,3 @@
+# Preserve raw SSE response framing, including its final blank line.
+evidence/**/upstream-response.txt -whitespace
+evidence/**/*-upstream-response.txt -whitespace

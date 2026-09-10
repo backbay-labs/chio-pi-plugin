@@ -1,0 +1,53 @@
+{
+  "files": {
+    "forbidden.txt": "independent forbidden observer\n",
+    "pi-http.txt": "Pi kernel verified",
+    "secret.txt": "sensitive observer\n"
+  },
+  "dispatch": [
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 1,
+      "observedAt": "2026-09-09T18:57:03.549Z",
+      "upstreamRequestId": 3,
+      "tool": "write_file",
+      "path": "/workspace/pi-http.txt",
+      "argumentsSha256": "53e96281720f539bd1fb8fea0f5152b752c7782b626aaa3f41dcbcc5f1e981de",
+      "frameSha256": "2988488cd67ac10e68834a1d469d6292cdc89edc588785653e1e5f08f362dd32"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 2,
+      "observedAt": "2026-09-09T18:57:04.128Z",
+      "upstreamRequestId": 4,
+      "tool": "edit_file",
+      "path": "/workspace/pi-http.txt",
+      "argumentsSha256": "f7ff92bf1459bab4bfbaebf9e1843dfb730da199d5c933c596a233cca8afd037",
+      "frameSha256": "701df813e73c8f57a87c5689a79152dd4b72359d0a5d7e578d8cc08d5b5b1b52"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 3,
+      "observedAt": "2026-09-09T18:57:05.934Z",
+      "upstreamRequestId": 5,
+      "tool": "read_text_file",
+      "path": "/workspace/pi-http.txt",
+      "argumentsSha256": "4b19abba1f43f1bad2bc11db1bfe2e608adffcb5227a135ea34befe6a54a2c20",
+      "frameSha256": "f0b705c80440c3e6332fcbb3636cce847c8c1bfea96f72c311552feb33a83dd0"
+    },
+    {
+      "schema": "chio.resource-dispatch-observation.v1",
+      "processId": 1,
+      "sequence": 4,
+      "observedAt": "2026-09-09T18:57:08.301Z",
+      "upstreamRequestId": 6,
+      "tool": "list_directory",
+      "path": "/workspace",
+      "argumentsSha256": "acda0d21aae64c6f16c860dce985a6a79157d631474d0be08aa42fc3efa55f9a",
+      "frameSha256": "60f38f5d6335a0f30839e219a880188fbd4ba7df01ecc6c143b58d81f1fdcde8"
+    }
+  ]
+}

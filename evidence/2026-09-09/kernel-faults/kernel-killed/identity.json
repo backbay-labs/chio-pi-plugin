@@ -1,0 +1,13 @@
+{
+  "host": "pi",
+  "suite": "kernel-killed",
+  "cases": 1,
+  "skips": 0,
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "resourceImage": "sha256:188cb84d5d0bb4063d4ce5a3b9c3832445a5acda5604911cda80a9136d1850a0",
+  "hostImage": null,
+  "packageDirectory": "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin",
+  "privateConfiguration": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-dc6c5412fd7b411b87b650c016d9239a/gateway.json",
+  "configurationSha256": "d7471c4a3746ee1f75f3bf0d3770bc974e2fc4f07d9df59f17f675487e9041ae",
+  "claim": "bounded real-host authority and explicit launcher refusal cases; full acceptance remains open"
+}

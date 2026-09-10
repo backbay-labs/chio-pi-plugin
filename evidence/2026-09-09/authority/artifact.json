@@ -1,0 +1,9 @@
+{
+  "host": "pi",
+  "candidateSha256": "b6f38bfb2c129e00d6e8c5c74b5b92ec4d527d26a81683316683abc690afac2c",
+  "artifact": "/tmp/chio-pi-native-history-package-r2-20260909/chio-pi-plugin-0.1.0.tgz",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "claim": "bounded actual-host authority cases; not full I01-I08 acceptance",
+  "driver": "arc/scripts/acceptance/host-approvals.py",
+  "driverSha256": "fa2b01d118126868cec3a314efcfa61a3449abd2b0bcdd97c391fe51d12d39e5"
+}

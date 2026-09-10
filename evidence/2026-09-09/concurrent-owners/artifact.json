@@ -1,0 +1,8 @@
+{
+  "host": "pi",
+  "candidateSha256": "b6f38bfb2c129e00d6e8c5c74b5b92ec4d527d26a81683316683abc690afac2c",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "evidence": "/Users/connor/Medica/backbay/standalone/chio-pi-plugin/evidence/2026-09-09/concurrent-owners",
+  "accepted": false,
+  "suite": "concurrent-owners"
+}

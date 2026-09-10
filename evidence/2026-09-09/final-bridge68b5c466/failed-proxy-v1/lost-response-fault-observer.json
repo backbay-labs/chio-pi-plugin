@@ -1,0 +1,12 @@
+{
+  "variant": "lost-response",
+  "recordedAt": "2026-09-09T15:41:07.420Z",
+  "exitCode": 0,
+  "observations": [
+    {
+      "proxyError": "TypeError: fetch failed"
+    }
+  ],
+  "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-evidence-fault-9Amk7V/lost-response-profile",
+  "outcome": "verify host rejection and independent resource state; committed effects may exist"
+}

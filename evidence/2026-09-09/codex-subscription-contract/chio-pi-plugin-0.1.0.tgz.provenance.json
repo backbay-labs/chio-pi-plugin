@@ -1,0 +1,14 @@
+{
+  "name": "@chio/pi-plugin",
+  "version": "0.1.0",
+  "sourceCommit": "165cde97b5719f272362190719e9c564dc2a1f87",
+  "sourceDirty": true,
+  "artifact": "chio-pi-plugin-0.1.0.tgz",
+  "sha256": "bf370a732c5e2824c6c8c7e558181181a7a0f48d33c863d9d1002fdf705f7937",
+  "packageLockSha256": "b636bb42fc601f31de939b05a6173f16560c76c21c423a2d62dd17e981a0591b",
+  "bridgeArtifactSha256": "7d9e34f7408a316e35125982a23faaecfd2f31f4da6b50ca8eab287c2c918f67",
+  "piVersion": "0.85.1",
+  "node": "v25.5.0",
+  "platform": "darwin",
+  "architecture": "arm64"
+}

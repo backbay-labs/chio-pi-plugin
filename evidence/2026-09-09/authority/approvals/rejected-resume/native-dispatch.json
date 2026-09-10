@@ -1,0 +1,24 @@
+{
+  "calls": [
+    {
+      "id": "call_7HUwNABkMERLFKn5Ce6IoW3i|fc_0a57d8610d23119e016aa1d1f4d87087d2844187e7ecea0f35",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "chio_resume",
+        "arguments": {
+          "requestId": "705d3d8a-88bb-4ca9-8495-1d398e2c6275:805ae7ab04fa85e5407abf178f53ad506a83ffef59e7665621256e960cca19f9",
+          "tool": "write_file",
+          "arguments": {
+            "path": "/workspace/pi-rejected-8bb974cccef7.txt",
+            "content": "must never appear"
+          }
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_7HUwNABkMERLFKn5Ce6IoW3i|fc_0a57d8610d23119e016aa1d1f4d87087d2844187e7ecea0f35"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

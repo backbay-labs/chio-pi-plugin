@@ -1,0 +1,25 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_lAlx6I6697ZFSK68qc9qjye2|fc_04d9ed33b61ddb33016aa213bbe35087d2ac54641e71c74e3f",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "chio_resume",
+        "arguments": {
+          "requestId": "9721379a-3b05-4b26-95f7-a576f79f7ea9:3d0673d61d3e2731d3cbb1a75d6b88182d3f95c0ef79efa1f833b69615a4c2d3",
+          "tool": "write_file",
+          "arguments": {
+            "path": "/workspace/pi-approved-5a3fa4409d1e.txt",
+            "content": "revised test sample"
+          }
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_lAlx6I6697ZFSK68qc9qjye2|fc_04d9ed33b61ddb33016aa213bbe35087d2ac54641e71c74e3f"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

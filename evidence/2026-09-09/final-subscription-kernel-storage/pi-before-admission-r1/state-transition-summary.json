@@ -1,0 +1,54 @@
+{
+  "case": "pi-before-admission-r1",
+  "during-fault.json": {
+    "dispatchCount": 1,
+    "operationStates": [
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "7fefebef1c48d9fbf5cbda067e5308905725099ccc827bad0e26208f6a29b4f0"
+      }
+    ],
+    "latches": [
+      {
+        "requestId": "storage-fault-pi-before-admission-r1:088d8e950d229aa4b32f429e7d301f101aac459b652b3b481db9283d940e323a",
+        "signed": true,
+        "recordState": "fenced"
+      }
+    ]
+  },
+  "after-unlock.json": {
+    "dispatchCount": 1,
+    "operationStates": [
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "7fefebef1c48d9fbf5cbda067e5308905725099ccc827bad0e26208f6a29b4f0"
+      }
+    ],
+    "latches": [
+      {
+        "requestId": "storage-fault-pi-before-admission-r1:088d8e950d229aa4b32f429e7d301f101aac459b652b3b481db9283d940e323a",
+        "signed": true,
+        "recordState": "fenced"
+      }
+    ]
+  },
+  "after-kernel-restart.json": {
+    "dispatchCount": 1,
+    "operationStates": [
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "7fefebef1c48d9fbf5cbda067e5308905725099ccc827bad0e26208f6a29b4f0"
+      }
+    ],
+    "latches": [
+      {
+        "requestId": "storage-fault-pi-before-admission-r1:088d8e950d229aa4b32f429e7d301f101aac459b652b3b481db9283d940e323a",
+        "signed": true,
+        "recordState": "fenced"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "host": "pi",
+  "archiveSha256": "b6f38bfb2c129e00d6e8c5c74b5b92ec4d527d26a81683316683abc690afac2c",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "sourceRevision": "67563b023650bf52f8d4208c0c96464963d055b8",
+  "cutpoint": "SIGTERM operator cancellation after actual kernel effect and before native host delivery",
+  "claim": "bounded native host and OpenAI cancellation, original-authority fence and explicit recovery; full acceptance open"
+}

@@ -1,0 +1,71 @@
+[
+  {
+    "case": "concurrent-owner-refused",
+    "exitCode": 1,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-a4034b059b1f44818ec9b487d7c65869/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-ab4db2f603e9424baf970b09fa8c0e95/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-ab4db2f603e9424baf970b09fa8c0e95/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-parallel-b487d7c65869.txt\", \"content\": \"second owner must never write\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "first-owner",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-a4034b059b1f44818ec9b487d7c65869/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-757b9ffcf9e947be86167d6d234c6035/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-757b9ffcf9e947be86167d6d234c6035/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-parallel-b487d7c65869.txt\", \"content\": \"only the live owner may write\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 1
+  },
+  {
+    "case": "read-after-exclusive-owner",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-subscription-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-a4034b059b1f44818ec9b487d7c65869/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-6a74264889874661bc08f4133a51fea5/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-6a74264889874661bc08f4133a51fea5/workspace",
+      "--provider",
+      "openai-codex",
+      "--model",
+      "gpt-5.5",
+      "--prompt",
+      "I am testing the filesystem tool integration and need its actual returned result for this test case. Call chio_execute exactly once with {\"tool\": \"read_text_file\", \"arguments\": {\"path\": \"/workspace/pi-parallel-b487d7c65869.txt\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments.",
+      "--codex-auth",
+      "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json"
+    ],
+    "newDispatchRows": 1
+  }
+]

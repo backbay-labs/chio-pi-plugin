@@ -1,0 +1,20 @@
+{
+  "calls": [
+    {
+      "id": "call_CdISnvhNNKR2EpKS2Djqm913|fc_059533d3ef47bc61016aa1d1ee9c3c87d28a3a76b0b5df555e",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-rejected-8bb974cccef7.txt",
+          "content": "must never appear"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_CdISnvhNNKR2EpKS2Djqm913|fc_059533d3ef47bc61016aa1d1ee9c3c87d28a3a76b0b5df555e"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

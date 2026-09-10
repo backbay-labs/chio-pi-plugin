@@ -1,0 +1,118 @@
+{
+  "runtimeSource": "2ccc027b42b837f3df2889863273df2c1e2d5669",
+  "archiveSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1",
+  "collections": [
+    {
+      "path": "evidence/2026-09-09/final-subscription-alternate-filesystem",
+      "fileCount": 27,
+      "bytes": 711730,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-budget",
+      "fileCount": 27,
+      "bytes": 268254,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-capability-expiry",
+      "fileCount": 12,
+      "bytes": 6339,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-cold",
+      "fileCount": 32,
+      "bytes": 530031,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-cutpoints",
+      "fileCount": 10,
+      "bytes": 195347,
+      "status": "retained failed harness/matching/unsupported-install attempt, not promoted"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-cutpoints-qualified",
+      "fileCount": 56,
+      "bytes": 781908,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-delivery",
+      "fileCount": 61,
+      "bytes": 860871,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-disabled-route",
+      "fileCount": 12,
+      "bytes": 357345,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-kernel-outcome-storage",
+      "fileCount": 42,
+      "bytes": 313798,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-kernel-storage",
+      "fileCount": 82,
+      "bytes": 705062,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-lifecycle",
+      "fileCount": 38,
+      "bytes": 833885,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-matrix",
+      "fileCount": 386,
+      "bytes": 4426715,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-parallel-response",
+      "fileCount": 9,
+      "bytes": 161423,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-relocated-install-corrected",
+      "fileCount": 6,
+      "bytes": 1927,
+      "status": "qualified finite observations; see per-case classifications"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-relocated-install-mismatch",
+      "fileCount": 3,
+      "bytes": 1949,
+      "status": "retained failed harness/matching/unsupported-install attempt, not promoted"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-tool-interval",
+      "fileCount": 6,
+      "bytes": 84267,
+      "status": "retained failed harness/matching/unsupported-install attempt, not promoted"
+    },
+    {
+      "path": "evidence/2026-09-09/final-subscription-tool-interval-qualified",
+      "fileCount": 19,
+      "bytes": 220916,
+      "status": "qualified finite observations; see per-case classifications"
+    }
+  ],
+  "currentOpenRequirements": [
+    "publication of compatible accepted version combination after release gates"
+  ],
+  "explicitApplicability": [
+    "Selected inline software Ed25519 primitive has no recoverable signer outage dependency; no live signing outage claimed",
+    "Native forced two-call model fixture is supplemental, separate from live provider acceptance",
+    "Recorded paired tool timing excludes startup, model generation and later ACK; noisy small sample, no general latency guarantee",
+    "Supported installation requires registry access and direct pinned public Pi peer first; plugin-only empty-cache offline failure retained and corrected relocated install passed"
+  ],
+  "scope": "Pinned native Pi0.85.1 subscription provider in protected macOS four-tool mode; no six-host completion or independent adoption claim"
+}

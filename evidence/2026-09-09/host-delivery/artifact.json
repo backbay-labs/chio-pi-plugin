@@ -1,0 +1,10 @@
+{
+  "source": "f45c6fb",
+  "artifactSha256": "0fbbc13745d663f8457b6887a529d8c5f08826cc05f584859df49675445b9da8",
+  "bridgeSha256": "b7785282b4f4e4da42e4158c7390a2d1411ba2763b01956b07896aadf6dcc6d9",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "piVersion": "0.85.1",
+  "model": "gpt-4.1-mini",
+  "runnerSha256": "bec58ccea5d7825bade0e05ae520268782381ae7b54a886650ba076570d78f38",
+  "acceptance": "unresolved"
+}

@@ -1,0 +1,32 @@
+{
+  "command": [
+    "node",
+    "/private/tmp/chio-pi-tool-error-final-cold-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+    "--config",
+    "/Users/connor/.local/share/chio-required-operators/kernel-storage-fault-20260909/pi-after-admission-r1/gateway.json",
+    "--profile",
+    "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-kernel-storage-s65p5c7s/profile",
+    "--cwd",
+    "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-kernel-storage-s65p5c7s/workspace",
+    "--provider",
+    "openai-codex",
+    "--model",
+    "gpt-5.5",
+    "--codex-auth",
+    "/Users/connor/.local/share/chio-required-operators/native-subscription-auth-20260909/codex/profile/auth.json",
+    "--prompt",
+    "Call chio_execute exactly once with this JSON: {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-storage-positive.txt\", \"content\": \"delivered before storage fault\"}}. This is a designated enforcement test; the gateway decides whether to dispatch. Stop on any refusal or uncertainty."
+  ],
+  "exitCode": 0,
+  "elapsedMs": 7216.941582999425,
+  "exactNativeAttempt": true,
+  "nativeCalls": 1,
+  "terminal": {
+    "type": "chio_session",
+    "sessionFile": "/private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-kernel-storage-s65p5c7s/profile/sessions/2026-09-10T03-12-28-490Z_01a0894d-6f47-74a9-a870-c28208117cef.jsonl",
+    "sessionId": "01a0894d-6f47-74a9-a870-c28208117cef",
+    "outcome": "completed",
+    "toolErrors": 0,
+    "providerStopReason": "stop"
+  }
+}

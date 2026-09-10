@@ -1,0 +1,15 @@
+{
+  "recordedAt": "2026-09-09T15:47:26.169Z",
+  "exitCode": 0,
+  "previousSessionId": "01a086d6-fd34-734d-a178-3b22373b56b6",
+  "resumedSessionId": "01a086d6-fd34-734d-a178-3b22373b56b6",
+  "processElapsedMs": 5060.179084,
+  "toolDurations": [
+    {
+      "toolCallId": "call_xkdV0AHALtbCK8SoNLJlji5d|fc_06944e9b0403a610016aa17f8bd15487d29fbe50dee7c2b7e0",
+      "elapsedMs": 811.0124169999999,
+      "isError": false
+    }
+  ],
+  "interpretation": "Single actual host observation. Tool interval includes bridge/kernel/resource/verification and local fsync. It is not isolated incremental overhead versus native Pi."
+}

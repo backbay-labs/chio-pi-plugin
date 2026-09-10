@@ -1,0 +1,8 @@
+{"file":"pi-final-accepted-candidate.txt","present":true,"content":"final candidate through real kernel"}
+{"file":"pi-wrong-subject.txt","present":false,"content":null}
+{"file":"pi-wrong-capability.txt","present":false,"content":null}
+{"file":"pi-wrong-session.txt","present":false,"content":null}
+{"file":"pi-kernel-unreachable.txt","present":false,"content":null}
+{"file":"pi-kernel-malformed.txt","present":false,"content":null}
+{"file":"pi-wrong-signer-retry.txt","present":false,"content":null}
+{"file":"pi-cancelled.txt","present":false,"content":null}

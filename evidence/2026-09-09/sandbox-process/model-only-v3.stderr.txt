@@ -1,0 +1,1 @@
+Chio Pi refused or failed: EPERM: process.cwd failed with error operation not permitted, uv_cwd

@@ -1,0 +1,69 @@
+{
+  "case": "pi-after-receipt-r1",
+  "during-fault.json": {
+    "dispatchCount": 2,
+    "operationStates": [
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "f1bbeddda8f48577bbe42f32e0b5c1a4973b059f98b9653f5e755cfce81898a5"
+      },
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "188b962432d51576cea12390b2b733fe96a034f1a038237c2b3c6fd04b6a4fbb"
+      }
+    ],
+    "latches": [
+      {
+        "requestId": "storage-fault-pi-after-receipt-r1:f2f112e4ffdc5252c34a805d194076bfa3efb7523d06500ee0c65583b132226d",
+        "signed": true,
+        "recordState": "fenced"
+      }
+    ]
+  },
+  "after-unlock.json": {
+    "dispatchCount": 2,
+    "operationStates": [
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "f1bbeddda8f48577bbe42f32e0b5c1a4973b059f98b9653f5e755cfce81898a5"
+      },
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "188b962432d51576cea12390b2b733fe96a034f1a038237c2b3c6fd04b6a4fbb"
+      }
+    ],
+    "latches": [
+      {
+        "requestId": "storage-fault-pi-after-receipt-r1:f2f112e4ffdc5252c34a805d194076bfa3efb7523d06500ee0c65583b132226d",
+        "signed": true,
+        "recordState": "fenced"
+      }
+    ]
+  },
+  "after-kernel-restart.json": {
+    "dispatchCount": 2,
+    "operationStates": [
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "f1bbeddda8f48577bbe42f32e0b5c1a4973b059f98b9653f5e755cfce81898a5"
+      },
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "188b962432d51576cea12390b2b733fe96a034f1a038237c2b3c6fd04b6a4fbb"
+      }
+    ],
+    "latches": [
+      {
+        "requestId": "storage-fault-pi-after-receipt-r1:f2f112e4ffdc5252c34a805d194076bfa3efb7523d06500ee0c65583b132226d",
+        "signed": true,
+        "recordState": "fenced"
+      }
+    ]
+  }
+}

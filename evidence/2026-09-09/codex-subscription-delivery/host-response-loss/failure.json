@@ -1,0 +1,6 @@
+{
+  "claim": "Unresolved fixture startup; not counted as host acceptance",
+  "reason": "Relative output path rejected by fault preload before launcher startup. Driver now canonicalizes output paths.",
+  "nativeHostStarted": false,
+  "resourceUnchanged": true
+}

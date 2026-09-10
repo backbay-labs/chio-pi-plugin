@@ -1,0 +1,20 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_XZHIJ6tqTxzsdUoNfykrkZlm|fc_02ad75dd02eef4a6016aa2143e492c87d29cf15ae90821adf7",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "list_directory",
+        "arguments": {
+          "path": "/workspace"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_XZHIJ6tqTxzsdUoNfykrkZlm|fc_02ad75dd02eef4a6016aa2143e492c87d29cf15ae90821adf7"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

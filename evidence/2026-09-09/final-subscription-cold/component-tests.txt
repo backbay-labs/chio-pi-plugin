@@ -1,0 +1,39 @@
+
+> @chio/pi-plugin@0.1.0 test
+> npm run build && node --test test/*.test.mjs
+
+
+> @chio/pi-plugin@0.1.0 build
+> tsc
+
+✔ native file, shell, descendant, network, and custom routes are absent from the actual Pi dispatcher (37.305333ms)
+✔ project extension, settings, skill, and context tampering do not load code or restore tools (10.245208ms)
+✔ extension omission leaves no tools; extension crash refuses session startup (9.80975ms)
+✔ missing kernel fails through actual Pi tool dispatch without local effects (10.579291ms)
+✔ unknown outcome survives executor recreation and blocks subsequent dispatch (15.376792ms)
+✔ retained completed results replay without redispatch and changed semantics conflict (30.093459ms)
+✔ pre-dispatch cancellation and known non-dispatch allow later legitimate work (30.226875ms)
+✔ denial preserves fence because it may follow an external effect (17.293375ms)
+✔ stock Pi serializes model-emitted sibling kernel calls (62.774083ms)
+✔ stock Pi retains verified denials and terminal tool errors as unsuccessful tool results (16.165291ms)
+✔ native error-history parsing still requires trusted signed caller/request/result binding (4.315375ms)
+✔ guest delivery verification: none (3.911834ms)
+✔ guest delivery verification: result (1.385875ms)
+✔ guest delivery verification: stale-request (0.824792ms)
+✔ guest delivery verification: signature (0.994542ms)
+✔ native tool-error history preserves the full outcome and never interprets arbitrary prose (1.948875ms)
+✔ model relay requires complete text/function history and removes provider item references (0.460167ms)
+✔ Codex reasoning must be inline encrypted content, never an item reference (0.278667ms)
+✔ native Codex cache stays read-only and must bind an unexpired account (15.584875ms)
+✔ native Codex transport uses local-only auth, bounded compressed history and fixed upstream (57.636959ms)
+✔ model relay refuses alternate models, hosted tools, references and background routes (0.254125ms)
+✔ only a normal provider stop can report conversation completion (1.585417ms)
+✔ resource uncertainty survives provider completion, failure and cancellation (0.118584ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1326.616417

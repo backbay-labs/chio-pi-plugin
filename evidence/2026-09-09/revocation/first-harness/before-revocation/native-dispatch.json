@@ -1,0 +1,20 @@
+{
+  "calls": [
+    {
+      "id": "call_p4iImusLae3H9j3tdoiJMHsU|fc_0dc78f53470399c7016aa1d6aef34887d28cddb04b07b7b0ba",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-revoke-b8c469705131.txt",
+          "content": "authorized before revocation"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_p4iImusLae3H9j3tdoiJMHsU|fc_0dc78f53470399c7016aa1d6aef34887d28cddb04b07b7b0ba"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

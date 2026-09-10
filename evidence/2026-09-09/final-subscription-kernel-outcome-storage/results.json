@@ -1,0 +1,18 @@
+[
+  {
+    "case": "pi-after-admission-r1",
+    "passed": true,
+    "cutpoint": "after-admission",
+    "nativePositiveDispatches": 1,
+    "faultedNativeDispatches": 1,
+    "subsequentNativeAttemptsFenced": 2,
+    "additionalRetryDispatches": 0,
+    "originalAuthorityPreserved": true,
+    "originalUnknownAcknowledged": false,
+    "privateState": "/Users/connor/.local/share/chio-required-operators/kernel-storage-fault-20260909/pi-after-admission-r1",
+    "runtime": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-kernel-storage-s65p5c7s",
+    "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+    "pluginArchiveSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1",
+    "kernelRestartFenced": true
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "case": "host-response-loss",
+    "passed": true,
+    "exitCode": 2,
+    "terminal": [
+      {
+        "type": "chio_session",
+        "sessionFile": "/private/tmp/chio-pi-qualified-7c2a6baa73f24143a90bae62b0b7f4c4/profile/sessions/2026-09-09T20-05-03-265Z_01a087c6-1ea0-749a-b4c3-36389933a0cc.jsonl",
+        "sessionId": "01a087c6-1ea0-749a-b4c3-36389933a0cc",
+        "outcome": "unresolved",
+        "toolErrors": 1,
+        "providerStopReason": "stop"
+      }
+    ],
+    "newDispatchRows": 1,
+    "operatorConfigUnchanged": true,
+    "acknowledgements": [
+      {
+        "state": "completed",
+        "hostDeliveryConfirmed": null,
+        "acknowledged": false
+      }
+    ],
+    "privateState": "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-host-response-loss-ec073f6aaaa74b43a961b87d3a7f5064",
+    "runtime": "/tmp/chio-pi-qualified-7c2a6baa73f24143a90bae62b0b7f4c4",
+    "command": [
+      "node",
+      "/tmp/chio-pi-host-delivery-cold-consumer-r3-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-host-response-loss-ec073f6aaaa74b43a961b87d3a7f5064/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-qualified-7c2a6baa73f24143a90bae62b0b7f4c4/profile",
+      "--cwd",
+      "/tmp/chio-pi-qualified-7c2a6baa73f24143a90bae62b0b7f4c4/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Use chio_execute write_file once to write /workspace/pi-qualified-b87d3a7f5064.txt with content \"original retained effect\". Stop immediately on unsuccessful or uncertain result. Never infer success from a transport error."
+    ]
+  }
+]

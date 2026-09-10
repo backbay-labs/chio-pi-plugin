@@ -1,0 +1,134 @@
+{
+  "recordedAt": "2026-09-09T15:36:25.527Z",
+  "cutpoint": "actual Pi tool_execution_start subscriber aborts before executor dispatch",
+  "cancelled": true,
+  "events": [
+    {
+      "type": "message_end",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Call chio_execute exactly once with tool write_file and arguments {\"path\":\"/workspace/pi-cancelled.txt\",\"content\":\"must not dispatch\"}. Do not retry."
+          }
+        ],
+        "timestamp": 1788968183037
+      }
+    },
+    {
+      "type": "message_end",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "call_Aj35IOZKJpMEBRqOBIR941Wa|fc_03e11cc91464194f016aa17cf92d2887d28a27e3e3a8e089d2",
+            "name": "chio_execute",
+            "arguments": {
+              "tool": "write_file",
+              "arguments": {
+                "path": "/workspace/pi-cancelled.txt",
+                "content": "must not dispatch"
+              }
+            }
+          }
+        ],
+        "api": "openai-responses",
+        "provider": "openai",
+        "model": "gpt-4.1-mini",
+        "usage": {
+          "input": 775,
+          "output": 35,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 810,
+          "cost": {
+            "input": 0.00031,
+            "output": 0.000056000000000000006,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.000366
+          }
+        },
+        "stopReason": "toolUse",
+        "timestamp": 1788968183096,
+        "responseId": "resp_03e11cc91464194f016aa17cf782d887d2a9fe7945e483d246",
+        "rawStopReason": "completed"
+      }
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "call_Aj35IOZKJpMEBRqOBIR941Wa|fc_03e11cc91464194f016aa17cf92d2887d28a27e3e3a8e089d2",
+      "toolName": "chio_execute",
+      "args": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-cancelled.txt",
+          "content": "must not dispatch"
+        }
+      }
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "call_Aj35IOZKJpMEBRqOBIR941Wa|fc_03e11cc91464194f016aa17cf92d2887d28a27e3e3a8e089d2",
+      "toolName": "chio_execute",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Operation aborted"
+          }
+        ],
+        "details": {}
+      },
+      "isError": true
+    },
+    {
+      "type": "message_end",
+      "message": {
+        "role": "toolResult",
+        "toolCallId": "call_Aj35IOZKJpMEBRqOBIR941Wa|fc_03e11cc91464194f016aa17cf92d2887d28a27e3e3a8e089d2",
+        "toolName": "chio_execute",
+        "content": [
+          {
+            "type": "text",
+            "text": "Operation aborted"
+          }
+        ],
+        "details": {},
+        "isError": true,
+        "timestamp": 1788968185517
+      }
+    },
+    {
+      "type": "message_end",
+      "message": {
+        "role": "assistant",
+        "content": [],
+        "api": "openai-responses",
+        "provider": "openai",
+        "model": "gpt-4.1-mini",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "totalTokens": 0,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0
+          }
+        },
+        "stopReason": "error",
+        "errorMessage": "This operation was aborted",
+        "timestamp": 1788968185518
+      }
+    }
+  ],
+  "agentDir": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-live-cancel-yeE44Y/profile"
+}

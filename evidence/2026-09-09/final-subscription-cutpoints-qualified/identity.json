@@ -1,0 +1,7 @@
+{
+  "artifactSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1",
+  "kernelSha256": "33dd1dea21a4ca5ecddeab4f30f6b06b0b90c513f0987aef552b0633d9da1e25",
+  "cases": 4,
+  "skips": 0,
+  "scope": "Actual native Pi with live provider and resource owner; injected cancellation, refused route, and parent operation journal EIO. Kernel receipt-store/signing failures are separate."
+}

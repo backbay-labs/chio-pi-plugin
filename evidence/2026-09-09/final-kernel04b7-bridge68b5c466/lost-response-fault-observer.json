@@ -1,0 +1,16 @@
+{
+  "variant": "lost-response",
+  "recordedAt": "2026-09-09T15:44:11.331Z",
+  "exitCode": 0,
+  "observations": [
+    {
+      "method": "tools/call",
+      "requestId": "pi:7d401a14245ec99b754fcac3c24b221a3b53b0b144c4dc6dbc3973589f5ea214",
+      "upstreamStatus": 200,
+      "responseBytes": 3601,
+      "variant": "lost-response"
+    }
+  ],
+  "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-evidence-fault-xHpwsY/lost-response-profile",
+  "outcome": "verify host rejection and independent resource state; committed effects may exist"
+}

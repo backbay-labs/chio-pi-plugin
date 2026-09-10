@@ -1,0 +1,69 @@
+{
+  "recordedAt": "2026-09-09T15:44:32.522Z",
+  "candidateCli": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-cold-peer-nUA2jA/node_modules/@chio/pi-plugin/dist/cli.js",
+  "temporary": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-live-cases-hYcKyM",
+  "cases": [
+    {
+      "name": "wrong-subject",
+      "exitCode": 0,
+      "toolCalls": 1,
+      "toolErrors": 1,
+      "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-live-cases-hYcKyM/wrong-subject-profile",
+      "target": "/workspace/pi-wrong-subject.txt",
+      "expectedEffect": "absent"
+    },
+    {
+      "name": "wrong-capability",
+      "exitCode": 0,
+      "toolCalls": 1,
+      "toolErrors": 1,
+      "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-live-cases-hYcKyM/wrong-capability-profile",
+      "target": "/workspace/pi-wrong-capability.txt",
+      "expectedEffect": "absent"
+    },
+    {
+      "name": "wrong-session",
+      "exitCode": 0,
+      "toolCalls": 1,
+      "toolErrors": 1,
+      "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-live-cases-hYcKyM/wrong-session-profile",
+      "target": "/workspace/pi-wrong-session.txt",
+      "expectedEffect": "absent"
+    },
+    {
+      "name": "kernel-unreachable",
+      "exitCode": 0,
+      "toolCalls": 1,
+      "toolErrors": 1,
+      "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-live-cases-hYcKyM/kernel-unreachable-profile",
+      "target": "/workspace/pi-kernel-unreachable.txt",
+      "expectedEffect": "absent"
+    },
+    {
+      "name": "kernel-malformed",
+      "exitCode": 0,
+      "toolCalls": 1,
+      "toolErrors": 1,
+      "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-live-cases-hYcKyM/kernel-malformed-profile",
+      "target": "/workspace/pi-kernel-malformed.txt",
+      "expectedEffect": "absent"
+    },
+    {
+      "name": "wrong-signer",
+      "exitCode": 0,
+      "toolCalls": 1,
+      "toolErrors": 1,
+      "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-live-cases-hYcKyM/wrong-signer-profile",
+      "target": "/workspace/pi-wrong-signer.txt",
+      "expectedEffect": "may occur; result must be rejected and profile fenced"
+    },
+    {
+      "name": "wrong-signer-restart",
+      "exitCode": 0,
+      "toolCalls": 1,
+      "toolErrors": 1,
+      "profile": "/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-pi-live-cases-hYcKyM/wrong-signer-profile"
+    }
+  ],
+  "status": "bounded observations; independently inspect resources before assigning results"
+}

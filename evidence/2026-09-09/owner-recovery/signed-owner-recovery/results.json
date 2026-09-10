@@ -1,0 +1,23 @@
+[
+  {
+    "case": "after-owner-reconciliation",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-3ed96ccb7b4048c6a40a0320d6e241fb/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-7fec21ea324249fbba11440d18a7e175/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-7fec21ea324249fbba11440d18a7e175/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"read_text_file\", \"arguments\": {\"path\": \"/workspace/pi-inflight-0320d6e241fb.txt\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 1
+  }
+]

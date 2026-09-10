@@ -1,0 +1,21 @@
+{
+  "launchPreflightRefused": false,
+  "calls": [
+    {
+      "id": "call_6dXKMobrYFK6wyMhHWEqHD7m|fc_0158becbff110236016aa1f0b9283487d28115ba790df56659",
+      "name": "chio_execute",
+      "arguments": {
+        "tool": "write_file",
+        "arguments": {
+          "path": "/workspace/pi-parallel-548727576bd2.txt",
+          "content": "only the live owner may write"
+        }
+      }
+    }
+  ],
+  "returnedToolCallIds": [
+    "call_6dXKMobrYFK6wyMhHWEqHD7m|fc_0158becbff110236016aa1f0b9283487d28115ba790df56659"
+  ],
+  "expectedAttemptObserved": true,
+  "attemptCount": 1
+}

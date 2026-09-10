@@ -1,0 +1,65 @@
+[
+  {
+    "case": "concurrent-owner-refused",
+    "exitCode": 1,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-44a6e4f02d3748d591dc548727576bd2/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-1d435a8540ad4eeca51d24b83c124cc9/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-1d435a8540ad4eeca51d24b83c124cc9/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-parallel-548727576bd2.txt\", \"content\": \"second owner must never write\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 0
+  },
+  {
+    "case": "first-owner",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-44a6e4f02d3748d591dc548727576bd2/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-4c857b30131f465b91101ce236ff4f85/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-4c857b30131f465b91101ce236ff4f85/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"write_file\", \"arguments\": {\"path\": \"/workspace/pi-parallel-548727576bd2.txt\", \"content\": \"only the live owner may write\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 1
+  },
+  {
+    "case": "read-after-exclusive-owner",
+    "exitCode": 0,
+    "command": [
+      "node",
+      "/tmp/chio-pi-native-history-cold-consumer-r2-20260909/node_modules/@chio/pi-plugin/dist/protected-cli.js",
+      "--config",
+      "/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-44a6e4f02d3748d591dc548727576bd2/gateway.json",
+      "--profile",
+      "/tmp/chio-pi-approval-runtime-1833e1fb53fc4192aa6b1ce6327fc951/profile",
+      "--cwd",
+      "/tmp/chio-pi-approval-runtime-1833e1fb53fc4192aa6b1ce6327fc951/workspace",
+      "--provider",
+      "openai",
+      "--model",
+      "gpt-4.1-mini",
+      "--prompt",
+      "Call chio_execute exactly once with {\"tool\": \"read_text_file\", \"arguments\": {\"path\": \"/workspace/pi-parallel-548727576bd2.txt\"}}. Preserve all identifiers and remote paths exactly. Stop on any unsuccessful or pending result. Do not substitute tools or arguments."
+    ],
+    "newDispatchRows": 1
+  }
+]

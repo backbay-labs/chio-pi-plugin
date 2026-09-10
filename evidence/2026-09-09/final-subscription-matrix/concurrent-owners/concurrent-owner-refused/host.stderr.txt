@@ -1,0 +1,1 @@
+Chio Pi protected launch refused: EEXIST: file already exists, open '/Users/connor/.local/share/chio-required-operators/pi-http-20260909/pi-approvals-463e106ac872497bbfee7c718214f534/journal/gateway.lock'
