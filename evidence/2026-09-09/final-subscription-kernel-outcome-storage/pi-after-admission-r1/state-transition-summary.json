@@ -1,0 +1,69 @@
+{
+  "case": "pi-after-admission-r1",
+  "during-fault.json": {
+    "dispatchCount": 2,
+    "operationStates": [
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "bb238b017137d96f119af7586228875bc64286d0d1ee08423d9bc68d49f509d7"
+      },
+      {
+        "state": "dispatch_committed",
+        "terminal": 0,
+        "operation_id": "ecf361cf6e8ca8e7fe9441a5b83897692b0becf4c89a8700fe6b93c831a8d69e"
+      }
+    ],
+    "latches": [
+      {
+        "requestId": "storage-fault-pi-after-admission-r1:722f8fa650d344ef735569626b6cf567e28353201a10b8ec6a8f3ccb5757d131",
+        "signed": true,
+        "recordState": "fenced"
+      }
+    ]
+  },
+  "after-unlock.json": {
+    "dispatchCount": 2,
+    "operationStates": [
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "bb238b017137d96f119af7586228875bc64286d0d1ee08423d9bc68d49f509d7"
+      },
+      {
+        "state": "dispatch_committed",
+        "terminal": 0,
+        "operation_id": "ecf361cf6e8ca8e7fe9441a5b83897692b0becf4c89a8700fe6b93c831a8d69e"
+      }
+    ],
+    "latches": [
+      {
+        "requestId": "storage-fault-pi-after-admission-r1:722f8fa650d344ef735569626b6cf567e28353201a10b8ec6a8f3ccb5757d131",
+        "signed": true,
+        "recordState": "fenced"
+      }
+    ]
+  },
+  "after-kernel-restart.json": {
+    "dispatchCount": 2,
+    "operationStates": [
+      {
+        "state": "completed",
+        "terminal": 1,
+        "operation_id": "bb238b017137d96f119af7586228875bc64286d0d1ee08423d9bc68d49f509d7"
+      },
+      {
+        "state": "outcome_unknown_after_dispatch",
+        "terminal": 1,
+        "operation_id": "ecf361cf6e8ca8e7fe9441a5b83897692b0becf4c89a8700fe6b93c831a8d69e"
+      }
+    ],
+    "latches": [
+      {
+        "requestId": "storage-fault-pi-after-admission-r1:722f8fa650d344ef735569626b6cf567e28353201a10b8ec6a8f3ccb5757d131",
+        "signed": true,
+        "recordState": "fenced"
+      }
+    ]
+  }
+}

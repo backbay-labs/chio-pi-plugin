@@ -1,0 +1,6 @@
+{
+  "cases": 2,
+  "skips": 0,
+  "harnessSha256": "12344627b551737331e81988438450e3db506d7b30379ffd295d7d4b37d8120c",
+  "scope": "Actual native Pi/provider and frozen kernel. Genuine SQLite contention before admission or after actual effect in receipt store. No rows/schema mutated; no synthetic kernel response."
+}

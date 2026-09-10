@@ -1,0 +1,6 @@
+{
+  "claim": "Failed timing harness assertion, not a measured three-pair comparison",
+  "cause": "Native details.evidence is a verified receipt object, not the string verified; the full native outcome carries evidence=verified. Driver was corrected to inspect that exact outcome.",
+  "observedCalls": "One direct baseline read and one successful native read occurred. Raw output retained; native interval was not persisted before the failed assertion.",
+  "runtimeArtifactSha256": "ec6095390b9eae233540b73aee0ad2fef6977c36122dd30aa2779329b1897aa1"
+}

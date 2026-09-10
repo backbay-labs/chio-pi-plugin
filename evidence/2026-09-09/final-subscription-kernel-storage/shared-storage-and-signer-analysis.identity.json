@@ -1,0 +1,6 @@
+{
+  "source": "/Users/connor/Medica/backbay/standalone/arc/.worktrees/mcp-execution-evidence-20260909/integrations/required-agents/qualification/STORAGE-FAULTS.md",
+  "sha256": "759c8b7dd60744552e2951c7b4b9f7ed80b02ecb95170fdcc44c8397299a11b4",
+  "qualifiedKernelSource": "d8c5f53705173e614a853bad6c0a85acfdf1212b",
+  "scope": "Shared selected-source signer analysis; not a live Pi signing-failure observation. Per-host storage evidence is separate in this collection."
+}

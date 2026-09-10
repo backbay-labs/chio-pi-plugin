@@ -36,6 +36,19 @@ evidence and unrelated files; they were outside the package's file selection.
 Documentation and qualification-script commits after `2ccc027` do not change
 the frozen archive.
 
+Registry access is required for the pinned public Pi peer. The plugin tarball
+bundles the Chio bridge and SDK, not Pi. A later generic bundle installer
+incorrectly attempted a plugin-only offline install with an empty cache, producing
+`ENOTCACHED` during peer resolution. That unsupported-path failure is preserved in
+`final-subscription-relocated-install-mismatch/`. The archive's shipped README
+already specifies the qualified two-step public-peer-first procedure. The bundle
+instructions were corrected to it; no archive repack, hidden sibling dependency
+or `--legacy-peer-deps` workaround is used. No fully offline Pi installation is
+claimed. `final-subscription-relocated-install-corrected/` retains the root
+worker's independent successful relocation and exact two-step installation from
+an initially empty cache. Its entry checks are installation evidence, not a new
+real-host effect test.
+
 The selected mode is a stock Pi SDK session in a default-deny macOS process
 sandbox. Its only native extension tool is `chio_execute`. Protected filesystem
 effects are owned by the isolated kernel resource server, with operator-prepared
@@ -65,11 +78,11 @@ audit rows are retained. No evidence from another host substitutes for Pi.
 | I01 | `final-subscription-cold`: empty-cache install, installed bin, native activation, pinned artifacts and runtime hashes | Compatible-combination publication belongs to I08 |
 | I02 | Four native kernel operations write/edit/read/list complete with independently observed bytes and four confirmed/acknowledged results. A separate missing-file tool error is verified and acknowledged, followed by a successful write under the same authority | No missing useful workflow in the stated four-tool mode |
 | I03 | Actual forbidden read/write, forbidden edit, secret dry-run edit, secret directory request, normalized read/write aliases and shell-indirection route refusal; useful work remains available. Exact launched OS policy denies private operator/provider/config reads, aliases, writes/hardlinks, Node/shell descendants, direct kernel port and an unrelated live listener. Profile extension/settings/auth-command tampering does not load code or restore tools | No skipped case in the recorded four-tool and disabled-local-action scope |
-| I04 | Startup absence, killed/malformed/timed-out kernel during a session, same-authority restart fences; missing/crashed/omitted/hung extension; live-kernel refused route and held-call cancellation | Kernel receipt-storage and signing failure cutpoints are separate from transport failures and remain under qualification |
+| I04 | Startup absence, killed/malformed/timed-out kernel during a session, same-authority restart fences; missing/crashed/omitted/hung extension; live-kernel refused route and held-call cancellation. Actual admission-store failure before effect, outcome-store failure after effect and receipt-store failure after effect retain the fence across kernel restart | No unexecuted required storage case in the selected mode; signer applicability is explained below |
 | I05 | Real pending/rejected/approved flows, changed approved arguments, replay without redispatch; capability and credential revocation, including in-flight revocation; actual capability expiry with persisted expiry checks; wrong caller/session/server/scope; three-call aggregate budget followed by denied fourth call | No skipped case in these executed authority suites |
-| I06 | Trusted signed useful results; foreign receipt, wrong signer and changed request ID rejected; host-result substitution rejected; forged operator recovery record rejected; exact original owner result imported/acknowledged without redispatch | Kernel evidence/signing failure behavior must be recorded separately; component cryptographic tests are not promoted to live failure observations |
-| I07 | Native resume, owner exclusion, kernel/host interruption, downstream response loss, operator cancellation, gateway crash, retained uncertainty, explicit recovery then later useful read. Original request/session/authority retained. New guest conversations cannot clear the private journal. Reservation/completion journal EIO and signed recovery from a pending original completion are observed. Supplemental native multi-call response fixture proves serialization and refusal of the second unacknowledged call | Kernel receipt-store/signing cutpoints remain separate |
-| I08 | Tested install/configuration, fresh-prefix upgrade retaining native session/authority, revoke then remove only dedicated install/profile, explicit recovery procedures, whole-run timings and intervention records | Publish the tested compatible combination after release gates. Whole-run timings do not establish incremental plugin overhead |
+| I06 | Trusted signed useful results; foreign receipt, wrong signer and changed request ID rejected; host-result substitution rejected; forged operator recovery record rejected; exact original owner result imported/acknowledged without redispatch. Actual receipt and outcome persistence failures report unknown/no ACK after one effect | No live outage is claimed for the selected in-memory signer, which exposes no recoverable signing-failure dependency |
+| I07 | Native resume, owner exclusion, kernel/host interruption, downstream response loss, operator cancellation, gateway crash, retained uncertainty, explicit recovery then later useful read. Original request/session/authority retained. New guest conversations cannot clear the private journal. Reservation/completion journal EIO and signed recovery from a pending original completion are observed. Supplemental native multi-call response fixture proves serialization and refusal of the second unacknowledged call. Native retries remain fenced after each actual kernel store failure and kernel restart | No skipped recovery case in the stated supported scope; absent trustworthy completed evidence remains unresolved by design |
+| I08 | Tested install/configuration, fresh-prefix upgrade retaining native session/authority, revoke then remove only dedicated install/profile, explicit recovery procedures, whole-run and paired tool-interval observations, intervention records | Publish the tested compatible combination after release gates; measured small-sample timings do not establish a general latency guarantee |
 
 `final-subscription-matrix/summary.json` contains 28 suites, 38 case records,
 30 native-attempt records and eight explicitly classified startup refusals,
@@ -107,6 +120,47 @@ contract supports both pending and unknown records, and the actual pending-state
 recovery is recorded separately. No uncertain operation was deleted or assigned
 new authority. Parent journal EIO is not evidence of kernel receipt-store or
 signing failure.
+
+`final-subscription-kernel-storage/` and
+`final-subscription-kernel-outcome-storage/` exercise the actual frozen kernel's
+SQLite stores, with separate owners, databases and volumes on ports 58512,
+58513 and 58526. Each begins with a real Pi positive write that completes and
+is acknowledged. The controller holds a genuine `BEGIN IMMEDIATE` transaction,
+then ends it with `ROLLBACK`; no row, schema, clock or kernel-code mutation is
+used. For post-effect cases, a trusted test-only stdio barrier holds the genuine
+resource response until an independent observer proves the effect and the target
+store is locked. This barrier is absent from ordinary installation.
+
+| Actual kernel failure | Independent effect beyond positive control | Caller and durable state |
+| --- | ---: | --- |
+| Admission store unavailable before admission | 0 | Signed admission rejection, conservative unknown, no acknowledged outcome |
+| Receipt append unavailable after effect | 1 | Actual receipt append timeout after 5,000 ms; tool outcome stored, caller unknown/unverified, no ACK |
+| Admission/outcome store unavailable after effect | 1 | Actual database-locked error; operation remains `dispatch_committed`, becomes `outcome_unknown_after_dispatch` on kernel restart; caller unknown/unverified, no ACK |
+
+After releasing each lock, actual native same-action and changed-content attempts
+are fenced. Each designated kernel is then restarted through the supported owner
+launcher with its original databases, credentials, journal and volumes retained.
+Another actual native attempt is fenced after restart. All three preserve a
+signed owner latch, unchanged original authority and zero additional resource
+dispatches. Raw store snapshots and native events distinguish a stored outcome
+without an appended receipt from an outcome that could not be stored at all.
+These cases do not turn the original post-effect write into a prevented action.
+Independent read-only checks also verify each post-restart latch signature
+against the configured trust root and exact original caller/session/capability/
+server/tool/argument hash. Changing the signed state invalidates the signature.
+
+The selected signer boundary is separately source-qualified against kernel
+`d8c5f5...`, with the exact analysis retained in the storage evidence. Hosted MCP
+uses the loaded in-memory `Ed25519Backend`; its `sign_bytes` implementation returns
+`Ok(self.keypair.sign(message))`, and that primitive returns `Signature` without
+a recoverable error. No external signer, key-file reread, timeout or optional
+signing queue is selected. Deleting the loaded seed would not test signer loss.
+Kernel termination is tested as interruption, not renamed a signing outage.
+Receipt coupling, canonicalization, semantic validation and persistence remain
+fallible; source branches are not promoted to live observations. Actual storage
+failures above and rejected malformed/substituted host evidence are recorded
+separately. This applicability analysis is not a claimed live cryptographic
+signing-failure test.
 
 `final-subscription-parallel-response/` is explicitly a supplemental model-fixture
 test through the actual installed Pi host and real kernel. Both outbound provider
@@ -194,6 +248,30 @@ operator configuration and login preparation. Fault cases explicitly record
 signals, dead-owner lock recovery where needed, signed original-outcome export,
 operator acknowledgement and resumed execution. The hung-extension watchdog is
 an operator intervention.
+
+`final-subscription-tool-interval-qualified/` adds three paired reads of the same
+existing resource through direct bridge execution and actual native Pi. Both
+paths use the same frozen bridge, kernel, resource and request arguments. Direct
+calls are a performance baseline only, not host acceptance. The direct interval
+covers `execute()` through verified result; the native interval covers observed
+`tool_execution_start` through `tool_execution_end`. Preparation, process startup,
+model generation and later ACK are excluded from both intervals. Private baseline
+intent and completion are persisted before acknowledgement. Independent audit
+records show exactly three native and three baseline reads, with unchanged bytes.
+
+| Pair | Direct bridge ms | Native Pi tool interval ms | Observed difference ms |
+| --- | ---: | ---: | ---: |
+| 1 | 692.317 | 3,143.198 | 2,450.881 |
+| 2 | 1,021.822 | 806.145 | -215.677 |
+| 3 | 962.627 | 1,226.926 | 264.299 |
+
+The median paired difference is 264.299 ms. This small sequential observation
+includes Pi dispatch, parent HTTP transport/journal, pipe delivery and scheduling
+differences; the negative pair and broad range show the noise. It does not
+causally allocate every millisecond to the plugin or establish a percentile/load
+guarantee. The first timing driver compared the receipt object to a string and
+stopped after one successful native/baseline pair; that harness failure remains
+under `final-subscription-tool-interval`, outside the qualified three-pair result.
 
 Twenty-three component tests passed without skips. They cover native provider
 contract validation, bounded compressed relay input, exact error-result parsing,
