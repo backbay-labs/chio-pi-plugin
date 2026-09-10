@@ -1,5 +1,7 @@
 # Pi process boundary qualification
 
+Current protected mode uses a launcher-owned HTTP gateway and excludes the kernel port. Its native Codex subscription cold-host/process qualification is recorded in [SUBSCRIPTION-QUALIFICATION.md](SUBSCRIPTION-QUALIFICATION.md). The direct-kernel model-only experiments below are historical and do not define the delivered boundary.
+
 Status: partial, not complete kernel acceptance. Source changes are awaiting the shared delegated-credential artifact and full installed-host rerun.
 
 The protected entrypoint is `chio-pi`, which starts the published Pi SDK in a separate macOS Seatbelt process. Its read allowlist contains the installed dependency tree, actual Node executable/dylibs, specific immutable OS library paths, its own delegated config and profile. Only the profile is writable. Paths are canonicalized before policy generation; profile, configuration and installation cannot overlap. An empty profile is marked for the retained session, and unmarked nonempty directories are refused.

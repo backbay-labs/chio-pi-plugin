@@ -1,0 +1,9 @@
+{
+  "reason": "Candidate reinstall failed; old artifact remained and reproduced the earlier reasoning refusal. Explicitly recovering original completed result.",
+  "acknowledgement": {
+    "acknowledged": true,
+    "requestId": "f7e8a98a-3408-4b93-88f8-d7bd4781bad5:4016341211a3e1f6d8ef999f271ad63d177349e91b60b89fb39c999c6d0127ce",
+    "receiptId": "e2f3ba067096b7ae5524bf31b784162bc5925ff30209f0655e61bc00cd35e759",
+    "protectedDispatch": false
+  }
+}

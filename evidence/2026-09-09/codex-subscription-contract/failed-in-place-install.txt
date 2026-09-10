@@ -1,0 +1,2 @@
+npm error Cannot read properties of null (reading 'resolve')
+npm error A complete log of this run can be found in: /tmp/chio-pi-subscription-empty-cache-20260909/_logs/2026-09-10T01_54_10_889Z-debug-0.log

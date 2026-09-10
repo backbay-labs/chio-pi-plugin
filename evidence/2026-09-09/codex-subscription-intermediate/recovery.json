@@ -1,0 +1,9 @@
+{
+  "reason": "Explicit operator recovery of known original completed write after native reasoning schema refusal",
+  "acknowledgement": {
+    "acknowledged": true,
+    "requestId": "1cea8947-22c0-43fa-99ff-12531139c376:b7fcf8d5d9d6505238b3268b8a24a93152c3127551ca0c66b0e3bdc8a01198c5",
+    "receiptId": "33fad91ce63619e73566bc6b22b36ba6ffbd846897cc915adf3f715d1fd1dfa8",
+    "protectedDispatch": false
+  }
+}

@@ -93,3 +93,15 @@ explicitly cannot establish downstream response-loss protection. Current real
 negative actions, delivery loss across all transport stages, approval, budget,
 revocation, restart and remaining I01-I08 gates are still open. No host acceptance
 or publication is claimed.
+
+## Native Codex subscription candidate
+
+The exact `70557f4` source and archive `78257af62fc8...` now support native Pi
+`openai-codex/gpt-5.5` with parent-held ChatGPT subscription credentials.
+[Subscription qualification](SUBSCRIPTION-QUALIFICATION.md) records the cold
+public installation, useful four-operation workflow, actual forbidden read/write
+with zero resource dispatch, credential exclusion, exact OS process probes,
+component tests and preserved failed candidates. Raw evidence is under
+`evidence/2026-09-09/codex-subscription-*`. The complete matrix remains separately
+reported; these observations do not close all I01-I08 gates or authorize a
+public accepted-release claim.
