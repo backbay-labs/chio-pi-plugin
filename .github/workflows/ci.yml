@@ -1,0 +1,88 @@
+# Source/package checks are not real-host acceptance. Required I01-I08
+# evidence must be executed separately with the exact delivered artifacts.
+name: ci
+'on':
+  push:
+    branches:
+    - main
+  pull_request: null
+  workflow_dispatch: null
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  PACKAGE_NAME: '@chio/pi-plugin'
+  TZ: UTC
+  LC_ALL: C
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      with:
+        ref: ${{ github.sha }}
+        persist-credentials: false
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: 22.19.0
+    - name: Pin npm
+      run: npm install --global npm@11.8.0 --ignore-scripts --no-audit --no-fund
+    - name: Install locked dependencies
+      working-directory: .
+      run: npm ci --ignore-scripts --no-audit --no-fund
+    - name: Typecheck, build, and unit regressions
+      working-directory: .
+      run: |
+        set -euo pipefail
+        rm -rf dist
+        npm run typecheck
+        npm run build
+        npm test
+    - name: Build staged release artifact
+      working-directory: .
+      run: |
+        set -euo pipefail
+        npm run pack:release -- "${RUNNER_TEMP}/chio-release"
+    - name: Verify clean consumer installation and packaged entrypoints
+      run: |
+        set -euo pipefail
+        cd "${RUNNER_TEMP}/chio-release"
+        sha256sum --check ./*.sha256
+        artifacts=(./*.tgz)
+        test "${#artifacts[@]}" -eq 1
+        package_artifact="$(realpath "${artifacts[0]}")"
+        consumer_dir="$(mktemp -d "${RUNNER_TEMP}/chio-consumer.XXXXXX")"
+        cache_dir="$(mktemp -d "${RUNNER_TEMP}/chio-empty-cache.XXXXXX")"
+        cd "${consumer_dir}"
+        printf '%s\n' '{"private":true}' > package.json
+        npm install  --ignore-scripts --no-audit --no-fund --cache "${cache_dir}" "${package_artifact}"
+        node --input-type=module <<'NODE'
+        import { readFileSync, existsSync, realpathSync } from 'node:fs';
+        import { resolve, relative, isAbsolute } from 'node:path';
+        import { execFileSync } from 'node:child_process';
+        const root = resolve('node_modules', process.env.PACKAGE_NAME);
+        const pkg = JSON.parse(readFileSync(`${root}/package.json`));
+        if (pkg.name !== process.env.PACKAGE_NAME) throw new Error('wrong installed package');
+        if (pkg.scripts) throw new Error('staged release retains lifecycle scripts');
+        for (const version of Object.values(pkg.dependencies ?? {})) {
+          if (/^(file:|link:|workspace:)/.test(version)) throw new Error('unresolved local dependency');
+        }
+        const bins = typeof pkg.bin === 'string' ? [pkg.bin] : Object.values(pkg.bin ?? {});
+        for (const entry of [pkg.main, ...bins].filter(Boolean)) {
+          const target = resolve(root, entry);
+          if (!existsSync(target)) throw new Error(`missing entrypoint ${entry}`);
+          const rel = relative(root, realpathSync(target));
+          if (rel.startsWith('..') || isAbsolute(rel)) throw new Error('entrypoint escapes installed package');
+          execFileSync(process.execPath, ['--check', target], { stdio: 'inherit' });
+        }
+        NODE
+        npm publish "${package_artifact}" --dry-run --ignore-scripts --access public
+    - name: Retain qualified package
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: source-package
+        path: ${{ runner.temp }}/chio-release
+        if-no-files-found: error
