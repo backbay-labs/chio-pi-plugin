@@ -41,15 +41,22 @@ Install the resulting tarball from a fresh consumer directory and empty npm
 cache, with scripts disabled:
 
 ```sh
-npm install --ignore-scripts --no-audit --no-fund \
+npm install --ignore-scripts --install-strategy=nested --save-exact --no-audit --no-fund \
+  --cache /absolute/new-empty-cache @earendil-works/pi-coding-agent@0.85.1
+npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund \
   --cache /absolute/new-empty-cache /absolute/new-candidate-directory/package.tgz
+./node_modules/.bin/chio-pi --help
 npm publish /absolute/new-candidate-directory/package.tgz --dry-run --ignore-scripts --access public
 ```
 
 The filename `package.tgz` above is a placeholder for the emitted tarball. The
 workflow checks the emitted checksum, installed package name, absence of local
 `file:`/`link:`/`workspace:` dependencies, and installed entrypoint syntax.
-Pi intentionally resolves its exact public host peer and public typebox dependency from npm during the empty-cache install; only Chio dependencies are bundled.
+Pi installs its exact public host peer first, then installs the plugin with the
+verified nested strategy. CI executes `chio-pi --help` after installation to
+catch missing peer transitive dependencies even when npm exits successfully.
+Registry access is required for the host and public typebox dependency; Chio
+dependencies are bundled.
 
 ## Hosted qualification and publication
 

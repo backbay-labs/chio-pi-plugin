@@ -131,7 +131,9 @@ jobs:
           cache_dir="$(mktemp -d "${RUNNER_TEMP}/chio-empty-cache.XXXXXX")"
           cd "${consumer_dir}"
           printf '%s\n' '{"private":true}' > package.json
-          npm install  --ignore-scripts --no-audit --no-fund --cache "${cache_dir}" "${package_artifact}"
+          npm install --ignore-scripts --install-strategy=nested --save-exact --no-audit --no-fund --cache "${cache_dir}" @earendil-works/pi-coding-agent@0.85.1
+          npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund --cache "${cache_dir}" "${package_artifact}"
+          ./node_modules/.bin/chio-pi --help
           node --input-type=module <<'NODE'
           import { readFileSync, existsSync, realpathSync } from 'node:fs';
           import { resolve, relative, isAbsolute } from 'node:path';
