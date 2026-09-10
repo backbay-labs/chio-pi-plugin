@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import time
@@ -15,7 +16,14 @@ for name in ['helper', 'package-dir', 'operator-bridge', 'owner-launcher', 'kern
 p.add_argument('--image', required=True); p.add_argument('--kernel-sha256', required=True)
 p.add_argument('--cases', nargs='+', choices=['after-receipt','before-admission','after-admission'], default=['after-receipt','before-admission'])
 p.add_argument('--restart-only', action='store_true')
-a = p.parse_args(); a.output = a.output.resolve(); a.output.mkdir(mode=0o700, exist_ok=a.restart_only)
+p.add_argument('--name-prefix', default='pi')
+p.add_argument('--ports', nargs=3, type=int, default=[58512, 58513, 58526],
+    metavar=('AFTER_RECEIPT', 'BEFORE_ADMISSION', 'AFTER_ADMISSION'))
+a = p.parse_args(); a.output = a.output.resolve()
+if not re.fullmatch(r'[a-z0-9-]{1,40}', a.name_prefix): p.error('invalid isolated owner name prefix')
+if len(set(a.ports)) != 3 or any(port < 1024 or port > 65535 for port in a.ports):
+    p.error('three distinct unprivileged ports are required')
+a.output.mkdir(mode=0o700, exist_ok=a.restart_only)
 a.package_dir = a.package_dir.resolve(strict=True)
 helper = ['python3', str(a.helper.resolve()), '--owner-root', str(a.owner_root.resolve()), '--output-root', str(a.output)]
 results = []
@@ -62,17 +70,18 @@ def restart_verify(case):
         'sameNativeSession':not fresh,'harnessSha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()})
 
 
-cases={'after-receipt':('pi-after-receipt-r1',58512,'/workspace/uncertain.txt'),
-       'before-admission':('pi-before-admission-r1',58513,'/workspace/before-fault.txt'),
-       'after-admission':('pi-after-admission-r1',58526,'/workspace/uncertain.txt')}
+cases={cutpoint:(a.name_prefix+'-'+cutpoint+'-r1', port,
+                '/workspace/before-fault.txt' if cutpoint=='before-admission' else '/workspace/uncertain.txt')
+       for cutpoint, port in zip(['after-receipt','before-admission','after-admission'], a.ports)}
 if a.restart_only:
     for selected in a.cases:restart_verify(cases[selected][0])
     print(json.dumps({'kernelRestartCases':a.cases,'passed':True}));raise SystemExit(0)
 for cutpoint in a.cases:
     case,port,target=cases[cutpoint]
-    created = invoke(helper + ['create', '--name', case, '--port', str(port), '--kernel', str(a.kernel),
+    create_command = helper + ['create', '--name', case, '--port', str(port), '--kernel', str(a.kernel),
         '--kernel-sha256', a.kernel_sha256, '--image', a.image, '--policy', str(a.policy),
-        '--owner-launcher', str(a.owner_launcher), '--bridge', str(a.operator_bridge)])
+        '--owner-launcher', str(a.owner_launcher), '--bridge', str(a.operator_bridge)]
+    created = invoke(create_command)
     manifest = json.loads(created.stdout); evidence = Path(manifest['output']); config = Path(manifest['gatewayConfig'])
     private = Path(manifest['owner']); runtime = Path(tempfile.mkdtemp(prefix='chio-pi-kernel-storage-'))
     config_hash = hashlib.sha256(config.read_bytes()).hexdigest()
