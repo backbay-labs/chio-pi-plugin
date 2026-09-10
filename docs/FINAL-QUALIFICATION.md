@@ -1,5 +1,10 @@
 # Pi final candidate qualification
 
+The [2026-09-10 static-kernel follow-up](STATIC-KERNEL-QUALIFICATION.md) records
+new native observations on kernel `c03a8a711dbb...`. The kernel and gate table
+below remain the historical `33dd1dea...` combination; their results are not
+automatically transferred to the newer binary.
+
 This is the current per-host record for the frozen candidate below. It supersedes
 the status routing in the historical acceptance and subscription records, without
 changing their artifact identities or promoting their failures. Pi is not yet a

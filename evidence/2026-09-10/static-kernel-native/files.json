@@ -1,0 +1,2606 @@
+[
+  {
+    "path": "raw/attempt-1/host/native-owner-start.stdout.gz",
+    "sha256": "97633370d5c30db345cb8281cf35fbf74e6a38d5eac94ec04995e183a48fb226",
+    "originalSha256": "2903d4559f73f1abd19f14dabf3083c6f972328a1497b7374d8a28db6cfcd543",
+    "originalBytes": 81,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-owner-start.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/budget-owner-start.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/budget-owner-start.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/summary.json.gz",
+    "sha256": "de8d2485aa39441b09f9c850dabef512cffa481fbe3b22eb83f886e6ed4e21d7",
+    "originalSha256": "742d027e5f8b3c3283f3347be4262963de7615061f1fae27ce57341b65badd38",
+    "originalBytes": 368,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/summary.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints.stdout.gz",
+    "sha256": "d4daa4829fb8ca5a4e5d3fd05c6c296c5bbe6e7f373fa2646a464b6a343e7379",
+    "originalSha256": "6ab12efb9666f3ae82c776735bbd72afcde40de9ff1ceeff8679d2487b9bfb14",
+    "originalBytes": 349,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/normal-resource-prepare.stdout.gz",
+    "sha256": "1f5ac473efb3aebacc68ec7051161727f5a7d14c86cf71749c9ef424f25e2028",
+    "originalSha256": "df692ac2d4eb62c78e276911823a7b2b450088405ac6d69231151ee96b1b9b0f",
+    "originalBytes": 150,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/normal-resource-prepare.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/seed-approved.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/seed-approved.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/source-identity.json.gz",
+    "sha256": "9b45b9f137fcee19ee2adbf2e167475788fe67a284f0ff6ad0717ebc9fac9cb7",
+    "originalSha256": "55d7f6ba480da3fe1d281ed579a944fb49dc4e807aa1f5e9486e73f1b14b2887",
+    "originalBytes": 6910,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/source-identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash.stdout.gz",
+    "sha256": "9e45f7445a9d81abf0de1c6b4d6a0da0236fe4993568b061f87fe127cc5b49fa",
+    "originalSha256": "672e2018eba2d114a7af06a2251ec25dd0e67842f417b5b67301c0f0d290b475",
+    "originalBytes": 1707,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/budget-policy.yaml.gz",
+    "sha256": "71fabe44a65eab7d41d2baf51288c613569173a64196a12c59e3c3cd6641b117",
+    "originalSha256": "976292f1bb402e04ab54ad9c577bf6762f4759817f6430cf257beabc2a82716f",
+    "originalBytes": 630,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/budget-policy.yaml"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage.stdout.gz",
+    "sha256": "0f4f477dacb21388f7611a631ce8a70fd79882fe15f905ad362d3e65fb22845e",
+    "originalSha256": "245a29a26c4bdf5a0a8e0d605a7a6542ae70cd228fb1daece1c51a7cad281a33",
+    "originalBytes": 2241,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/seed-approved.stdout.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/seed-approved.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/normal-resource-prepare.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/normal-resource-prepare.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/native-owner-start.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-owner-start.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-binding.json.gz",
+    "sha256": "127b698ae0677f4c101ffe8c161ff4d484f301e1720e118139b9088dd20db9c9",
+    "originalSha256": "1560f7932dce00c5697b3d9e14ca63a7f9b70154835b5369dd02b5e97cce5cad",
+    "originalBytes": 2239,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-binding.json"
+  },
+  {
+    "path": "raw/attempt-1/host/budget-owner-start.stdout.gz",
+    "sha256": "7ae834487e8672c9f7ff3d48bc1fe2a87157bb9eb2fc96375778aa7ec7ff7ad9",
+    "originalSha256": "69942e8e26e321eebb2da90e38ef965769a6c8ec7b80be7de559dfbcd94ff1a0",
+    "originalBytes": 80,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/budget-owner-start.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/expiry-owner-start.stdout.gz",
+    "sha256": "186155d00c8132746e8283dcd38d7f160e1915fef332748cdba93e1e1496772c",
+    "originalSha256": "30b84b21f5afd711319a0ee15d3516ffb81586ea94282d4ae8c055cb6b61d152",
+    "originalBytes": 80,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/expiry-owner-start.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/native-confinement.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-confinement.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/parallel-fixture-prepare.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/parallel-fixture-prepare.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-prepare.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-prepare.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle.stdout.gz",
+    "sha256": "fb5e2ddf0922030f133c09c3dc4b2b298777770aa050fd7917cb7d47b9bc7b42",
+    "originalSha256": "84f9311e50403f6056cc6b91ae76dcc804f33d795a587c4ba15b691f708cd3b4",
+    "originalBytes": 761,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/installed-files-at-start.json.gz",
+    "sha256": "091b500d669c16639cd40d9f75e279b95b7d8831f813d1ef892b5b3cf80474dc",
+    "originalSha256": "c97bbd6bd3221623e017fd2173151bb6cb50f44ef5855b6b941555b32ae1c5a2",
+    "originalBytes": 2617433,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/installed-files-at-start.json"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval.stdout.gz",
+    "sha256": "ab53e8eeb893edb1f2e6033b6fb0bd2882a8db487cacd25c3150c35971c223c7",
+    "originalSha256": "b098df4e0788e70b0d01d2fe76bc63f663082787a4b71ebf13dc516a658b23da",
+    "originalBytes": 1043,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry.stdout.gz",
+    "sha256": "4835d129a5ac67619f8d181e3904a80dda1841b95aefcc12e3c14f6c02b0e207",
+    "originalSha256": "541773478da8bf282f9fcbe0c5f56d75a265428f4917472fd81e0d877baba4fc",
+    "originalBytes": 68,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss.stdout.gz",
+    "sha256": "738ba99fb18dbe58320b1d43fce0a0e64a9e5dfe4de55fb691385625edbe0db7",
+    "originalSha256": "5ffc6458f1b910b718bbdf60169e166b0359284ab05859c75fd3898169b0934b",
+    "originalBytes": 1720,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/installed-links-at-start.json.gz",
+    "sha256": "28e4917d215075f9e8aae097888a37801948e533496a6bf9c1b5de9c64409301",
+    "originalSha256": "acc04b2acebeebe9c596c4d427cc312d4662a7cf8858ba19b4d8ed0aacdce60f",
+    "originalBytes": 1445,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/installed-links-at-start.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-identities.json.gz",
+    "sha256": "7175909bb296019e6914b16bdca020cfee9656833fb0cc3ad42c300a826f0238",
+    "originalSha256": "b59dbb902780ab846a2314c4c1c88ac3f214ecb65b45d137cf8a20340b785583",
+    "originalBytes": 437,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-identities.json"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel.stdout.gz",
+    "sha256": "b3858bbedb703a627cbbb2fe35a67ca2feed0b65bbf73cb5d2138237071d9672",
+    "originalSha256": "6a3d0f0bdfad197e7b232ab04411030b5ba4c92910cad3f984d9d28d7806ab09",
+    "originalBytes": 2432,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra.stdout.gz",
+    "sha256": "65bbab564079de89ba00d72c08790dd311a020886bd87f22df04a3371690c360",
+    "originalSha256": "ef72289e0a0982fc3eef243ea2a4b12f839fb4e43c6daab946ddbd4f722fab10",
+    "originalBytes": 3943,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/expiry-policy.yaml.gz",
+    "sha256": "2c8d6025dd88b1cab9ac55ca0af500cffe9690309c24ea726e950219077aa2c7",
+    "originalSha256": "9890d6b40a7b8394ec5eb52a0dd0ab8168b14e6ae370e7ca9731f1f76e28d52d",
+    "originalBytes": 627,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/expiry-policy.yaml"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-prepare.stdout.gz",
+    "sha256": "de400ac569c1d4627b1c38aa771a7c60a823eec839c53a5c2cb2a327fa9ee897",
+    "originalSha256": "40e6a720bf41dbbcd158018f390f17e8e564e9f16a21bd1bfed0b22e18619acc",
+    "originalBytes": 150,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-prepare.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/runs.json.gz",
+    "sha256": "3efc85dffe1b736104cb7b385164bf552130b54c1d23bfd905936bcafa8d841e",
+    "originalSha256": "6e663d85d823b1ac5a197821d256dbdcbf0f1ade66696f38ea7dd65e1b2b65e9",
+    "originalBytes": 18441,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/runs.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/native-confinement.stdout.gz",
+    "sha256": "fa4fe5486bee9199a096b91323d1873ddcfd24da1a6a1f2cb157b262999942a5",
+    "originalSha256": "e815d72d3ff2202ec70220bceebcf16c33ded73697c2fe6b691589602abcbe05",
+    "originalBytes": 76,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-confinement.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/expiry-owner-start.stderr.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/expiry-owner-start.stderr"
+  },
+  {
+    "path": "raw/attempt-1/host/parallel-fixture-prepare.stdout.gz",
+    "sha256": "bd4de57f97b1f21b719a5dc2e1d369d4f37785e24e84ce847258af94116fad70",
+    "originalSha256": "bd11ac05b6152d8fb1e44e7a046c7cb10eace808b518d3a357ea712645ac8e06",
+    "originalBytes": 150,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/parallel-fixture-prepare.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget.stdout.gz",
+    "sha256": "45d6d4ba42690686f8f7901483b55a4baa20b2dc08c1d4d08f3c7e5f1611337c",
+    "originalSha256": "bbd52190b114df351e9789c3ac585aded9af27c33fbd8d6bac49b29a8a84efe6",
+    "originalBytes": 250,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution.stdout.gz",
+    "sha256": "098477d053c89f5d2bbd1f5673a8541df886ef8291d8eba0c34afb0252389e41",
+    "originalSha256": "8642302352e6b1ba8a1f25e18185e9a8ff263d38ef5f61f9746e50321f757145",
+    "originalBytes": 1671,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution.stdout"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/results.json.gz",
+    "sha256": "71c8beb4b0198d3d2890d2185877c9a5cb5c2865f832208cefdfff50b6f41bcd",
+    "originalSha256": "1a1fa927960835c221785a2acc6e2e1369fa42310af8c2118d4a09cfb0bc1129",
+    "originalBytes": 1975,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/results.json"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/identity.json.gz",
+    "sha256": "13082cd38c4cb428a71654729734cc8f495a6ec15b2105cfd75f8200b0053c53",
+    "originalSha256": "0e52603d530fc9a635c9ede0f6d79a57d35db6ef8ce219658d37c0087b69237b",
+    "originalBytes": 654,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/before.json.gz",
+    "sha256": "9555380fd9c7b14a96d5ce8b112827804264af9f8d599f0e0ef4f3fae2257ceb",
+    "originalSha256": "5f415192193e381d54d66735495ed75f86cf2e0416196eaa4342c76341a8ee74",
+    "originalBytes": 5817,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/configuration.redacted.json.gz",
+    "sha256": "80b5611b192e0bbcffbf9f6d436218d5813e984ae61bf3be3a4e976933f42c83",
+    "originalSha256": "5a178e8e23f0ecb7d177a90a735705d1775786eabc596a5c63c632da30daa9de",
+    "originalBytes": 4962,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/configuration.redacted.json"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/after.json.gz",
+    "sha256": "df8cefe0cc56b9c59ec610f98e78d489e9298d7bf22d166f42ecb966e484e542",
+    "originalSha256": "015f2dd5ac2e7ca16b4dc0411af697257ce78ad2ee649747dbaf5ca79781f5ff",
+    "originalBytes": 6342,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/dead-owner-lock-recovery.json.gz",
+    "sha256": "7067cd1176ee2006981c70f5fee67968c26bdb307afaa7c7f51bbdab3ebcad90",
+    "originalSha256": "4bd0a50c68cda23f9e5c38d5deb6c4d507d1a51110128027874f5b1531cd9198",
+    "originalBytes": 505,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/dead-owner-lock-recovery.json"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/fault.jsonl.gz",
+    "sha256": "a7e28449556538ed31b768740f6cbcc980db45351ac9c4a71452d9ba43610642",
+    "originalSha256": "5c62e8fadcae2b2cad89b74a7520f3d09a2bc8b47d2bb537e7fd490548ddaa3f",
+    "originalBytes": 265,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/fault.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/after-operator-recovery.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/after-operator-recovery.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/restart-fenced.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/restart-fenced.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/host.stdout.jsonl.gz",
+    "sha256": "6f19d173061561ea0d99a8a0f710d976554eaf6e779ae188b1f0d32d54973811",
+    "originalSha256": "4aa6762ba9a37be9bbb01bead03f5f88b60df1396b0df0ea3267e90250c272de",
+    "originalBytes": 3039,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/recovery.json.gz",
+    "sha256": "6ae06baf7d17914b73b4a886ff7985056f3297d32e7a385fb64ddeb9bf920c8b",
+    "originalSha256": "95239234a0284c16822a38a16ffe2445f0929335fbbaa4adb8f1a62ca3b4535c",
+    "originalBytes": 8330,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/recovery.json"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/restart-fenced.stdout.jsonl.gz",
+    "sha256": "5bdff6dbdd2bcd4fbbd4629458b3447f5667094cf729e07f818c2981a8c6acbf",
+    "originalSha256": "f8d4c56290860e35074dfc5c0ad02aca9b6baac06bb82caf361b91de5ecec7aa",
+    "originalBytes": 5617,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/restart-fenced.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/gateway-crash/gateway-crash/after-operator-recovery.stdout.jsonl.gz",
+    "sha256": "afcc346e8f93275c3ff8ed8748df6dd29e5028f8b24588c45d169b9363ed164b",
+    "originalSha256": "0da4a26803994a7c5a5c6ffc12648f3b7a05f96b47c980baae90c9a91d3a1ad7",
+    "originalBytes": 18317,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/gateway-crash/gateway-crash/after-operator-recovery.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/results.json.gz",
+    "sha256": "d5ff447a6e6764464acdd8f993ee4c15ed858e801b16fb12eeee04ab2bf17548",
+    "originalSha256": "c154814119a00c7d563eb8a078e948c09e780f31f6b2ae8e9baca353508a0f30",
+    "originalBytes": 5020,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/results.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/identity.json.gz",
+    "sha256": "39ae7413f122f202a02bd7b375d750349987911baf31c595785d33d7e25d93da",
+    "originalSha256": "e3a987c213099e3159f5b5b710e737eb4f2539dcf8804812e124aaafc35d7e89",
+    "originalBytes": 782,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/aggregate-budget-result.json.gz",
+    "sha256": "99e4b316524f9e7ef73aef7a29be2451ae145b2bca2b9f677e4fa995003fd3a2",
+    "originalSha256": "dc0e1c5507ecaa20e42776288fcd41cc0eb70e5ae37473d593c2f36cd5aeddcb",
+    "originalBytes": 193,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/aggregate-budget-result.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-exhausted/before.json.gz",
+    "sha256": "7c1e65adaeb3c57e904237d395eec566bf0918f10e5efbd853ce57489e507c64",
+    "originalSha256": "864a003d1a578bba14bac70c78ca6fa6f0a09721de3d716fb2f4d076d96827f6",
+    "originalBytes": 1568,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-exhausted/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-exhausted/native-dispatch.json.gz",
+    "sha256": "11725ffd941ddeef3cb8ff2187fd544c3a6b887da81978103d1125ede79974cf",
+    "originalSha256": "01f243ff8bff8a910b13a856bca6dee21b2f4bd662a560dc4e2dab4b63557373",
+    "originalBytes": 502,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-exhausted/native-dispatch.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-exhausted/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-exhausted/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-exhausted/prompt.txt.gz",
+    "sha256": "85bca9d4ea34827f712cccb8db27c4fdc71f007ba68f5578d2bb0381d51859e3",
+    "originalSha256": "8906fbee388d14106a8c5acf4b133d3a6b451731edf42c8e7e8f25fd2561866d",
+    "originalBytes": 335,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-exhausted/prompt.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-exhausted/after.json.gz",
+    "sha256": "7c1e65adaeb3c57e904237d395eec566bf0918f10e5efbd853ce57489e507c64",
+    "originalSha256": "864a003d1a578bba14bac70c78ca6fa6f0a09721de3d716fb2f4d076d96827f6",
+    "originalBytes": 1568,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-exhausted/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-exhausted/host.stdout.txt.gz",
+    "sha256": "8908885b2dfaa9194d8748c1643cef0709ec12804cd329d774d9f3fc2a3ade52",
+    "originalSha256": "6b49aa86bbbd93f552126ab0ac4127027cf9e99915fba1e30ddeea6cf74b3472",
+    "originalBytes": 6906,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-exhausted/host.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-read/before.json.gz",
+    "sha256": "488c6b222cd501c17a87c6cf8b0e8d1047c83b0ff68ff990ccc7ca33a8b0f17b",
+    "originalSha256": "2d58e725db8a57d2250f201e98f768de2ecbcb3ee2660292c8ead6788e3bfd0c",
+    "originalBytes": 1109,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-read/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-read/native-dispatch.json.gz",
+    "sha256": "ae3dd8411f805d652b29d1ac35519a0620a77673d7a6114bd405c2d20a699391",
+    "originalSha256": "2f78e26b92e4f99681b25d76d37ef11cd8bdabf89d4f5c938fd5cbf24e39b3e8",
+    "originalBytes": 529,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-read/native-dispatch.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-read/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-read/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-read/prompt.txt.gz",
+    "sha256": "e8743ecaa7fde4b96e62da90e6e306275d778ff6114038ae23a13728de3a7993",
+    "originalSha256": "fd0cea9d75e6fc463b87610ed7f309ae11733fbb182f703dd54f57212cba9f03",
+    "originalBytes": 362,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-read/prompt.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-read/after.json.gz",
+    "sha256": "7c1e65adaeb3c57e904237d395eec566bf0918f10e5efbd853ce57489e507c64",
+    "originalSha256": "864a003d1a578bba14bac70c78ca6fa6f0a09721de3d716fb2f4d076d96827f6",
+    "originalBytes": 1568,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-read/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-read/host.stdout.txt.gz",
+    "sha256": "95775ce2502665dea3359671fe756e8c4beafc070c95437a4e190108cc7b8b50",
+    "originalSha256": "eb103ef4e594b3bf494b6b412f0a86627f5c464df39253cf91157a98ffd99d65",
+    "originalBytes": 16901,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-read/host.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-edit/before.json.gz",
+    "sha256": "039dada48607edc0d546e0e35c0f56568d9b828f3b4ab00150130a16dcf24e9f",
+    "originalSha256": "6f8c504fa11755ed2c5c5eee53f57f4513aeab55e3ec387ffaf3a6c1504fdbd6",
+    "originalBytes": 657,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-edit/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-edit/native-dispatch.json.gz",
+    "sha256": "5c154a2c93e0ead2af8c83faf1208e490de39cecc261de512e07d420f110da7a",
+    "originalSha256": "110ffe1bff5e6f451060087ce3226796a31428bf61fd8081e6c2355a8686c7d7",
+    "originalBytes": 657,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-edit/native-dispatch.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-edit/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-edit/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-edit/prompt.txt.gz",
+    "sha256": "81b3be4e111adacac54d8575ebbe0a252ec14d577048034e2c34dde756214884",
+    "originalSha256": "13256a63f7693aee3119b6217dac0c63e00019ae4c3f6e94dfede7fe40174d7e",
+    "originalBytes": 414,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-edit/prompt.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-edit/after.json.gz",
+    "sha256": "488c6b222cd501c17a87c6cf8b0e8d1047c83b0ff68ff990ccc7ca33a8b0f17b",
+    "originalSha256": "2d58e725db8a57d2250f201e98f768de2ecbcb3ee2660292c8ead6788e3bfd0c",
+    "originalBytes": 1109,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-edit/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-edit/host.stdout.txt.gz",
+    "sha256": "cdf3e7e316103c91223816b7cdb8e82e933e41bf1a5bae5bb8f6b4c9a664f7e1",
+    "originalSha256": "9d1910c9661200b360fc2480acf5b8c1a09aa70982d3c10c8d35071e8dc933d1",
+    "originalBytes": 19366,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-edit/host.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-write/before.json.gz",
+    "sha256": "bdf16a58650c4b500bd7bc45f83516d4a77fce227d10c65af2000f1b4aff4429",
+    "originalSha256": "096fe7ac523c61c768f3241237d0fea4ec7db0db70996514ffb570e6158c742b",
+    "originalBytes": 137,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-write/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-write/native-dispatch.json.gz",
+    "sha256": "08426baef5564fda4c090577461fd28a64718e31a32455ea52e1a2b9f86bc810",
+    "originalSha256": "ab46847f10854bf426a9eb5d239c59ae73c0e570956a01ed6bbf1b17ef41d1fe",
+    "originalBytes": 575,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-write/native-dispatch.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-write/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-write/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-write/prompt.txt.gz",
+    "sha256": "218bef7c7d205d673dc7078aa9b146802ee87a785ff38b12c49134d3ddb3912f",
+    "originalSha256": "f6b65e4c5197f0dc656bf1ffb3bb0ea85db020856a5626f805798c90ae3df4a2",
+    "originalBytes": 398,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-write/prompt.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-write/after.json.gz",
+    "sha256": "039dada48607edc0d546e0e35c0f56568d9b828f3b4ab00150130a16dcf24e9f",
+    "originalSha256": "6f8c504fa11755ed2c5c5eee53f57f4513aeab55e3ec387ffaf3a6c1504fdbd6",
+    "originalBytes": 657,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-write/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/aggregate-budget/budget-write/host.stdout.txt.gz",
+    "sha256": "8b21d223f93cc52cb47f08b4586ebe8bdab8d182786d9a5a5551efcd4df486ca",
+    "originalSha256": "3a3e1cc7a780a93b6465ddb5cd2c93682b76b5d1c4fffe9e4608cb8f1093fefe",
+    "originalBytes": 18073,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/aggregate-budget/budget-write/host.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/expiry-observation.json.gz",
+    "sha256": "deca42fc6cdca2239e8748808433230e1f90512137edbd670aef452b74b41bbc",
+    "originalSha256": "d93175613b6aff1bed72778a7d096ecce3ab728526f812e7e64449aa65022d2c",
+    "originalBytes": 91,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/expiry-observation.json"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/results.json.gz",
+    "sha256": "fa74aef1a5409e9f023910e87c79b1d825c653f8c40b656294f0260329a782e2",
+    "originalSha256": "c96d8d5068c157953590d731c695e5735e76b444e64911d204a940f33e536b12",
+    "originalBytes": 1300,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/results.json"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/actual-capability-binding.json.gz",
+    "sha256": "127b698ae0677f4c101ffe8c161ff4d484f301e1720e118139b9088dd20db9c9",
+    "originalSha256": "1560f7932dce00c5697b3d9e14ca63a7f9b70154835b5369dd02b5e97cce5cad",
+    "originalBytes": 2239,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/actual-capability-binding.json"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/identity.json.gz",
+    "sha256": "e97bd5da3784b92a93d2eba9ac5864f860934db32fbba68380b6c2d9c60b5ac1",
+    "originalSha256": "a3b874d2edae9cab7680588bf1c40c988d2e90680f842f98947602db7da99013",
+    "originalBytes": 783,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/expired-capability/before.json.gz",
+    "sha256": "bdf16a58650c4b500bd7bc45f83516d4a77fce227d10c65af2000f1b4aff4429",
+    "originalSha256": "096fe7ac523c61c768f3241237d0fea4ec7db0db70996514ffb570e6158c742b",
+    "originalBytes": 137,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/expired-capability/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/expired-capability/native-dispatch.json.gz",
+    "sha256": "0a52c30dc6cc5c8391780fe64a68f3fe49ecc8ff1e321b075df27148ef545b55",
+    "originalSha256": "df7fc2f7f4ab94a27048183dc7e49ce7738af246c35cc8a305462e8ddd90f3db",
+    "originalBytes": 138,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/expired-capability/native-dispatch.json"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/expired-capability/host.stderr.txt.gz",
+    "sha256": "13fbb7279ccf8ecb982d533b1dd19cbf5e5ba7d3dd3f31e1269e1cbda6e2a61b",
+    "originalSha256": "f761a48f7f908cd76b6259379586c4f1b18aef38e1757333cfac98e97347839a",
+    "originalBytes": 86,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/expired-capability/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/expired-capability/prompt.txt.gz",
+    "sha256": "d8e15487712128b589d3c47c8ebc47cef1d51b0335ec3470cac09c232d44e3d0",
+    "originalSha256": "c10107ea889c34017d14ccfe36814c81e4aaf861a71ce98c9b0a7421a57829ec",
+    "originalBytes": 415,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/expired-capability/prompt.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/expired-capability/after.json.gz",
+    "sha256": "bdf16a58650c4b500bd7bc45f83516d4a77fce227d10c65af2000f1b4aff4429",
+    "originalSha256": "096fe7ac523c61c768f3241237d0fea4ec7db0db70996514ffb570e6158c742b",
+    "originalBytes": 137,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/expired-capability/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/actual-capability-expiry/expired-capability/host.stdout.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/actual-capability-expiry/expired-capability/host.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-plugin-install.txt.gz",
+    "sha256": "25328e2424142215c716d8ec1a15057d3465c1fe046aabf916eca2416e5db1f4",
+    "originalSha256": "d02bfdcec2801ddec9c535bae3498f722acf2e259bc8125609e0c6175c6627ea",
+    "originalBytes": 141,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-plugin-install.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/resumed-profile-tampering.json.gz",
+    "sha256": "7361e8bbdc93e2fce5bc4da6549771174660b72683814b602eced8cc19c3b612",
+    "originalSha256": "f813b790497a626feae0f4c6a40f1b6223d5b6a8b3cdbde5641de84a74612280",
+    "originalBytes": 245,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/resumed-profile-tampering.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/results.json.gz",
+    "sha256": "8841948a17eaa7e2276e2727e4da7ed3c35d21adf24fb03ca4bf4182d35d3b2d",
+    "originalSha256": "12df20df4a8e57443383e7991ed0e49b9263af657dff46b428569dbfa27ac850",
+    "originalBytes": 9654,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/results.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-host-install.txt.gz",
+    "sha256": "c4e61ea4a9f6ade907179c76c0ab4f7270c5d0125c87e1ffde1b14c52ad6ce5a",
+    "originalSha256": "18ae5a8d92b986df61a01bd796657ff4de60ba45dc8d7a17ae2379eeb3211115",
+    "originalBytes": 186,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-host-install.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/input-installations.json.gz",
+    "sha256": "02cf31f0f39896a5d3da906ec51ab3bc93535ff9b874e08f2e4a1646eb4d7e7a",
+    "originalSha256": "010f2f0fb897267748599fdd381dd290ee06afa0a4836c93840dcf13b3f8726a",
+    "originalBytes": 567,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/input-installations.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/lifecycle-summary.json.gz",
+    "sha256": "533070bba9d011c696339205492abbaa44b35d7fd857f5b34800e540ba67a5ca",
+    "originalSha256": "3f638373c48350894e06ce70f5ddd3cff78c1a068bac34b13ce0798e821d56ef",
+    "originalBytes": 723,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/lifecycle-summary.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgraded-installation.json.gz",
+    "sha256": "8bfdbe8561014ebd351ff14a3d35e07fe03c80ca0502f712b58c77b877e58f34",
+    "originalSha256": "5df274179d595e6d1b67aaabfbe516b255e1d43488abb952f136304604b1fc24",
+    "originalBytes": 275,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgraded-installation.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/removal-revocation.json.gz",
+    "sha256": "3858a1f9899f63cac55a198153bd7d686b7ee820e566ddc5735c3acb90beaac3",
+    "originalSha256": "6a59a41ca3179f71e863804731a914cbd5b2a685c53bdc2df6e89bb7bbc3d93e",
+    "originalBytes": 250,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/removal-revocation.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-previous-write/before.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-previous-write/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-previous-write/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-previous-write/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-previous-write/after.json.gz",
+    "sha256": "01de6df766ca9f5631450ba56b4c3322d87f8091be3a497806b454c143c64df4",
+    "originalSha256": "4065e2cdb2fa470cf942a558c96078c509a48286646bbc13f3731abd5b6bad6c",
+    "originalBytes": 2300,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-previous-write/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-previous-write/host.stdout.jsonl.gz",
+    "sha256": "f52dcf9332fa239203f0f57bdbf3ba274e0de0cdb805e80a29889f78a5774deb",
+    "originalSha256": "c37df44268d3c0ecf7a1e33f99d93807dfb8b8bb892e77e9cf8731e1038b5290",
+    "originalBytes": 17415,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-previous-write/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-current-read/before.json.gz",
+    "sha256": "01de6df766ca9f5631450ba56b4c3322d87f8091be3a497806b454c143c64df4",
+    "originalSha256": "4065e2cdb2fa470cf942a558c96078c509a48286646bbc13f3731abd5b6bad6c",
+    "originalBytes": 2300,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-current-read/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-current-read/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-current-read/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-current-read/after.json.gz",
+    "sha256": "30bdae3f6750d9903050fab8ce4ce900801236a7a647d178234bb86c25940d6a",
+    "originalSha256": "ea895580b881acd917ac59c3a651ed4d646b5902dd589e17d66b8b8ae463cd89",
+    "originalBytes": 2780,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-current-read/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/upgrade-current-read/host.stdout.jsonl.gz",
+    "sha256": "b6bb15b80e96ce483941455143d6ba39ad4a33ce3e660bea82e38c22a1a6ef05",
+    "originalSha256": "5857f99d8be3664e5e1c4a0d92a583d18fb12e53936752dabe20d72be677834b",
+    "originalBytes": 16935,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/upgrade-current-read/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/removal-revoked-launch/before.json.gz",
+    "sha256": "30bdae3f6750d9903050fab8ce4ce900801236a7a647d178234bb86c25940d6a",
+    "originalSha256": "ea895580b881acd917ac59c3a651ed4d646b5902dd589e17d66b8b8ae463cd89",
+    "originalBytes": 2780,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/removal-revoked-launch/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/removal-revoked-launch/host.stderr.txt.gz",
+    "sha256": "13fbb7279ccf8ecb982d533b1dd19cbf5e5ba7d3dd3f31e1269e1cbda6e2a61b",
+    "originalSha256": "f761a48f7f908cd76b6259379586c4f1b18aef38e1757333cfac98e97347839a",
+    "originalBytes": 86,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/removal-revoked-launch/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/removal-revoked-launch/after.json.gz",
+    "sha256": "30bdae3f6750d9903050fab8ce4ce900801236a7a647d178234bb86c25940d6a",
+    "originalSha256": "ea895580b881acd917ac59c3a651ed4d646b5902dd589e17d66b8b8ae463cd89",
+    "originalBytes": 2780,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/removal-revoked-launch/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/removal-revoked-launch/host.stdout.jsonl.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/removal-revoked-launch/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-crashed/before.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-crashed/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-crashed/injection.json.gz",
+    "sha256": "1d9053b48abc491ce5f34d0cfbf24916ee19dc71362c877b0456ee9518201c4f",
+    "originalSha256": "e7e2ee397aa33998b32d698eedb52675d0f811c16a021dcc363d39e81302e81c",
+    "originalBytes": 386,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-crashed/injection.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-crashed/host.stderr.txt.gz",
+    "sha256": "cbf453c23d3f346c18d228fd7561433320ed29256e918b02d5e057d3269e98d0",
+    "originalSha256": "219f7e360efdbd7b1975e4378103937949bc490e99db30bd0d203215ba769207",
+    "originalBytes": 99,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-crashed/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-crashed/after.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-crashed/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-crashed/host.stdout.jsonl.gz",
+    "sha256": "7bfa55259f226b1ec175c35def7a450f73c96efe07fc9826c50ac6dc2801cbd3",
+    "originalSha256": "e608403ef02f832e0b0e9e4467f9b288f093d1c9eeaa875af6f7300d652f404c",
+    "originalBytes": 472,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-crashed/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-omitted/before.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-omitted/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-omitted/injection.json.gz",
+    "sha256": "c0e364db70490949f97c748b5862bd35e9486bbbd2ceaef0063788ae485d88b2",
+    "originalSha256": "ae32e6557bb7ecc979a7f936bae8f2c7080f77f5877b2e8f8a21f7a88ee98780",
+    "originalBytes": 386,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-omitted/injection.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-omitted/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-omitted/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-omitted/after.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-omitted/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-omitted/host.stdout.jsonl.gz",
+    "sha256": "9928e6d8b2a6e3cfe669505fb0ae4423614426fbc8095d822a959b96fa33fb32",
+    "originalSha256": "a59ac2ba555c4b798a5a00f19d41a01ae38ebbd8448b25dbe2aa12fa5252f090",
+    "originalBytes": 3975,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-omitted/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-hung/before.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-hung/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-hung/injection.json.gz",
+    "sha256": "ece4dae4a54c3701868bfcc3affd56dcbef7dc94ebbb7a81cc75f2e6372166b0",
+    "originalSha256": "f14cd4520b979c96500bfbcbfaed65d7f1f3d888e44e923dcd9c4bc4e274eb5a",
+    "originalBytes": 383,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-hung/injection.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-hung/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-hung/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-hung/after.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-hung/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-hung/host.stdout.jsonl.gz",
+    "sha256": "43eb42052abeea5c54939bc4c9a476dcd36ecf7c3c91b49d4114f64c75166e3b",
+    "originalSha256": "dfcec102b3a8d4f2cc3b6d684c0eb80b02916a7fa8410a1d6b553378859c6bde",
+    "originalBytes": 3579,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-hung/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-missing/before.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-missing/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-missing/injection.json.gz",
+    "sha256": "6416c489783935e3849dadadd89df96c6e2c44715b14730b7e7b53b6e36dc5a2",
+    "originalSha256": "7416ff712ab5a8a140830453fb7621a67752d9f72c896b0494759f740f51af3e",
+    "originalBytes": 324,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-missing/injection.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-missing/host.stderr.txt.gz",
+    "sha256": "754fd91054ddaab204f6be8831a6ff5dbbbe85c4c8c44babb5033fd284978a85",
+    "originalSha256": "9846c28a789faa9bbee33c7ddf71ef86113bc5decf2e055c7caacd5dcc8ea0f6",
+    "originalBytes": 1363,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-missing/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-missing/after.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-missing/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/lifecycle/plugin-missing/host.stdout.jsonl.gz",
+    "sha256": "51a409e1c5972f0f95617ae7ffbc682527220a0a44a78d61a8c3e4fed1815b8b",
+    "originalSha256": "ea6f3979e2f3efda180830f48635e46cf450b878222e8713b27dfcc558e2de5e",
+    "originalBytes": 472,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/lifecycle/plugin-missing/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/native-confinement/boundary-probe.json.gz",
+    "sha256": "1293932963e18842501b794ea604467f3605c5d5275ba30988b8af9eb226885a",
+    "originalSha256": "bd3d0173926ec0a20ec316a3dd0dc72e80040e58fd935543233374c010332313",
+    "originalBytes": 4033,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-confinement/boundary-probe.json"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/results.json.gz",
+    "sha256": "4f21db0477c9374d2801ac55c46c6231f7cb285d935e2c9343a97345a0521111",
+    "originalSha256": "9f5277de8422be42db80abd7d15e92f21c896d6f8b6ed70d7bc041999936527d",
+    "originalBytes": 1939,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/results.json"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/identity.json.gz",
+    "sha256": "13082cd38c4cb428a71654729734cc8f495a6ec15b2105cfd75f8200b0053c53",
+    "originalSha256": "0e52603d530fc9a635c9ede0f6d79a57d35db6ef8ce219658d37c0087b69237b",
+    "originalBytes": 654,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/before.json.gz",
+    "sha256": "158b005eb2960334c458c4b3a070cba558e748b19a1fa244b1c428e0a9c08bf4",
+    "originalSha256": "243c2d1478b26f33c4941c095a6fe690c2e2879649843fa3f5d9dbdbf16e8064",
+    "originalBytes": 4889,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/configuration.redacted.json.gz",
+    "sha256": "fe61ef3ca380d7b611c9e6406d7fbd51f0f9d171cdfdbc890dadb4d7cb8c9764",
+    "originalSha256": "834cf5739ca0c99487e2e4a7030aa6063166c33962915c7e33a9edb3a7304035",
+    "originalBytes": 4968,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/configuration.redacted.json"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/after.json.gz",
+    "sha256": "448c9f745d7a0a895188628b432d0cced95ce4e9649a771a473170aeff2950b5",
+    "originalSha256": "68e577f6134f3ec4ca6e82bdf94bb8b8a301c8b698a998301b25f7da3f517c1e",
+    "originalBytes": 5353,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/fault.jsonl.gz",
+    "sha256": "1323bd9d09a077035e035b2ec98f0bedc0378477dcb8744547b68c321140d7d3",
+    "originalSha256": "0799b1e968aaca0c05dad1788eb2b9769da5d99210a15a81d6bc3a9d9327e29e",
+    "originalBytes": 434,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/fault.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/after-operator-recovery.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/after-operator-recovery.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/restart-fenced.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/restart-fenced.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/host.stdout.jsonl.gz",
+    "sha256": "0a187d5a4cd939f400643c35891d3361f156b57bfad87486e8a573f53a294f41",
+    "originalSha256": "4c6eb10a5c171125197a4abafed4ec7e591ff21437f23dc628964dffffe24749",
+    "originalBytes": 3354,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/recovery.json.gz",
+    "sha256": "8de712d1bf8b2eaa5ff3a6bc1e718b6ee1209263b066992df1e5f1e882164e7f",
+    "originalSha256": "7a2ae332e53cc9c76792fdfc0adad4e81c82287ddc5d90d652b88bf3dfffeae7",
+    "originalBytes": 7295,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/recovery.json"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/restart-fenced.stdout.jsonl.gz",
+    "sha256": "a60b497333b4bc619473fec815b773af4f9a4fda07e22ba8ac46cc24fc23a0ed",
+    "originalSha256": "327ffb789657d7141bb4b562106abf757c66c20abbd9de547fd91101a9363295",
+    "originalBytes": 3772,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/restart-fenced.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/result-substitution/result-substitution/after-operator-recovery.stdout.jsonl.gz",
+    "sha256": "ee3da070546bb02d5db470d593de9f1ac907abd2d96e7be8038f64dde3b87dba",
+    "originalSha256": "e0bf8c88ba1d234025ea7f59b072456517e93c1e632e8ef6b09e47fae5198166",
+    "originalBytes": 16860,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/result-substitution/result-substitution/after-operator-recovery.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/results.json.gz",
+    "sha256": "5c7aca41f216fc57c9125bbab92d8cae33350c10da3642693f7d20c2f277fc24",
+    "originalSha256": "3cd04229823d6267656afc12fd62c4ec8d8947bf964eeae2e1729fbdcff6cd4d",
+    "originalBytes": 6189,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/results.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/identity.json.gz",
+    "sha256": "928a7d270cf06d90ae40f20fa6d53b8e0090e92be6768b8138fa2ae2a2efafaa",
+    "originalSha256": "96896eff60e1e1736ccf8f969a6e01b9c6fb4831973394dbc5d4512e57b470db",
+    "originalBytes": 399,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/before.json.gz",
+    "sha256": "30bdae3f6750d9903050fab8ce4ce900801236a7a647d178234bb86c25940d6a",
+    "originalSha256": "ea895580b881acd917ac59c3a651ed4d646b5902dd589e17d66b8b8ae463cd89",
+    "originalBytes": 2780,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/kernel-live-after.json.gz",
+    "sha256": "191e7a830d2b2130165140a151b9de634baeabb4786b4c70fb6dc2668dbc7f38",
+    "originalSha256": "793c12a8983d06125986f3d8b738fb7ef3576ff8345107d57fef291772f107b2",
+    "originalBytes": 50,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/kernel-live-after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/kernel-live-before.json.gz",
+    "sha256": "191e7a830d2b2130165140a151b9de634baeabb4786b4c70fb6dc2668dbc7f38",
+    "originalSha256": "793c12a8983d06125986f3d8b738fb7ef3576ff8345107d57fef291772f107b2",
+    "originalBytes": 50,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/kernel-live-before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/restart.stdout.jsonl.gz",
+    "sha256": "65e5b83e7b741bb1763dd0303d5ce615e249451c637b0c89fa90823e63f14af0",
+    "originalSha256": "fbdfd9385f6718499611a998a4cd22c8a5cd79675e95023c52de204886fe5efa",
+    "originalBytes": 5250,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/restart.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/restart.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/restart.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/after.json.gz",
+    "sha256": "ea51130d9cb09d5cb3d7b4e42e926ec189e5b9b452ef24addc3aedcd610d4c4c",
+    "originalSha256": "bfe5ea49bf3a21667dc5b27926a2f731942cbda3cc1f9d328853c357219f51b0",
+    "originalBytes": 3341,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/journal-summary.json.gz",
+    "sha256": "788034f109037a53031597e7bc1054d0efb5963acd9a274ddba0b1aed4b40712",
+    "originalSha256": "b556b6e585cb9a9fa01fda151f20e53400d35887f8f15d28d7a7c657cca2f17d",
+    "originalBytes": 436,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/journal-summary.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/fault.jsonl.gz",
+    "sha256": "c5ac1f4766b95cf657942163e6251694bd7a8f81212d3449b39996e555d50a81",
+    "originalSha256": "d88e87896d4e525ff4fb48f01d8748f1dd9e197a9ef1d6cbdb90bf9122fec842",
+    "originalBytes": 308,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/fault.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/restart.json.gz",
+    "sha256": "d371d578f2f466bb878174000e67d5e3685c51e2d44117530f6872f42be02b1d",
+    "originalSha256": "d82de99df12c7de16a732ab51509e35e6d4cc9331e145dced65404a9f87b24a2",
+    "originalBytes": 116,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/restart.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/kernel-network-refused/host.stdout.jsonl.gz",
+    "sha256": "3a6c06338e94bf55906983cc6794d54956b4e177889eb5cb36e747702f0eaf63",
+    "originalSha256": "7eb0198c6584be649f7aa5ef3b6e737810bfe83da2aa3b238c1e8b2b45ec6b33",
+    "originalBytes": 19587,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/kernel-network-refused/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/before.json.gz",
+    "sha256": "30bdae3f6750d9903050fab8ce4ce900801236a7a647d178234bb86c25940d6a",
+    "originalSha256": "ea895580b881acd917ac59c3a651ed4d646b5902dd589e17d66b8b8ae463cd89",
+    "originalBytes": 2780,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/restart-no-native-attempt.json.gz",
+    "sha256": "aea96c2e2abf42c75217c57997b8a2d3b393336ad28ce0470422b29610ef12f2",
+    "originalSha256": "c3504641bbebeafc17920f89f2e7bd07e3c666d6a189c11994343368b39a2545",
+    "originalBytes": 106,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/restart-no-native-attempt.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/fresh-conversation.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/fresh-conversation.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/restart.stdout.jsonl.gz",
+    "sha256": "be8468d4e62881512ca5e1490f112fbd81006924fc4235cda898292cbbcd2c86",
+    "originalSha256": "16762b1c5235cda5bb6e5e8633e5500e21f0da3ed052d483c691b9dde0871e04",
+    "originalBytes": 3642,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/restart.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/fresh-conversation.stdout.jsonl.gz",
+    "sha256": "4e5f36797589a589439959fbb60c01ae02ece2a32f3cb29e09e3ec60c83cebb0",
+    "originalSha256": "224eb319697877a42ea95d9cc48c0b627c6c0de6b361e6002c524b1f17fe0530",
+    "originalBytes": 5318,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/fresh-conversation.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/restart.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/restart.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/after.json.gz",
+    "sha256": "30bdae3f6750d9903050fab8ce4ce900801236a7a647d178234bb86c25940d6a",
+    "originalSha256": "ea895580b881acd917ac59c3a651ed4d646b5902dd589e17d66b8b8ae463cd89",
+    "originalBytes": 2780,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/at-cancellation.json.gz",
+    "sha256": "30bdae3f6750d9903050fab8ce4ce900801236a7a647d178234bb86c25940d6a",
+    "originalSha256": "ea895580b881acd917ac59c3a651ed4d646b5902dd589e17d66b8b8ae463cd89",
+    "originalBytes": 2780,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/at-cancellation.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/journal-summary.json.gz",
+    "sha256": "d98ccaf5323bffd2c76973e1d525a7fb53d89721e292336665783a21b0155b95",
+    "originalSha256": "ad915c2e5134bae87a79cc5929d241873ff573a0d5d1980be5705abcf6cfc746",
+    "originalBytes": 219,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/journal-summary.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/fault.jsonl.gz",
+    "sha256": "8de408e1343e9de642d89dd3e0eb0e3b4dae960c73edc0938defb1749b145aad",
+    "originalSha256": "907c631685c358ff3e033a4f49b66802eb15560896d34d3d8aa474ec007bc7ac",
+    "originalBytes": 286,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/fault.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/restart.json.gz",
+    "sha256": "9246d64028550c7bf767ee71b863c63a857caa3f8fc13dec2da4845cb355286b",
+    "originalSha256": "a01db03ab42996ce41a912bfcf86891b39454a21ca0930ebc12a3e273360a865",
+    "originalBytes": 117,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/restart.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/hold-before-dispatch/host.stdout.jsonl.gz",
+    "sha256": "6c8ca9d930937da22785e791b2116e50d9b8b70b23e4e6590202dc653aba9c27",
+    "originalSha256": "b4f8e1272d7751acb58e3fc9535fbb02a5ff0db2c3bfff8e94d596b4910b948a",
+    "originalBytes": 3456,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/hold-before-dispatch/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-before-dispatch/before.json.gz",
+    "sha256": "ea51130d9cb09d5cb3d7b4e42e926ec189e5b9b452ef24addc3aedcd610d4c4c",
+    "originalSha256": "bfe5ea49bf3a21667dc5b27926a2f731942cbda3cc1f9d328853c357219f51b0",
+    "originalBytes": 3341,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-before-dispatch/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-before-dispatch/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-before-dispatch/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-before-dispatch/after.json.gz",
+    "sha256": "ea51130d9cb09d5cb3d7b4e42e926ec189e5b9b452ef24addc3aedcd610d4c4c",
+    "originalSha256": "bfe5ea49bf3a21667dc5b27926a2f731942cbda3cc1f9d328853c357219f51b0",
+    "originalBytes": 3341,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-before-dispatch/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-before-dispatch/journal-summary.json.gz",
+    "sha256": "abc129be8d26e8d4afe9ce45f9d5a73c8ed9aa62810ca24ee789fe4581dc4a80",
+    "originalSha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "originalBytes": 3,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-before-dispatch/journal-summary.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-before-dispatch/fault.jsonl.gz",
+    "sha256": "2a5dfe17471b8b33e12d452a63497a678b2f8e177eb059072224d6d1e5f02968",
+    "originalSha256": "13758681d5e6413455629ec7478b0ab66f3beaecb63b9bedfd9512f78c352906",
+    "originalBytes": 303,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-before-dispatch/fault.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-before-dispatch/host.stdout.jsonl.gz",
+    "sha256": "426c709f5be9899016f87f33f1b9ebdd04d3a5294613c5dc25999922302ec424",
+    "originalSha256": "768cf32591f76d49a0f6ee96bce8a76a8e4011afe8a703db297b1ecde29f6cc0",
+    "originalBytes": 3425,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-before-dispatch/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/before.json.gz",
+    "sha256": "ea51130d9cb09d5cb3d7b4e42e926ec189e5b9b452ef24addc3aedcd610d4c4c",
+    "originalSha256": "bfe5ea49bf3a21667dc5b27926a2f731942cbda3cc1f9d328853c357219f51b0",
+    "originalBytes": 3341,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/restart-no-native-attempt.json.gz",
+    "sha256": "aea96c2e2abf42c75217c57997b8a2d3b393336ad28ce0470422b29610ef12f2",
+    "originalSha256": "c3504641bbebeafc17920f89f2e7bd07e3c666d6a189c11994343368b39a2545",
+    "originalBytes": 106,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/restart-no-native-attempt.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/fresh-conversation.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/fresh-conversation.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/restart.stdout.jsonl.gz",
+    "sha256": "04f8da44ce7c0925b969d183ab06a5febf349f3e3a3550ea1e49144e85eb0f5f",
+    "originalSha256": "fadcaa3e1745ca5e02d87aeee96cf7d46ef225f96216240d9664dc64415e63b5",
+    "originalBytes": 1859,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/restart.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/fresh-conversation.stdout.jsonl.gz",
+    "sha256": "a8e5a360e1b8b06369fefac67ead1c2ff30e5cd73e19ffc859a80dc61f8920c5",
+    "originalSha256": "63340770385c4ae46679e4318c0ce6b36d78cfa0c82a766ac935c5d9097acc30",
+    "originalBytes": 3591,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/fresh-conversation.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/restart.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/restart.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/after.json.gz",
+    "sha256": "6029b1fe704cff701b95a6fad804f0d136b95a071350c8d71fb7942776cded98",
+    "originalSha256": "444a69d9361d73d681d682338606d35937144826e909303ffcd9dbeda928d4e9",
+    "originalBytes": 3902,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/journal-summary.json.gz",
+    "sha256": "307b9989619aca144b129bcc5cad9d9b17c57bbffa18271972324e0924a60229",
+    "originalSha256": "8881f9f78ee9f3890c68733828d8e92c772793b1e72b4df3b27b1faf7bd399d8",
+    "originalBytes": 218,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/journal-summary.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/fault.jsonl.gz",
+    "sha256": "59e9f87d550ec12fb5512ee83eb446bab2edfe61534212ba465660f9e693f62a",
+    "originalSha256": "e385f2efb964f5d8892bbf3acb582b33702874449e372406df556ce82640a0c2",
+    "originalBytes": 310,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/fault.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/restart.json.gz",
+    "sha256": "9246d64028550c7bf767ee71b863c63a857caa3f8fc13dec2da4845cb355286b",
+    "originalSha256": "a01db03ab42996ce41a912bfcf86891b39454a21ca0930ebc12a3e273360a865",
+    "originalBytes": 117,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/restart.json"
+  },
+  {
+    "path": "raw/attempt-1/host/cutpoints/journal-after-effect/host.stdout.jsonl.gz",
+    "sha256": "c0e956bf7d10d71f960979e312f6cab02ce4ce39082c8ed024aa5580ca943828",
+    "originalSha256": "fd38d278c336a0640ef4cec08335c9e6e75dc4e0b625e7068bd92ee5bb531946",
+    "originalBytes": 3457,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/cutpoints/journal-after-effect/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/results.json.gz",
+    "sha256": "808a469fe29245445bfa5b0f2ba3bd727b74dfd51489df39f9351f9be13a9585",
+    "originalSha256": "87a27be5b1c71bfd3619e3db356b92d872ffc6da1ce520fbad45b1ef7a366667",
+    "originalBytes": 1988,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/results.json"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/identity.json.gz",
+    "sha256": "13082cd38c4cb428a71654729734cc8f495a6ec15b2105cfd75f8200b0053c53",
+    "originalSha256": "0e52603d530fc9a635c9ede0f6d79a57d35db6ef8ce219658d37c0087b69237b",
+    "originalBytes": 654,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/before.json.gz",
+    "sha256": "6029b1fe704cff701b95a6fad804f0d136b95a071350c8d71fb7942776cded98",
+    "originalSha256": "444a69d9361d73d681d682338606d35937144826e909303ffcd9dbeda928d4e9",
+    "originalBytes": 3902,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/configuration.redacted.json.gz",
+    "sha256": "37d85b27eaff2b1db37a7dcec0948d99ed8066eb6a04d7a4c483588dec4bb97a",
+    "originalSha256": "a3c8a732f7eeeb4d00e69975170f0d081ebe0100aa931ded8dfa90ff8ff556b2",
+    "originalBytes": 4967,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/configuration.redacted.json"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/after.json.gz",
+    "sha256": "c95ae6c9f182fe60e3e72bd4fc4dde3465d6686815fd0da97688edfa7a92d64c",
+    "originalSha256": "de3f899ae2746a800333acdb6689a18cef24a6d2a7547bf7eb3fc455f9acb4f8",
+    "originalBytes": 4426,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/fault.jsonl.gz",
+    "sha256": "16d7f044ab32a45063354e693fce2094d41624b35e994b0ddef0c57eac312f2d",
+    "originalSha256": "a882ca72349d2eff33375e8a62ac94d228182013467900aa536755c790254aee",
+    "originalBytes": 532,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/fault.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/after-operator-recovery.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/after-operator-recovery.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/restart-fenced.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/restart-fenced.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/host.stdout.jsonl.gz",
+    "sha256": "86ac4049af67452bc95abb3f097e7a9dfcc66d6aaed51d0971a592d5cd242ec5",
+    "originalSha256": "7406951bccc12260caf7cd3454302165d116d333dde01b966ce36fabba88842a",
+    "originalBytes": 3358,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/recovery.json.gz",
+    "sha256": "e96d592d130b520c10f2a4c30e43872014bb5beca7b2fd1282988a068ff931cb",
+    "originalSha256": "877c31b61c5d891de157da66d7d7738f2cb12adcd064aaba6204232ed17094b5",
+    "originalBytes": 6323,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/recovery.json"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/restart-fenced.stdout.jsonl.gz",
+    "sha256": "2c6873a4e4e2557b0aae3561e982d6021de8799811a219457d4934326a988947",
+    "originalSha256": "1b697ce94a2a3e06296a3ba5bda69c17932d5542f81f6579dfdd7fa568e5abe4",
+    "originalBytes": 5291,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/restart-fenced.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/host-response-loss/host-response-loss/after-operator-recovery.stdout.jsonl.gz",
+    "sha256": "f2928282ca94d809c071f3c8301fb18139649e5eb07c6bfcce658f808ba6bc8e",
+    "originalSha256": "d28e094696371d7c5200e60b64345edc66edd5c2cc39748d776a01caaad2e6e3",
+    "originalBytes": 18371,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/host-response-loss/host-response-loss/after-operator-recovery.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel/before.json.gz",
+    "sha256": "fcfbc420ef0182031d30e91813fb291f1b41e364a93b49cf170e3f579553874b",
+    "originalSha256": "f1d8e486e80778997b8694d382ead9f46328a8efdd4a6b8a903396389f457993",
+    "originalBytes": 9846,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel/fixture.json.gz",
+    "sha256": "18f7679cc80dd8a36af5634e13f8f6ce0a414c03e50d12700fbe7c0b017d7fe5",
+    "originalSha256": "d04655b9a68413faaf058b28d6e9e9fa3ebc38df5cafb05b3212945808a0b430",
+    "originalBytes": 575,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel/fixture.json"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel/summary.json.gz",
+    "sha256": "b3858bbedb703a627cbbb2fe35a67ca2feed0b65bbf73cb5d2138237071d9672",
+    "originalSha256": "6a3d0f0bdfad197e7b232ab04411030b5ba4c92910cad3f984d9d28d7806ab09",
+    "originalBytes": 2432,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel/summary.json"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel/journal-states.json.gz",
+    "sha256": "fd09a5b770191cb78682226857cd43f02a7d39eb8b92a1f4f15e78b44cfbe6cb",
+    "originalSha256": "315279c370b5aa2fc36c6a9cc96ee234a2a6729012b415e9c0ec31a47948da9c",
+    "originalBytes": 536,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel/journal-states.json"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel/after.json.gz",
+    "sha256": "7a0907c4cfa86bf8eda1e7d4542aad2a73e4b96db924b81e832cce5bcd9cf5ac",
+    "originalSha256": "792a4a113f77670dcdae4168ab1619d6cf36c6292edcd7735c27ae3ad55fb058",
+    "originalBytes": 10475,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel/identity.json.gz",
+    "sha256": "8aee2eb720c6374ff045c205605bcbaa8f3bb77a8c18c8dab63a81cb056a1755",
+    "originalSha256": "2295f191dfc110821a4f647db01b04a1a5e521a75e4c5bbbdb5c31baa987af13",
+    "originalBytes": 3645,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel/fixture.jsonl.gz",
+    "sha256": "f7416fa8cf8e024d0eafb95c6b41a208320dadb76ddc0e6e911c601d4e4a624c",
+    "originalSha256": "073f743c2527128ef863b63c1dee9eb6144584e24ac15fb444fb90b2c3535ca0",
+    "originalBytes": 2401,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel/fixture.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/forced-parallel/host.stdout.jsonl.gz",
+    "sha256": "8d013a50ca4360d48469ac44acc6258ce96472f5a63b4205439d988172c24a37",
+    "originalSha256": "5b408c7adf46463c5a9aae3eac9b107b80c34999fb6b6bb780a5c397d07640cb",
+    "originalBytes": 18729,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/forced-parallel/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/results.json.gz",
+    "sha256": "5adf40b663ac9f24740393cf0fc26c3c553a64b84bc5862817249f3379bdc794",
+    "originalSha256": "811d919d4be70b65166e467d2c27f85efa216c01110b827344fbf2e3a54901ee",
+    "originalBytes": 2433,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/results.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/identity.json.gz",
+    "sha256": "1deb699c2c1b3877ffb97910f9958126e32d184821df7228e5b5ccedca40cb96",
+    "originalSha256": "14a7a60798d6a3e830e98e203e3d740e8f02ffb78553cfee8414b68ba2ca6839",
+    "originalBytes": 315,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/after-kernel-restart.json.gz",
+    "sha256": "9df015ca915338e2715161be1a7c1664e645fb947f1c4e7ffca6beba6ea69366",
+    "originalSha256": "fa07fe5fd870c6fc0e64b3dbc9918a5695d1ab7259987f2a65754c817947e1f4",
+    "originalBytes": 47278,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/after-kernel-restart.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/journal-states.json.gz",
+    "sha256": "f989aa0ae6cfd40fc05c5ca01c13d5c3d5f67ca5246e13b2afddfe82983e324b",
+    "originalSha256": "a8e206591c5763b82ef14d5296a120e7e656c487fd60971d18d52b51c7954298",
+    "originalBytes": 5648,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/journal-states.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/positive.json.gz",
+    "sha256": "be71c6e82fde4af52adeff3f96f7e79d5ac0407f38711712b71ffc61dfe19317",
+    "originalSha256": "8a1b384cff1ccd9c22a9ae798ae126a9e61698f9a0947db280d34c13101f0908",
+    "originalBytes": 1577,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/positive.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/faulted-native-write.json.gz",
+    "sha256": "ab95e43a9f07bc9e082fd9bb5ca15f79f56a034e23fec61fb69fee5f8ddd6df7",
+    "originalSha256": "ce78943031cec67b92e559cacbacdb83319e2c01be35fd229fec65af935c7a57",
+    "originalBytes": 1766,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/faulted-native-write.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/fault-locked.json.gz",
+    "sha256": "ba28d52c749d23bff37a96bd62f0a68f5a31dcb0dd17ac06b1a4d8b529f15659",
+    "originalSha256": "2dcdda929ddf8a909d35855c61fdf508e19d29a743fca3d0922b91ddcd8a5eb1",
+    "originalBytes": 345,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/fault-locked.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart-result.json.gz",
+    "sha256": "4fb4a568167b23e1c68ef7002180690794bc89a15e6e733d3ecdb5e56bcf649f",
+    "originalSha256": "1981dce43854b547d2ff1e961a7f6d9eba46e51a8d580af3632e4f087fc81ba6",
+    "originalBytes": 235,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart-result.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/fault-released.json.gz",
+    "sha256": "672c995056ceb20aab158accaa49e8644c88e083a3b6dbe0be9ccd879e71ea44",
+    "originalSha256": "d6da548137cb944b4937fb25eadd18c47077c8322b474aa0ca139aa3eb3d78b0",
+    "originalBytes": 75,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/fault-released.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/start.log.gz",
+    "sha256": "4afdbcbbecae9242aa6300ea9832233b8e9d0b0b76b76b037cded3f158a8cbe5",
+    "originalSha256": "2f56241138aea12b2c55aade216b851b853a08fbc0d6d54eaa8587e51c5b21d5",
+    "originalBytes": 81,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/start.log"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/positive.stdout.jsonl.gz",
+    "sha256": "7492d7a7fde8c678c330b348c511496ca9a6a663e70b632a9e26dc6d1b60ff84",
+    "originalSha256": "72fd1174ec3219a7ec056b4ee7bcb0dff901e1aa0f568803d0a2dae50aeca377",
+    "originalBytes": 17254,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/positive.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart-native.stdout.jsonl.gz",
+    "sha256": "360cca78787ce8feb7ceaf681d85900f6962140a563ac02ac2dc6d7155d0a124",
+    "originalSha256": "e14899e67f544896ea1baef1a446665c8b34afc60773b739c47b540ca87f9037",
+    "originalBytes": 3610,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart-native.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/after-kernel-restart-attempt.json.gz",
+    "sha256": "96caa5593bb8a62bad9441d9fad198bf3106a0f7f105646b0c75dcf3c0bce7a4",
+    "originalSha256": "75d75ad5332057091877195cce22e7b40b6d062b83ea339c2fbc24c64cfea582",
+    "originalBytes": 47277,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/after-kernel-restart-attempt.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/effect-before-fault.json.gz",
+    "sha256": "4e705466804789c8bd8b01d3a389398b3302054deed200a6c2ad980860cf3ec5",
+    "originalSha256": "e9d942910ae1e6d4437c60a82fa0618a510ea9033e60fcb8d16ee83f94020e62",
+    "originalBytes": 1193,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/effect-before-fault.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/after-unlock.json.gz",
+    "sha256": "ece76b7d5b9ad5a56ee7418ae0194851ab0102889513aaec20e40a5c2b9f7620",
+    "originalSha256": "1e6be7a9d43a3125e8437978724ec949c0df2250852e0b52b33809aa07740711",
+    "originalBytes": 41506,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/after-unlock.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/fault-controller.stdout.txt.gz",
+    "sha256": "6bcc54747a236cf8c5fbd1f602cda5af95dd1189f40507cedd36964da460a3cf",
+    "originalSha256": "ab361a0beab7b37d73cd6abc4086e63c41a0c207278ce7cc6db8ac5d821a5f6f",
+    "originalBytes": 172,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/fault-controller.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/start-command.json.gz",
+    "sha256": "c633f668ca801a6f736e4371606359857069f533abef6575200e28d3005220b2",
+    "originalSha256": "b87aa9b21854280fedb760614b46fa3bae9a06028d15600cddfa76f323591b3b",
+    "originalBytes": 927,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/start-command.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/release.gz",
+    "sha256": "2bb8c39d7c30fc9b35b7e9e63351bde2f5937e84e45e9ee203340ac15a16a623",
+    "originalSha256": "be7368d21047148639b9d202dba3561424c08929ac5a7be448edc3d7415ce179",
+    "originalBytes": 83,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/release"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/faulted-native-write.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/faulted-native-write.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/faulted-native-write.stdout.jsonl.gz",
+    "sha256": "9333e509a3e044e91650fb9cd25c6af3330612fccf290216e1e537bb94dd8877",
+    "originalSha256": "c7947cc560fb9be9ff411ca8ab429368f7557bf1e59b92914ca551c1ef650ccc",
+    "originalBytes": 3474,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/faulted-native-write.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart-native.json.gz",
+    "sha256": "4ec5ff0d7d64bb5ddff6368412a28ff8ca387f95bc513dd8fe13fb4b6318320d",
+    "originalSha256": "98d364b014552e11f61e17e8de89ccbe999b6a01669e1dd13a28523f960826ad",
+    "originalBytes": 1303,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart-native.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/new-action-retry.stdout.jsonl.gz",
+    "sha256": "d43daec71ab5732ef51574da5f67becda23712c1db5d47ed98d85e94ec56a834",
+    "originalSha256": "618488956e6090d4acd886c91f2dd822f0ac92dc7376276bb21f823d1ba94323",
+    "originalBytes": 3660,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/new-action-retry.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/restart.log.gz",
+    "sha256": "25899a5cafbe9650d80a73e8e1359a0ffeb649c42734b91894f6c1c0ce0216f7",
+    "originalSha256": "0c5031423b89df04d4b329aab69f1601beddc174126a9bbccfbe63f51bc754b9",
+    "originalBytes": 81,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/restart.log"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/positive.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/positive.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/manifest.json.gz",
+    "sha256": "c0d5a99a6d99fea7939085d0d75802f43ee25b67f564c9d885f8d844010aabba",
+    "originalSha256": "02fb49c59911f7d301b5cb51754db8552f0299d306cd216b23b5099bf0e52e6a",
+    "originalBytes": 2161,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/manifest.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/prepare.log.gz",
+    "sha256": "4e55ec8cc7c740a8c4a73bd7a6c5fc9d783e02081aea27fa7adca97a63cb2f27",
+    "originalSha256": "60b1ea54d79589ffc9e6cc213392eba7bf073503fd5277ecd4c06ee4568bdea8",
+    "originalBytes": 108,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/prepare.log"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/new-action-retry.json.gz",
+    "sha256": "8284d912f8a3ba3f46835b109e206d305310299ae5f55a37e8307190857117e8",
+    "originalSha256": "b6dda42a1ad0de082464fd3dc3c058cb4735c618e75e19ba2c07b98ab48f9b74",
+    "originalBytes": 1779,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/new-action-retry.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/during-fault.json.gz",
+    "sha256": "044f7cf930f8fb6b8d3afba3ea108e6c0a45c4c131b8b27de351652831c5f906",
+    "originalSha256": "16b10b45671a2f5166cd284a82ecd443e960067d24dfcfebd208fab641817a42",
+    "originalBytes": 41506,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/during-fault.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/unlock.gz",
+    "sha256": "7b68d4e48ef12883b0624512146b0a4523dc6d45f4aed732241e2b897b881d9a",
+    "originalSha256": "e62e443dabb018863a30fd36a678695e84574f695f3e117205e02ffebfaef216",
+    "originalBytes": 52,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/unlock"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart.stdout.txt.gz",
+    "sha256": "fd15f41dccd8769932afc4593c3c0049945f179748d74d0aa400c1d8c187bbb3",
+    "originalSha256": "9f04afcfd3725309711847eeffaaea8c48b287cda62c10ead120ed1281ea0f89",
+    "originalBytes": 81,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/fault-controller.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/fault-controller.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/before-fault.json.gz",
+    "sha256": "3fc7b04c4ba0a0eab6b778ac3821a3aba15152f2e1d86ef151465a9fef1021f3",
+    "originalSha256": "9d3e47b504dfca82d2e313561c63b2d107f5d3c98dc1fd059803fe372f555e22",
+    "originalBytes": 38525,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/before-fault.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/same-action-retry.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/same-action-retry.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/same-action-retry.json.gz",
+    "sha256": "863261087fdabfac700b3ffcbe625812151da0ef6ebd02952607302b5822aadd",
+    "originalSha256": "16ebf5d26c7fe0c966ab5b463e0494ee9ec4a41733a37ae6a885cb3002e97df1",
+    "originalBytes": 1782,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/same-action-retry.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/same-action-retry.stdout.jsonl.gz",
+    "sha256": "23474f2c8aaa2d4e6cf596399b879beccf5a0eb95c477c36816001210a9fb357",
+    "originalSha256": "8a8cd204b1ca39a39e07c4947ed934c95982809ec5d49ed8f7cbc0335237ed56",
+    "originalBytes": 5333,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/same-action-retry.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/new-action-retry.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/new-action-retry.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/initial-observer.json.gz",
+    "sha256": "6a4f19406de45fbe58d177f88a804d8c0200ec1d9636e88c01ee52ad0250288a",
+    "originalSha256": "e6c3cd7ae00b8c6b8dfa9666710a22ea0bfa1c4d3b3558dfae5d0da2b2fae416",
+    "originalBytes": 177,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/initial-observer.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart-native.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/kernel-restart-native.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/after-retries.json.gz",
+    "sha256": "18fdf5a3b223bc3a73554dd8fa33ecb3851efe7ac494dbf7c0d8d3902dff9358",
+    "originalSha256": "cf227f97832dcf3ea044c1308ece04e07f635b91077d99f496d5d9bf82e1c41d",
+    "originalBytes": 41506,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/after-retries.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-admission-r1/resource-replied.json.gz",
+    "sha256": "9b2071e949885c39b1743defc7cb56f6b71bc6ae47d2ab66e8f116f617950b99",
+    "originalSha256": "c80f4efd55b60f2ea26412c4c9c8b308a992a9416a7347c51b37e92285854615",
+    "originalBytes": 420,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-admission-r1/resource-replied.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/after-kernel-restart.json.gz",
+    "sha256": "3dbcc2efffa067f3a317888fcf7f52d88194a925bc01e8af3cfc1e5b3a3f17a5",
+    "originalSha256": "61526ce0bed2d77cee4b4cada92a3df895b4d73349a8520909d5e4b75b042045",
+    "originalBytes": 38927,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/after-kernel-restart.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/journal-states.json.gz",
+    "sha256": "58c2603d35f397fdc6f4aba482e63a1a0d7df11b750daa22a850beedf464b04e",
+    "originalSha256": "6eceb27c6c31f624a4ec056cb0a124d3c516c9fab23623ce632a776a70526c09",
+    "originalBytes": 7612,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/journal-states.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/positive.json.gz",
+    "sha256": "a19ce9dbb7b2f423862e0b15dfa5a9548dd93d3e83347ad3f2137b6fef5ad71a",
+    "originalSha256": "b575bc2c265f0ef5d86c5e89696d1400e7603a3a2ac6ed2f8ae4ad501f1ab3ec",
+    "originalBytes": 1578,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/positive.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/faulted-native-write.json.gz",
+    "sha256": "61b8c35a132de2b6d4b845044d16f5cd14263cd19be0613580d3b7767fc4ed43",
+    "originalSha256": "ebf36896145f83b8509297b9621c6c30423fdfc4c3e9b5a7f7e0938ec2180afd",
+    "originalBytes": 1768,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/faulted-native-write.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/fault-locked.json.gz",
+    "sha256": "6319f6497620b1c1a75a290588a0a3f8bd8901e90de595395a781121e573ad66",
+    "originalSha256": "58d2ccc635a8c716bc023240f5d8bd363126dc05541e84d245ca7e8506200267",
+    "originalBytes": 346,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/fault-locked.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart-result.json.gz",
+    "sha256": "4fb4a568167b23e1c68ef7002180690794bc89a15e6e733d3ecdb5e56bcf649f",
+    "originalSha256": "1981dce43854b547d2ff1e961a7f6d9eba46e51a8d580af3632e4f087fc81ba6",
+    "originalBytes": 235,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart-result.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/fault-released.json.gz",
+    "sha256": "c5fddbaec7ec8db7caf85a8147f9d2dfae7615047309812f3524389ebb36e316",
+    "originalSha256": "b94c699b9ff1ae0a3a513cc8b18816721e57b803753d46e1c4bb3ad232b5d933",
+    "originalBytes": 75,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/fault-released.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/start.log.gz",
+    "sha256": "c7868bcd3a6d16c88bf1c1e6538ad4da6be1c71e9eb8bb36262846d761fa141c",
+    "originalSha256": "d4836080eb7baa0f855d92535d16895451d34c60a13714c68edbc9227cafeaf1",
+    "originalBytes": 81,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/start.log"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/positive.stdout.jsonl.gz",
+    "sha256": "a6dd21051ee6689a8fcf2ecc1c3ef70ccf27e7effd7d09995d68721df835f8ac",
+    "originalSha256": "f2d64d7c1411932c10a278cbc4c6bcccb2f41cdecb22c1651b5f877f5bdcb463",
+    "originalBytes": 17240,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/positive.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart-native.stdout.jsonl.gz",
+    "sha256": "5e76e2beeed261820d97b8ac1ad57b79b88e7d5d4e53a9e2eda185b3f47d7622",
+    "originalSha256": "9d582802cb379acf2a6c42f160d8f51b37c86e2c874120365b741390540d4a06",
+    "originalBytes": 3641,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart-native.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/after-kernel-restart-attempt.json.gz",
+    "sha256": "d4742cc17e35d2f4f7798328d977df18a1402698cee57452859eee545db2443f",
+    "originalSha256": "a5972d5cf6bbcb0a7587c75ca3a0d2e7adfb1aa5b5bb6457553b4f12339e77ca",
+    "originalBytes": 38926,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/after-kernel-restart-attempt.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/after-unlock.json.gz",
+    "sha256": "5e7e21d413955b9ece42a6d6995c08fa6f5bf1ec5c0d5e22aba219ed0ecf769a",
+    "originalSha256": "26a13fa734f8bb1425c1cd1503bb4d633d4899f8eddc93d22bfe71176afdcda6",
+    "originalBytes": 38926,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/after-unlock.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/fault-controller.stdout.txt.gz",
+    "sha256": "eb0480f2c103b3bb30cc78c3e2e4026150fc99276361a5aec04e9daf93cd8dfe",
+    "originalSha256": "fc5ab46405bf6e22672f3d101012f212c2bd833ef91152db5711fd0046ff5a20",
+    "originalBytes": 173,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/fault-controller.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/start-command.json.gz",
+    "sha256": "782d48769b0c40c1343c9c1d3e46f8e6b947635dda8b04670ea53b5ffddbd538",
+    "originalSha256": "759ad12479181a1a62f8cb9d25ad6969894b083bae7b7149f4b3011f96e3bd54",
+    "originalBytes": 929,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/start-command.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/faulted-native-write.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/faulted-native-write.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/faulted-native-write.stdout.jsonl.gz",
+    "sha256": "f62012551aa38a2b630e5ab4cfcf4a54cd89588ac89d3fec9375b255bc63f45e",
+    "originalSha256": "54c8623fb077d51ecee5ab05e9583725a28d18b35f1f56e21550a9127bae9e02",
+    "originalBytes": 3482,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/faulted-native-write.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart-native.json.gz",
+    "sha256": "91ed47940e5873ba536cc855264ad24904f87c8a5e2f750ee1bca9959b716e42",
+    "originalSha256": "d0b9a2fd920ce648aee16cd2282a6227347fc8b6f76f348e04930feaade3601f",
+    "originalBytes": 1307,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart-native.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/new-action-retry.stdout.jsonl.gz",
+    "sha256": "9521ea169ad5126a9e8d72abfc8efda35b09c08443d72719eb2a17f7c3dcbbe2",
+    "originalSha256": "82da1f2abd3081fc4905dcdd96b8c95e4fb4488e07963df2933e3f7a6a48e035",
+    "originalBytes": 3691,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/new-action-retry.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/restart.log.gz",
+    "sha256": "e3cbe404af2ddcb36d84712fe2df5f865d6e88771cc76aac7e41a90220d8ed69",
+    "originalSha256": "e935668f08c45eb7877b00ac35e0cd8b750762a9f6816edc9afd05804b2a59f0",
+    "originalBytes": 81,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/restart.log"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/positive.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/positive.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/manifest.json.gz",
+    "sha256": "88108bdadfc4c7c2f511649b013ea2d82e46239ba8428f430349c9e8d625e45b",
+    "originalSha256": "cfb9b40566e8f164c0eaa766601629bbd1c64d2ab650ca7e2a9becdbef96d138",
+    "originalBytes": 2167,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/manifest.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/prepare.log.gz",
+    "sha256": "4e55ec8cc7c740a8c4a73bd7a6c5fc9d783e02081aea27fa7adca97a63cb2f27",
+    "originalSha256": "60b1ea54d79589ffc9e6cc213392eba7bf073503fd5277ecd4c06ee4568bdea8",
+    "originalBytes": 108,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/prepare.log"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/new-action-retry.json.gz",
+    "sha256": "683332ff9371835691a8f17761c407824f80c539b347d8b84e5b6d678678ff75",
+    "originalSha256": "0e96aa1c7bb6a4d1098ad4203d0283595e01665442d2001f9b5a2ae87a28b9fa",
+    "originalBytes": 1782,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/new-action-retry.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/during-fault.json.gz",
+    "sha256": "f492fc904345bcbf0d8fb8a3003abb980c97884f9126e82660332fa81f98fad6",
+    "originalSha256": "b6880b3a1742d1009a387b0fea96d6aea3e1f1e47a6d6db264efa60b5e462790",
+    "originalBytes": 38926,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/during-fault.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/unlock.gz",
+    "sha256": "7b68d4e48ef12883b0624512146b0a4523dc6d45f4aed732241e2b897b881d9a",
+    "originalSha256": "e62e443dabb018863a30fd36a678695e84574f695f3e117205e02ffebfaef216",
+    "originalBytes": 52,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/unlock"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart.stdout.txt.gz",
+    "sha256": "6b1ff826b755639d43bde2c791932b9fa71c54f440560b6514713beddfbd75be",
+    "originalSha256": "d0f01c7843f02c08f5b7250984de1b74be989f0862a6f791ef32f0f432b5d4ae",
+    "originalBytes": 81,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/fault-controller.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/fault-controller.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/before-fault.json.gz",
+    "sha256": "6d154792a6b1c2a6135ae44349032841961ee8cadc47df4686536af5be6e473e",
+    "originalSha256": "16bfd98d22c8350b4f920e799819dc42eb94d1d3033cfa2d0c35eae943a26f24",
+    "originalBytes": 38525,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/before-fault.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/same-action-retry.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/same-action-retry.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/same-action-retry.json.gz",
+    "sha256": "9d0052cd2bb63731d9390e7129e82d7d107d2cf92394db9f1999ae42703185df",
+    "originalSha256": "3fc99d989cde6c04a0cf3bed32f9455fef5530a1f080cd0c9d554bffd8798474",
+    "originalBytes": 1785,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/same-action-retry.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/same-action-retry.stdout.jsonl.gz",
+    "sha256": "b7102d3660b2727257f7f28ade572907523551a69e8ee5e51cb268c73b0a29c8",
+    "originalSha256": "2dadea787bb73b843ae71071a90759aa8ab036c3a02c8c11bb0c6fe03bb15757",
+    "originalBytes": 5377,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/same-action-retry.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/new-action-retry.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/new-action-retry.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/initial-observer.json.gz",
+    "sha256": "8787ce229aee30c28405a4e46d7019057de7defb518ff4c3edd1d18634743bfe",
+    "originalSha256": "7c1cb7a33359ba59994a33c16b376cbb42e8d89635c75e0f038176cfed94c57e",
+    "originalBytes": 177,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/initial-observer.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart-native.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/kernel-restart-native.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-before-admission-r1/after-retries.json.gz",
+    "sha256": "87bd7ccc23a37242a2f4035c1232e95a59722d535c0487c2cf30996690d3493a",
+    "originalSha256": "5557ad939ad3c0452640cc8a2a09402e37c06d2cd4606cdc21d3b97131a539f9",
+    "originalBytes": 38926,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-before-admission-r1/after-retries.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/after-kernel-restart.json.gz",
+    "sha256": "29b0431ecf13ffb39087c19f4ebccf1880f6f7a85120d9d0e4fc69a7c38bfd7e",
+    "originalSha256": "508d8ab11283795e08ea4267ebf3bc5e2654513def7e410520be8b878a85a41c",
+    "originalBytes": 61172,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/after-kernel-restart.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/journal-states.json.gz",
+    "sha256": "0e0b3cbddf60b0fec8b534a4c779a1dc3be263732514e9e236dcf82d5e274fdd",
+    "originalSha256": "14db2e1dd5753f22001cf0f30c126139306982e77797ac34172a68ad6c244c5d",
+    "originalBytes": 5648,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/journal-states.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/positive.json.gz",
+    "sha256": "4ef26eb0550f5d1fae11e24c6da12b0cfd3609bec65e76c9a886f2bc8b7ed9e5",
+    "originalSha256": "08c082fcbd6408b487669feb422c139182396e3e37f1f0d7a46e8ec398bbee11",
+    "originalBytes": 1575,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/positive.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/faulted-native-write.json.gz",
+    "sha256": "586fe868a9634ecded62cc6390eecb2756ba656134e71acdcfc45db57f04f1bd",
+    "originalSha256": "963e7378aa2fc2ec265db3344304954a605b5b2b1de6478f023feec792b4c6b3",
+    "originalBytes": 1764,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/faulted-native-write.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/fault-locked.json.gz",
+    "sha256": "1cca998d07d137984d220c73b35676bc3e36f2bada0f1db11c523756e5a8aa49",
+    "originalSha256": "1cfff94f7ce36320a2c400b0c15d0cdcccec296e035ea102659e18c773ba9e83",
+    "originalBytes": 329,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/fault-locked.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart-result.json.gz",
+    "sha256": "4fb4a568167b23e1c68ef7002180690794bc89a15e6e733d3ecdb5e56bcf649f",
+    "originalSha256": "1981dce43854b547d2ff1e961a7f6d9eba46e51a8d580af3632e4f087fc81ba6",
+    "originalBytes": 235,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart-result.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/fault-released.json.gz",
+    "sha256": "737e688fc6e360540a3d7d4cf944411dc9705929adb5c7579d1597d2df98ba7e",
+    "originalSha256": "542351f613892c5a6a35c4b7325efe44a90fef5555f523a5bb94837cce51a65f",
+    "originalBytes": 76,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/fault-released.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/start.log.gz",
+    "sha256": "04de5dd4bb36378e4f73fa5f506a76117eeff0053c642812e541d6653bf35cc3",
+    "originalSha256": "5eb7b501091ddc10a2f12b9eb029a972a8c3be0df253def2c17853dda3e72c1d",
+    "originalBytes": 80,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/start.log"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/positive.stdout.jsonl.gz",
+    "sha256": "be8d428a3ebde7d72d07b79ae404e66b05b3a279e8547deead56aa1150ba6e22",
+    "originalSha256": "ddb380460db991b2d590fe24d0a13cbe9d5593e7f6630b429c0610d5f6d69419",
+    "originalBytes": 17216,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/positive.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart-native.stdout.jsonl.gz",
+    "sha256": "fc44e58c9583ef86774195311ec243edb32e18e06824169b44fedb97c56d61c4",
+    "originalSha256": "dda6a02f4b94fa63eb4ac1fef492ef5143bb3c2af7d524d52643249a30e17c0c",
+    "originalBytes": 5291,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart-native.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/after-kernel-restart-attempt.json.gz",
+    "sha256": "1b848d05fccdbdb9e67587ccdf54195d471fc6fc59e92805d52395ea31aa0540",
+    "originalSha256": "eb07918649dfb077200f1fe52448273bf356849592c13dcac7793a3c6cf9bcfe",
+    "originalBytes": 61171,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/after-kernel-restart-attempt.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/effect-before-fault.json.gz",
+    "sha256": "631f25ec55fb48dc69813e3d943da6c0b2cccd955ec4aad939d8c4aeaa025fce",
+    "originalSha256": "00522c1b4c47a5a8dcfecb32e93136312a7d37395e9a703f2915f6336b234c4c",
+    "originalBytes": 1193,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/effect-before-fault.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/after-unlock.json.gz",
+    "sha256": "21bdee03f855b532eff87dc47d15cd3eb482f5a6fb4df5083111a3ed982d161e",
+    "originalSha256": "bf235ba822c7ff4758be84824e17ba47987bfa194c84910f7697c0ddd3dd1753",
+    "originalBytes": 61170,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/after-unlock.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/fault-controller.stdout.txt.gz",
+    "sha256": "8b28adfcf9043b273b15069ff3565005e43f02f1c2946835f805dd6d8a720dbf",
+    "originalSha256": "4ffc53724552a2e6b0c2833dabb6d976003f39bae2a71c9f0316f8d62cd61471",
+    "originalBytes": 160,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/fault-controller.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/start-command.json.gz",
+    "sha256": "799b677f6ba12001c408afacb113a46546f4750fc0d045063b2f2dae67589b9f",
+    "originalSha256": "96440457645278af64f72b840b6cd8938f0a5dc8d9e109b83ae9ac017f4f983a",
+    "originalBytes": 923,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/start-command.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/release.gz",
+    "sha256": "2bb8c39d7c30fc9b35b7e9e63351bde2f5937e84e45e9ee203340ac15a16a623",
+    "originalSha256": "be7368d21047148639b9d202dba3561424c08929ac5a7be448edc3d7415ce179",
+    "originalBytes": 83,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/release"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/faulted-native-write.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/faulted-native-write.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/faulted-native-write.stdout.jsonl.gz",
+    "sha256": "3f662842b857377a789c97fe3a4703e3cc5f4602030a451e72af97a56158bf73",
+    "originalSha256": "a0b4e91d2617d68874c0dbdad7d7874632851cd8a7e2a747bb9df9d205440a64",
+    "originalBytes": 5114,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/faulted-native-write.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart-native.json.gz",
+    "sha256": "acd7a63651cee157bd7d40be5b0f776c008075d5866942dea5d7d388de81ff7e",
+    "originalSha256": "2d779bf26ad749f356092f1829444c14d30e953ef980c88edc9604f13a9b6e4b",
+    "originalBytes": 1301,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart-native.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/new-action-retry.stdout.jsonl.gz",
+    "sha256": "1a784040ed7255483ee23fbd944d9d16ceb207b4e5c4853820f7b31c1f46af87",
+    "originalSha256": "a4a3451aaf3f028cd2ff6dc43789b401aff779fa9f0c53c21c90abb26cf06ff3",
+    "originalBytes": 3645,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/new-action-retry.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/restart.log.gz",
+    "sha256": "65c8ee115820aad0f14124be7cdf59151e588b6274d91505f8af8e5d38943175",
+    "originalSha256": "bad7e1553e1a54d4203572d8d585c9cf7c9a0735a5fad117fd1693ae6e143dae",
+    "originalBytes": 80,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/restart.log"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/positive.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/positive.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/manifest.json.gz",
+    "sha256": "56e66c79cda452b2881a8398bb0fcdbb00b53b3c0160288062424815564fc541",
+    "originalSha256": "5ec3398f81981ea770592d14e30e40486722f990816d2f6f171b579f2c4c8919",
+    "originalBytes": 2151,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/manifest.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/prepare.log.gz",
+    "sha256": "4e55ec8cc7c740a8c4a73bd7a6c5fc9d783e02081aea27fa7adca97a63cb2f27",
+    "originalSha256": "60b1ea54d79589ffc9e6cc213392eba7bf073503fd5277ecd4c06ee4568bdea8",
+    "originalBytes": 108,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/prepare.log"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/new-action-retry.json.gz",
+    "sha256": "c9b5552ca0b2a9aef1e7c2b1a31f650f94ca735c49ac0435ec00a39cd3fd6b3d",
+    "originalSha256": "9ba66efb0650827421e1cb44aa5837165d91c90901c7d9e2895c6bcb4c81b0de",
+    "originalBytes": 1776,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/new-action-retry.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/during-fault.json.gz",
+    "sha256": "fed75cc3698b2b673299969808fffe6d3b3815669f6adfb057295ae1eb848aa5",
+    "originalSha256": "2b948535cc7808f49443c47fdb652f800083be6031ea1e9404f4a7a2da470244",
+    "originalBytes": 61172,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/during-fault.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/unlock.gz",
+    "sha256": "7b68d4e48ef12883b0624512146b0a4523dc6d45f4aed732241e2b897b881d9a",
+    "originalSha256": "e62e443dabb018863a30fd36a678695e84574f695f3e117205e02ffebfaef216",
+    "originalBytes": 52,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/unlock"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart.stdout.txt.gz",
+    "sha256": "06b6bb96e171c4d64e0ba14c8de6959344e8e38f428672d71985ce15dee7603b",
+    "originalSha256": "76617083e62a6017a5d1989cd75ba6e2b76f34e97bb1ad9a03c0d8c05e07e837",
+    "originalBytes": 81,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart.stdout.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/fault-controller.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/fault-controller.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/before-fault.json.gz",
+    "sha256": "c17802a2b7f09b56fb7bfbbbe741c009b3eda841391f049876e8c5c2d6149d72",
+    "originalSha256": "1d9fcea4fbe7e85256848f0d7f47754bc702eeef083f847d8147e6b70903594c",
+    "originalBytes": 38524,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/before-fault.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/same-action-retry.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/same-action-retry.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/same-action-retry.json.gz",
+    "sha256": "6c0f5709f23f89fb5fe7806e97d39683efe336e5d126219e09e58f164ad8b9ab",
+    "originalSha256": "d21190e36977c527a22b8530d7abcfcd9730c85b45948b30b10969f5d2bce5bd",
+    "originalBytes": 1779,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/same-action-retry.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/same-action-retry.stdout.jsonl.gz",
+    "sha256": "e8d62a285a5fed71acb7bfc5649b611d9ee9f2e241b66ff11055d27c6d8c7978",
+    "originalSha256": "c1cc79dedeb286ce01967b7c5bd90856d3d0e712446fa8cbfeaaf7f28b98b6b3",
+    "originalBytes": 5336,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/same-action-retry.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/new-action-retry.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/new-action-retry.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/initial-observer.json.gz",
+    "sha256": "e897853c1c8e4a85bfcaef5a67f17531d19b98c9a6643867cff393ae1f3c0850",
+    "originalSha256": "15e76a5477ee2216771d5a65226b4b2cfd109862f5091950d503e506d0a13d5d",
+    "originalBytes": 177,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/initial-observer.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart-native.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/kernel-restart-native.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/after-retries.json.gz",
+    "sha256": "b9674e4bfd247f9e0872b5a926de3afbfa75170f1bdc654bbb9eecfb8a295f18",
+    "originalSha256": "0715ed4b3a7897f87e6d14f60f83a2e6339cdd84cb4b183d78e0b0275d1c04df",
+    "originalBytes": 61171,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/after-retries.json"
+  },
+  {
+    "path": "raw/attempt-1/host/kernel-storage/final-pi-20260910-after-receipt-r1/resource-replied.json.gz",
+    "sha256": "9b2071e949885c39b1743defc7cb56f6b71bc6ae47d2ab66e8f116f617950b99",
+    "originalSha256": "c80f4efd55b60f2ea26412c4c9c8b308a992a9416a7347c51b37e92285854615",
+    "originalBytes": 420,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/kernel-storage/final-pi-20260910-after-receipt-r1/resource-replied.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/results.json.gz",
+    "sha256": "0aefa37dda7001361a12819bd5d1fdd97c962ed45f21e45d3dcb25c904898e69",
+    "originalSha256": "f4354b5a64ec15ee785fc0ee4eccf5805997c085541a6c98dd5395b9c4d9cc6b",
+    "originalBytes": 4514,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/results.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/identity.json.gz",
+    "sha256": "808247a63081870b7b20d282d56c8d1841bdf4fdc189b99b81fa7ebd733d3056",
+    "originalSha256": "380cb4b2fe78539dacab41e431d1250ff78946e6158c08ad3b0f64f939ec243e",
+    "originalBytes": 654,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/disabled-route/before.json.gz",
+    "sha256": "813c43558bc7de9c72c3499c0ea9ea12c0bd1a779dfc696bae81908d68063ba6",
+    "originalSha256": "16973a40ebbd4f3dacd8636159f2e1b2c05ac9f1e4c1b75972eb29a74cefc08c",
+    "originalBytes": 1194,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/disabled-route/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/disabled-route/configuration.redacted.json.gz",
+    "sha256": "6cf0815a9f319a12d89cbb6675ebf7593a8ed000096dd707e5abc7a183548d14",
+    "originalSha256": "ce28a54fa6b98e3d97d5a8a691b5440623c5bf0e3dc383855aca36c5e83ed7dd",
+    "originalBytes": 4963,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/disabled-route/configuration.redacted.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/disabled-route/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/disabled-route/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/disabled-route/after.json.gz",
+    "sha256": "3b15ed44eb7eff67fd1041653fe42f5759764c93212b65ca93c9e45073541128",
+    "originalSha256": "7b4eba3a15ea40037a3e7ecae8342203b9283bb765ea3ff2e76d48746f9b4d9e",
+    "originalBytes": 1731,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/disabled-route/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/disabled-route/host.stdout.jsonl.gz",
+    "sha256": "7813a39e82804d13f6e9c7d143c3bb184d3c8674fa41ac2f1f88ce71ca0a43d5",
+    "originalSha256": "eea255e4b51188e2ecc37d0353755c62209e3c8b6d9c953c6a10d1ca4c2c40ab",
+    "originalBytes": 21028,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/disabled-route/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/tool-error/before.json.gz",
+    "sha256": "f86319dbde4c64a29029ff1480dc604498845427215ffd157d228ab23bb296e1",
+    "originalSha256": "503b986c21d9140313c7f02ce424767a24c048125f00a0bf96a2cd37e43e0bfe",
+    "originalBytes": 191,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/tool-error/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/tool-error/configuration.redacted.json.gz",
+    "sha256": "9c4cb9623a795c25bede756fa8d9fba227d736c0d12d20bd4ee6317a129a175d",
+    "originalSha256": "1f19cc954668947d794c1ff16d008197650f35c7b7be216d97e3c2a2889b9faf",
+    "originalBytes": 4959,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/tool-error/configuration.redacted.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/tool-error/host.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/tool-error/host.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/tool-error/after.json.gz",
+    "sha256": "813c43558bc7de9c72c3499c0ea9ea12c0bd1a779dfc696bae81908d68063ba6",
+    "originalSha256": "16973a40ebbd4f3dacd8636159f2e1b2c05ac9f1e4c1b75972eb29a74cefc08c",
+    "originalBytes": 1194,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/tool-error/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/native-extra/tool-error/host.stdout.jsonl.gz",
+    "sha256": "c77d4711c6a14c10633c8752032745c728043279425023bfe84b2e0968df9232",
+    "originalSha256": "442da5c71c0a930366ef391367777ab2ba19425dc16e92e18e3623c14b56da40",
+    "originalBytes": 35954,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/native-extra/tool-error/host.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/before.json.gz",
+    "sha256": "2a2803a98bbff4e28772a006f284119e16ab1ecd8635dac6fee401effd3e414a",
+    "originalSha256": "0a8a22ab78151846fcce3dc1426cc9bc8e63c11e09c4d82bf633ec0efd203e3c",
+    "originalBytes": 7164,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/before.json"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/summary.json.gz",
+    "sha256": "51ef18a2e1d42d792e9ed5eed446ba274e6a5116e7fb27f5f4f01143f4d7c79b",
+    "originalSha256": "490e304644d3fd17413e0919492db430194460535b5dc4c458019446feb3a621",
+    "originalBytes": 1042,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/summary.json"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/native-0.stdout.jsonl.gz",
+    "sha256": "9b95c751e918810e08ac1c4478de3275131d2d5d160e7e767ba97efb2f97915c",
+    "originalSha256": "5746ce727287ee7c1f6efa8d4689de2a25e12b5515c2dfd755483e13f11842a3",
+    "originalBytes": 16672,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/native-0.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/direct-0.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/direct-0.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/native-0.timing.json.gz",
+    "sha256": "cdd7bdeae783923c26401b4f17299afcecf01e491d4a8b0f7230f36d0a8a1ade",
+    "originalSha256": "0c57c0452ea192f8083594bc4d6e8d7dd471d9cb2c74a4874069585e6c8fdf7d",
+    "originalBytes": 8872,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/native-0.timing.json"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/native-1.stdout.jsonl.gz",
+    "sha256": "9338e388105a7023cb7af0b56cd152eac213b30fd221e9cb2854f9ccd8bdd87a",
+    "originalSha256": "10624cfa62ad78cb6cf7601257447a00866ac8499507448f9909c8b68471516b",
+    "originalBytes": 16659,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/native-1.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/direct-0.stdout.json.gz",
+    "sha256": "b0e148d3d0bdee942ccd2afc35c9070f0bcfbc1fe292f3549f9fe960c076fb7a",
+    "originalSha256": "50508a317fa984758e2006d98916bb0e102b15ee8bf7618ec15e21f4f8d5520c",
+    "originalBytes": 147,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/direct-0.stdout.json"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/samples.json.gz",
+    "sha256": "fe8b6be7f91b979988d081c6490ebc68decf39da91bc6c981a36335e654b0543",
+    "originalSha256": "1aefceccfb4ce0038ac34f98492235cf71075de40a08177f56bc06c32c52f7b7",
+    "originalBytes": 4540,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/samples.json"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/native-1.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/native-1.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/after.json.gz",
+    "sha256": "fcfbc420ef0182031d30e91813fb291f1b41e364a93b49cf170e3f579553874b",
+    "originalSha256": "f1d8e486e80778997b8694d382ead9f46328a8efdd4a6b8a903396389f457993",
+    "originalBytes": 9846,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/after.json"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/direct-2.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/direct-2.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/direct-2.stdout.json.gz",
+    "sha256": "7ed0ac0925aaa52989552c935e71682bb69d09c6ff96a913383c3d74d65a27a7",
+    "originalSha256": "3531ed3ab01aa69e6c892faa428bbdd4ade9d00d56adaf835ed5f77482f53f74",
+    "originalBytes": 147,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/direct-2.stdout.json"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/native-1.timing.json.gz",
+    "sha256": "3b55ccbbf7c2c6e605edc53f11b51a0163de5721f4b9ed2cf6eeccbd1100c7b4",
+    "originalSha256": "6302e153cd76ab326c98e4451883b0edc54077733fe8f98969b55068a0ff4d24",
+    "originalBytes": 8872,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/native-1.timing.json"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/direct-1.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/direct-1.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/native-2.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/native-2.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/native-0.stderr.txt.gz",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "originalBytes": 0,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/native-0.stderr.txt"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/native-2.timing.json.gz",
+    "sha256": "0064d51d89d090eae2c1d027b0fc55b9327d51934bb3d186ca83414fc40a42b3",
+    "originalSha256": "ea35ef24f92547aa697dc68c3ab231a1a9c0a66155367da3e2bc72014b6e489c",
+    "originalBytes": 8872,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/native-2.timing.json"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/native-2.stdout.jsonl.gz",
+    "sha256": "b18a6ff52b4cd04dd072623a4138a4f52ec857848549f5d223fc593e1c268e2a",
+    "originalSha256": "c1b2748196d1322a1545d9b4fe7e7715845793bb36284e761da619d66de4f1da",
+    "originalBytes": 16633,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/native-2.stdout.jsonl"
+  },
+  {
+    "path": "raw/attempt-1/host/paired-tool-interval/direct-1.stdout.json.gz",
+    "sha256": "b85c2c3d81bdcd39123bc1ff45e00e9312007fd90746502d3861294caca7fa67",
+    "originalSha256": "265709d4f318b4f04efaf49c5b1cae31f8baaea863d4a10e81782cb29a03fcd6",
+    "originalBytes": 148,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/paired-tool-interval/direct-1.stdout.json"
+  },
+  {
+    "path": "raw/attempt-1/coordinator/completed-owner-drain.json.gz",
+    "sha256": "bfaad5adab1b3c0a34461e8a9a3f6ce26c48ca91263855642db7f3e2419536c1",
+    "originalSha256": "81d2f96bc5d6f33856606d616da75a9534073b643d8ac8ffb8de32c1918e144f",
+    "originalBytes": 6287,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/completed-owner-drain.json"
+  },
+  {
+    "path": "raw/attempt-1/coordinator/capacity-resume.json.gz",
+    "sha256": "35142d832ed10c47638f2d9659075c326bc4da0794e1528be14a69a08c68951d",
+    "originalSha256": "805bf59f61eeadd113dbd894b78bf2cb7a8b696468fbf73bb4211996828b8f0e",
+    "originalBytes": 393,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/capacity-resume.json"
+  },
+  {
+    "path": "raw/attempt-1/coordinator/capacity-pause.json.gz",
+    "sha256": "1a1579a9c43566e17f10da79f9eb3ad6d6983830250754578af52da0c43a0638",
+    "originalSha256": "e0461e2ecc23edd6b33a792488ae5e1ebffac6b0a05b5a932325574ca2869f20",
+    "originalBytes": 467,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/capacity-pause.json"
+  },
+  {
+    "path": "raw/attempt-1/coordinator/results.json.gz",
+    "sha256": "9667d36c69c5d8fc06f45ed69735ef3187d70dfbc4fc5367fc483c4f77453b3e",
+    "originalSha256": "5d95e3c1e94990f1788cb9b80ca454916d733b9c52d467e86736f08285dc2831",
+    "originalBytes": 147,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/results.json"
+  },
+  {
+    "path": "raw/attempt-1/coordinator/identity.json.gz",
+    "sha256": "ed9b47ace5d79287fcef15086f67a6df54bcfc953e1852bb6c450ae619dce532",
+    "originalSha256": "aa6575c3771faef13c2d79ebcc737ca6014428127103177667f18e9bf3e9511b",
+    "originalBytes": 569,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/identity.json"
+  },
+  {
+    "path": "raw/attempt-1/coordinator/capacity-pause-drain.json.gz",
+    "sha256": "2d4c1ac5172950466d7b8cca2f7d380643e96899cbfa99905af05bc900628a08",
+    "originalSha256": "7008fb8249dcd1f4c3e7d17e01e9b26c350f1146b99980832ae371b35aac0c88",
+    "originalBytes": 402,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/capacity-pause-drain.json"
+  },
+  {
+    "path": "raw/attempt-1/coordinator/driver.py.gz",
+    "sha256": "7f7019b128f536e648985c01cc89e859a2c9d6640bc06e6b931b5d585c72be53",
+    "originalSha256": "bda9cded6a83b26318ef026d621ef85d9e11274d2f1b0c6198ba1a8b72602986",
+    "originalBytes": 18675,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/driver.py"
+  },
+  {
+    "path": "raw/attempt-1/coordinator/installations.json.gz",
+    "sha256": "41345be129809f33f2d90c9dd5835abdd6f401a5cb40861a0fd96c37578fc5b4",
+    "originalSha256": "cf5558389304885188fcdb10739d3fa1cb0625ac9a3eb47bda39e79a6465e136",
+    "originalBytes": 2237,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/installations.json"
+  },
+  {
+    "path": "raw/source-ci/pi.log.gz.gz",
+    "sha256": "da40d15195fbca2c0105b7cdbc8557e949252d028bfd18133370cad0c41751da",
+    "originalSha256": "664eebf62b06cd18603dc22125cf3205f4feddb18022187901b4cf081c2aa79c",
+    "originalBytes": 11361,
+    "source": "/tmp/chio-final-codex-pi-source-ci-20260910/pi.log.gz"
+  },
+  {
+    "path": "raw/source-ci/pi.json.gz",
+    "sha256": "05561057637d743036cf20a086a673389e5656e25a7a6255acfb9dd65ddb8c7f",
+    "originalSha256": "1dad5902642fe43b919a866a5c99dc65088e96845b05bc86ff170c6980c5a1cf",
+    "originalBytes": 2706,
+    "source": "/tmp/chio-final-codex-pi-source-ci-20260910/pi.json"
+  }
+]
