@@ -43,5 +43,9 @@
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "0.85.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/backbay-labs/chio-pi-plugin.git"
   }
 }
