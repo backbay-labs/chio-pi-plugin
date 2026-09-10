@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import test from "node:test";
+import { Socket } from "node:net";
+import test, { after, before, mock } from "node:test";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
 import { createChioPiSession } from "../dist/index.js";
@@ -11,13 +12,32 @@ import { withUncertaintyInterlock } from "../dist/uncertainty.js";
 
 // These exercise stock Pi's AgentSession and tool dispatcher with a scripted
 // provider. They are contract tests, not live-model or real-kernel acceptance.
+// A provider or catalog network attempt must fail even if upstream catches it.
+let networkAttempts = 0;
+before(() => {
+  const denyNetwork = () => {
+    networkAttempts++;
+    throw new Error("Network access is forbidden in scripted host-contract fixtures");
+  };
+  mock.method(globalThis, "fetch", denyNetwork);
+  mock.method(Socket.prototype, "connect", denyNetwork);
+});
+after(() => {
+  mock.restoreAll();
+  assert.equal(networkAttempts, 0, "Scripted host-contract fixtures attempted network access");
+});
+
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), "chio-pi-contract-"));
   const cwd = join(root, "workspace");
   const agentDir = join(root, "profile");
   await mkdir(cwd);
   await mkdir(agentDir);
-  const modelRuntime = await ModelRuntime.create({ authPath: join(agentDir, "auth.json"), modelsPath: null, modelsStorePath: join(agentDir, "models-cache.json"), allowModelNetwork: false });
+  // Stock Pi checks auth before invoking the injected stream. ModelRuntime's
+  // AuthStorage gets only this isolated dummy, never the normal native cache.
+  const authPath = join(agentDir, "auth.json");
+  await writeFile(authPath, JSON.stringify({ openai: { type: "api_key", key: "fixture-only-not-a-real-api-key" } }), { mode: 0o600 });
+  const modelRuntime = await ModelRuntime.create({ authPath, modelsPath: null, modelsStorePath: join(agentDir, "models-cache.json"), allowModelNetwork: false });
   return { root, cwd, agentDir, modelRuntime, provider: "openai", model: "gpt-4.1-mini" };
 }
 
