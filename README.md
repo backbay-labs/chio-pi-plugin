@@ -1,45 +1,103 @@
-# Chio for Pi
+<p align="center">
+  <picture>
+    <source media="(max-width: 600px)" srcset="docs/assets/readme-hero-mobile.svg" />
+    <img src="docs/assets/readme-hero.svg" alt="Chio for Pi" width="960" />
+  </picture>
+</p>
 
-This candidate runs the real Pi SDK with a native Chio extension. Pi can perform useful file work through the Chio kernel. Local file, shell, network, extension, and delegation tool paths are unavailable in its protected mode. All protected operations are executed by the kernel's configured resource server.
+<p align="center">
+  <strong>Pi's reasoning. Chio's authority.</strong>
+</p>
 
-**Acceptance is incomplete.** [Acceptance](docs/ACCEPTANCE.md) records the real host observations and every remaining gate. This is a qualified development candidate, not an announced accepted release.
+<p align="center">
+  <a href="#what-it-does">Overview</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+  <a href="#build-and-install">Install</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+  <a href="#run-a-task">Run</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+  <a href="#the-execution-boundary">Boundary</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+  <a href="#resume-and-recover">Recovery</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+  <a href="#development">Develop</a>
+</p>
 
-The `chio-pi` launcher confines the Pi process with a macOS sandbox. It can read the installed code and write only its dedicated profile. The launcher owns the Chio HTTP transport and authoritative operation journal. The guest receives an ephemeral local transport token, with no direct kernel credential or kernel network access. Operator and other hosts' credentials are excluded. A small operator-owned model relay keeps the provider key outside Pi and permits only text/function requests to the selected model. The kernel's resource-owner credential and dispatch contract must enforce scope and unresolved-operation fencing independently of Pi's mutable local state. That new complete combination is awaiting qualification; earlier SDK-only runs do not prove this boundary.
+## What it does
 
-## Version combination
+Chio for Pi connects the stock [Pi coding agent](https://github.com/earendil-works/pi)
+to [Chio](https://github.com/backbay-labs/chio) through a native extension. Pi can
+read, write, edit and list files in an operator-selected resource workspace.
+The kernel checks authority, executes each operation through its resource server,
+and returns signed evidence for the adapter to verify.
 
-- Pi: `@earendil-works/pi-coding-agent@0.85.1`, upstream `d981de1229ef899957bbe968bc8dcda02a21f477`.
-- Plugin: `@chio/pi-plugin@0.1.0` candidate.
-- Bridge: `@chio/bridge@0.3.0` candidate, embedded in the release tarball. Its exact SDK is bundled too.
-- Node: 25.5.0 tested on macOS 26.4 arm64. The package's upstream engine floor is 22.19.0; other versions are not qualified here.
-- Kernel: the execution-evidence/context candidate identified in the acceptance record. The public CLI 0.1.0 cannot substitute for it.
+- **Choose the resource access.** The operator supplies the tool inventory,
+  capability, scope and trusted signer before the session starts.
+- **Keep credentials with the operator.** The trusted launcher owns the kernel
+  transport and model relay. Pi receives ephemeral local transport credentials.
+- **Preserve outcomes across interruption.** The gateway retains original
+  requests and verified results. An unknown external outcome blocks new work
+  until the operator reconciles it.
 
-## Install the candidate artifact
+**Availability:** this is an unpublished restricted candidate for macOS. The
+public Pi peer is available on npm; build this plugin from source below. Bounded
+real-host observations exist, while complete published-release acceptance remains
+open. [Current qualification](docs/STATIC-KERNEL-QUALIFICATION.md) identifies the
+exact tested combinations. A rebuilt archive has its own identity.
 
-Obtain the matching release tarball, SHA256 and provenance files, kernel artifact, and private operator-prepared configuration from the candidate distribution. Verify the artifact hash before installation. The provenance identifies the source commit, source cleanliness, dependency lock and bridge artifact hashes, and host version. The release tarball contains the unpublished Chio bridge and SDK; npm installs the exact public Pi and TypeBox versions. It needs registry access and no private sibling checkout.
+## Build and install
+
+Use Node.js **22.19.0 or newer** and npm. Native runtime observations used Node
+25.5.0 on macOS 26.4 arm64; the release build uses Node 22.19.0 with npm 11.8.0.
+The protected launcher requires macOS `sandbox-exec`.
+
+Start in a new working directory:
 
 ```sh
-shasum -a 256 -c chio-pi-plugin-0.1.0.tgz.sha256
-mkdir pi-install
-cd pi-install
-npm install --ignore-scripts --install-strategy=nested @earendil-works/pi-coding-agent@0.85.1
-npm install --ignore-scripts --install-strategy=nested /absolute/chio-pi-plugin-0.1.0.tgz
+git clone https://github.com/backbay-labs/chio-pi-plugin.git
+cd chio-pi-plugin
+npm ci --ignore-scripts
+npm run pack:release
+```
+
+The packer builds TypeScript and writes a tarball, SHA-256 file and provenance
+record to `artifacts/`. Checked-in vendor archives supply the Chio bridge and SDK;
+the resulting package bundles them. No private sibling checkout is required.
+
+Install the exact public Pi peer first, then the local plugin archive:
+
+```sh
+(cd artifacts && shasum -a 256 -c chio-pi-plugin-0.1.0.tgz.sha256)
+mkdir ../chio-pi-install
+cd ../chio-pi-install
+npm install --ignore-scripts --install-strategy=nested --save-exact \
+  @earendil-works/pi-coding-agent@0.85.1
+npm install --ignore-scripts --install-strategy=nested \
+  ../chio-pi-plugin/artifacts/chio-pi-plugin-0.1.0.tgz
 ./node_modules/.bin/chio-pi --help
 ```
 
-Use an empty private profile and a separate disposable local working directory. The launcher marks the profile as belonging to its retained kernel session and refuses an unmarked nonempty directory. Configuration, installed code and profile must occupy separate paths. The kernel tool server must not mount the profile, plugin installation, model credentials, or kernel administrative state. The tested filesystem resource server exposes only its designated Docker volume. Its process has no agent-accessible shell or direct route to the host filesystem.
+Registry access is required for Pi and the public TypeBox dependency. Keep the
+peer-first, nested installation order: it avoids the documented transitive
+resolution failure in Pi's published shrinkwrap. Help verifies the entrypoint;
+it does not start protected execution. See [release qualification](docs/RELEASE-QUALIFICATION.md)
+for clean installation checks, provenance and publication procedures.
 
-## Configure and run
+## Run a task
 
-The operator prepares a retained kernel session with `chio-prepare-gateway`, shipped in the bridge artifact. It obtains the actual caller/capability context and tool schemas, then exchanges operator authority for a credential restricted to that session. Its input and output are private mode-0600 files. Keep both operator input and delegated gateway output outside Pi's profile and installation. Supply the delegated output only to the trusted launcher. Supply explicit trusted signer, server ID, allowed tools, and logical session ID; never ask the model to supply them. See the shared kernel/bridge runbook for provisioning authority and the resource server.
+First [provision a compatible Chio kernel and isolated resource server](https://github.com/backbay-labs/chio/blob/70071260afe514b06cac1c319487bd48e465d39e/integrations/required-agents/README.md),
+then prepare a retained session with the bridge's `chio-prepare-gateway` command.
+The original public CLI 0.1.0 does not supply the required contract. Use the
+kernel and operator-tool identities in the [compatibility record](docs/FINAL-QUALIFICATION.md#supported-combination)
+and its [static-kernel follow-up](docs/STATIC-KERNEL-QUALIFICATION.md).
 
-The resulting configuration must include `execution.endpoint`, the delegated `execution.bearerToken`, `execution.trustedSigners`, `execution.subjectKey`, `execution.capabilityId`, `execution.serverId`, `execution.sessionId`, a logical `sessionId`, and the explicit `tools` inventory. The protected launcher also requires matching `sessionCredential` metadata with schema `chio.mcp.session-credential.v1`. That metadata is a format check; the kernel validates the actual token. Older operator-bearer configurations are refused. The selected kernel endpoint is HTTP on an explicit `127.0.0.1` port.
+The prepared configuration binds the actual caller, capability, kernel session,
+server, trusted signer and explicit tool inventory. It must contain the delegated
+`chio.mcp.session-credential.v1` metadata and a private gateway journal path.
+An operator-wide bearer is refused. The current launcher requires a kernel
+endpoint at `http://127.0.0.1:PORT`.
 
-For API billing, provide `OPENAI_API_KEY` to the operator launcher and select `openai/gpt-4.1-mini`. For ChatGPT subscription billing, select Pi's native `openai-codex/gpt-5.5` provider and pass `--codex-auth /absolute/private/codex/profile/auth.json`. The auth file must be a private operator-owned native Codex ChatGPT login cache, outside the installation, Pi profile and workspace. The launcher reads its access token and bound account without copying, changing or refreshing them. Native Codex owns login and refresh; if the token expires, refresh it through that native client before restarting Pi with the same kernel configuration and profile.
+Keep the private configuration, authoritative journal, installation, empty Pi
+profile and disposable local working directory separate. The kernel resource
+server must not mount credentials, the Pi profile or installed code. In the
+example, `/workspace` belongs to that resource server, not the local `--cwd`.
 
-Pi receives a random relay-only credential in a read-only in-memory credential store. It receives no subscription token, account ID, refresh token or auth-cache path. The native Codex provider uses its actual `openai-codex-responses` contract through SSE, including bounded zstd request decoding and complete inline encrypted reasoning history. There is no alternate-model fallback. The parent relay sends validated requests only to the selected provider's fixed Responses endpoint. Native history verification and durable delivery acknowledgement run before the next provider turn for both modes.
-
-The child may contact only the local model relay and launcher-owned MCP transport. The kernel port is excluded from its sandbox. Image/file inputs, provider-side item references, hosted tools, background provider jobs and other API routes are refused. The runner uses a separate Pi cache location and does not read the normal Pi configuration.
+With `OPENAI_API_KEY` already set in the operator's environment:
 
 ```sh
 ./node_modules/.bin/chio-pi \
@@ -47,68 +105,104 @@ The child may contact only the local model relay and launcher-owned MCP transpor
   --profile /absolute/private/pi-profile \
   --cwd /absolute/disposable/pi-workspace \
   --provider openai --model gpt-4.1-mini \
-  --prompt 'Write /workspace/note.txt through the kernel, then read it back.'
+  --prompt 'Write /workspace/note.txt with the text "Hello from Pi", then read it back.'
 ```
 
-For the subscription mode, replace the provider/model line above with:
+Pi calls the native `chio_execute` tool with the configured tool name and
+arguments. JSONL output contains Pi messages, tool results and a retained
+`sessionFile`; verified successful results include kernel receipts. Keep that
+output private when task content is sensitive.
 
-```sh
-  --provider openai-codex --model gpt-5.5 \
-  --codex-auth /absolute/private/codex/profile/auth.json \
+For ChatGPT subscription mode, replace the provider/model line with
+`--provider openai-codex --model gpt-5.5` and add
+`--codex-auth /absolute/private/codex/profile/auth.json`. The operator supplies a
+private native Codex login cache outside all guest paths. Native Codex owns login
+and refresh; this launcher reads the cache without copying or refreshing it.
+The account must have access to the selected model. Current native qualification
+uses this subscription mode; API-key evidence belongs to earlier artifacts.
+[Provider and operational details](docs/FINAL-QUALIFICATION.md#operation-and-limitations)
+record that distinction.
+
+## The execution boundary
+
+```mermaid
+flowchart LR
+    Pi["Pi SDK + native chio_execute\nUntrusted macOS sandbox"]
+    Parent["Trusted launcher\nGateway, journal and model relay"]
+    Kernel["Chio kernel\nAuthority, guards and signed receipts"]
+    Resource["Isolated resource server\nProtected files"]
+    Model["Selected model provider"]
+    Pi -->|Local transport| Parent
+    Parent -->|Retained session| Kernel
+    Kernel -->|Execute| Resource
+    Parent -->|Provider credentials| Model
 ```
 
-Use the current supported native Codex login procedure to obtain that private cache. The Pi launcher does not run OAuth or store a second refresh token. A successful native login does not prove the selected model is available for an account; provider denial remains an explicit failed session.
+The installed `chio-pi` launcher establishes the process boundary. Pi can write
+its dedicated profile and contact only the launcher's local gateway and model
+relay. Kernel credentials, provider credentials and the authoritative journal
+stay in the trusted parent. Receipt and result verification precede delivery
+acknowledgement; the parent confirms delivery through Pi's native tool history
+before another model turn.
 
-The output is JSONL containing actual Pi messages, tool results, and the retained session path. Kernel receipts are included with verified successful results. Keep this output private when task inputs or results are sensitive. The model calls `chio_execute` with the operator-listed tool name and arguments.
+The supported mode exposes print/SDK execution and kernel-owned file workflows.
+Native file and shell tools, third-party extension discovery, delegation,
+background jobs, attachments, raw RPC and interactive commands are unavailable.
+Tool calls are sequential. Loading the extension into an ordinary Pi session or
+embedding the exported SDK helpers requires a separate process boundary. The
+protected launcher refuses source-checkout execution and has no sandbox bypass
+flag. The [action inventory](docs/ACTION-INVENTORY.md) describes each surface and
+its resource owner.
 
-The terminal `chio_session` record includes an explicit outcome. Unresolved resource outcomes exit 2, provider/runtime failures or incomplete generation exit 1, and cancellation exits 130 (SIGINT) or 143 (SIGTERM). Token truncation is `incomplete`, never completed. A task that completes after intermediate tool errors is labeled `completed_with_tool_errors` and exits 3. Pending operator approval exits 4; inspect its actual tool results. A normal model explanation cannot erase a retained uncertainty interlock.
+## Resume and recover
 
-The runner deliberately exposes print/SDK execution only. It does not pass arbitrary flags, file attachments, raw RPC requests, interactive shell commands, or third-party extension loading to Pi. The [action inventory](docs/ACTION-INVENTORY.md) defines the complete supported surface.
+Resume with the same configuration, profile, workspace and model options, adding
+`--resume /absolute/private/pi-profile/sessions/SESSION.jsonl` for the retained
+`sessionFile`. The path must be inside that profile's sessions directory. Changed
+authority, signer, session or tool inventory refuses profile reuse.
 
-Only the installed `chio-pi` launcher defines the protected mode. Direct invocation of `dist/cli.js` or embedding the exported SDK helpers is a development surface requiring its own process boundary; earlier evidence identifies those runs explicitly. The protected launcher refuses source-checkout execution and has no flag to disable its sandbox.
+The terminal `chio_session` record carries the outcome. Unresolved operations
+exit 2, tool errors retained at task completion exit 3, and pending approval exits
+4. Provider/runtime failures or incomplete generation exit 1; cancellation exits
+130 or 143. A model's explanation does not clear uncertainty.
 
-## Resume, recover, upgrade, remove
+Inspect retained outcomes with `chio-gateway-operator status CONFIG` in a trusted
+operator installation. Preserve the original request, configuration and journal;
+never clear them or mint new authority to retry an uncertain effect. Dead-owner
+lock recovery only releases a stale process lock. Exact-result reconciliation
+uses the separately pinned operator utility described in the
+[recovery procedure](docs/FINAL-QUALIFICATION.md#operation-and-limitations).
+A configured approval flow resumes the original request and arguments after an
+operator decision. Session expiry must not silently create replacement authority.
 
-To resume, use the same config/profile/cwd/model options and add `--resume` with the retained `sessionFile` printed by the previous run. The path must be inside that profile's sessions directory. A changed authority, signer, retained kernel session, or tool allowlist refuses reuse of the existing profile.
+For upgrades, stop the runner, retain unresolved state and install the next
+verified artifact into a new directory before checking compatibility. For
+removal, resolve outstanding outcomes, close or revoke the retained authority,
+and remove only the dedicated installation and profile. Keep required receipts
+and private operator state. [Release operation](docs/RELEASE-QUALIFICATION.md#verify-and-recover)
+and the [qualification record](docs/STATIC-KERNEL-QUALIFICATION.md) cover the
+supported procedures and their limits.
 
-The launcher-owned gateway durably records each original operation before
-kernel dispatch. It verifies the receipt and exact result and persists completion.
-The trusted model relay acknowledges only after stock Pi includes the complete
-verified outcome in native tool history, before the next model turn. The guest
-does not send an acknowledgement RPC. Provider requests enforce one tool per
-turn. Unknown and unconfirmed operations remain fenced in the private gateway
-journal; known pre-dispatch denials do not invent an external effect.
-Pi's mutable profile cannot erase that
-authoritative state. The HTTP transport closes with its launcher process.
+## Development
 
-Do not delete a journal, change request IDs or switch to new authority to retry
-an uncertain operation. Use `chio-gateway-operator status CONFIG` to inspect
-retained outcomes. `chio-gateway-operator recover-lock CONFIG` checks the dead
-process identity and preserves operation records; it does not resolve uncertainty.
-Reconcile the kernel admission/receipt and independent resource first. Retained
-MCP sessions expire after 15 idle minutes by default, potentially before the
-delegated credential expires. Expiry must not silently initialize fresh authority.
-
-A configured approval mode adds `chio_resume` to the inventory exposed through
-`chio_execute`. Pending proposals perform no resource action. The operator uses
-the bridge approval submit/decision commands, then Pi resumes the exact original
-request ID, tool and arguments. Real Pi approval and full restart/fault
-qualification remain required; this source support alone does not accept them.
-
-For an upgrade, stop the runner and let in-flight calls settle. Archive the private config, session files, operation records, artifact hashes, and receipts. Install the next pinned artifact into a new directory, verify it, and reuse the retained profile only with compatible authority/configuration. Repeat the useful-work and failure checks in a disposable resource environment before moving the workload. Do not overwrite or discard unresolved operations during upgrade or rollback.
-
-For removal, stop the runner, preserve required evidence, close/revoke its retained kernel session and capability through the operator's kernel administration procedure, and delete only the dedicated installation/profile after outstanding outcomes are resolved. No normal Pi configuration was modified and no global uninstall is required.
-
-## Source development and release packing
+From the source checkout, after `npm ci --ignore-scripts`:
 
 ```sh
-npm ci --ignore-scripts
+npm run typecheck
 npm test
-npm run pack:release
+npm run pack:release -- /absolute/new-candidate-directory
 ```
 
-The source manifest intentionally does not declare bundled dependencies. npm 11 can flatten an already bundled SDK and attempt to download an unpublished candidate when such a declaration is present during source installation. The release script copies the selected files to a temporary staging directory, bundles the installed Chio dependency there, emits the tarball and SHA256, and leaves source metadata unchanged. It refuses dependency paths outside this checkout's own `node_modules`.
+The package exports `chioExtension`, `createChioPiSession`, `bridgeExecutor`,
+`readPreparedConfig` and `configuredExecutor` for adapter development. Their
+[TypeScript entrypoint](src/index.ts) exposes the corresponding types. These
+in-process APIs do not establish the launcher's OS boundary on their own.
 
-The exact Pi host is a peer dependency. Install it directly using the first command above: a tested npm 11 transitive-install path omitted dependencies from Pi's published shrinkwrap despite exiting successfully. Always run `chio-pi --help` and the disposable kernel workflow after installation; npm's exit status alone is insufficient validation.
+Deterministic stock-Pi dispatcher and recovery tests run through `npm test`.
+Real host/kernel observations, independent resource checks and preserved failures
+live in the [evidence records](docs/FINAL-QUALIFICATION.md). Source checks and
+packaging success remain separate from runtime acceptance.
 
-`npm test` contains deterministic stock-Pi dispatcher tests and client recovery tests. They are not real kernel acceptance. The retained live JSONL observations and independent resource observations are recorded separately under `evidence/` in the source repository.
+[Apache-2.0](LICENSE) · [Chio](https://github.com/backbay-labs/chio) ·
+[Pi upstream](https://github.com/earendil-works/pi) ·
+[Chio bridge](https://github.com/backbay-labs/chio-bridge)
