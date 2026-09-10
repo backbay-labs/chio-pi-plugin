@@ -28,14 +28,14 @@ Both credentials and the authoritative journal stay in the trusted parent.
 The useful workflows and all reachable resource operations require the kernel.
 
 The [raw collection](../evidence/2026-09-10/static-kernel-native/README.md) contains
-372 losslessly retained objects. Its manifest maps original paths and hashes to
+404 losslessly retained objects. Its manifest maps original paths and hashes to
 deterministic gzip objects. Every regular installed dependency file and installed
 symlink was captured and reverified at completion; all symlink targets stayed
 inside the isolated install. All 1,090 regular current archive files and every
 regular predecessor archive file were compared before execution. The installed
 Pi peer came from the public npm registry using the documented nested procedure.
 The runtime did not import a private sibling checkout. Selected test drivers and
-shared operator utilities have their own exact captured hashes.
+shared operator utilities have their own exact captured hashes and retained source bytes.
 
 | Gate | New observations on this exact kernel | Scope still outside this collection |
 | --- | --- | --- |

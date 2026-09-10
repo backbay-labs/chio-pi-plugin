@@ -2602,5 +2602,229 @@
     "originalSha256": "1dad5902642fe43b919a866a5c99dc65088e96845b05bc86ff170c6980c5a1cf",
     "originalBytes": 2706,
     "source": "/tmp/chio-final-codex-pi-source-ci-20260910/pi.json"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/000-serve-filesystem.py.gz",
+    "sha256": "de3d4443f55fdef78e769239afa596bb045cf7c7270042be6eb34a1ec857b016",
+    "originalSha256": "24187dd47e497d226fb0b1f6652a006a2514cff6bc84fea9b35361e948ed6399",
+    "originalBytes": 7273,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/000-serve-filesystem.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/001-prepare-session.py.gz",
+    "sha256": "92d3ac12ae0ff469d3eb7ffb5ef2c704e140d32db8abe6e80de70b445c0ab48e",
+    "originalSha256": "662986b01bca757163b48e2b5179b3a3a58d7f619950dbc16c43c6c09deba863",
+    "originalBytes": 1816,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/001-prepare-session.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/002-host-approvals.py.gz",
+    "sha256": "48006891f3351b6d5c65c3c4ebfc6638e9fb37ff2f96d890b6eacbd71d6c5d7e",
+    "originalSha256": "8f0fe5ebb4c76c34107f313dd9062e70a24b088212a287ce4f666204d900cbd1",
+    "originalBytes": 32726,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/002-host-approvals.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/003-storage_fault.py.gz",
+    "sha256": "4976c3d684d5d52b04fce08a5a9dbb54b39e1f5b6801c25e3587b38fde3ac414",
+    "originalSha256": "7de25889696ee9c1cca324130c6f10e34a41bdce555495a118673ad1336dd8d5",
+    "originalBytes": 10863,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/003-storage_fault.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/004-stdio_response_barrier.py.gz",
+    "sha256": "f74e02251c5424e67bdb8c85cb57eeeaffc5911da00d8050cdadad3dab183096",
+    "originalSha256": "a690f141d14fb3b9a18a8541e89bb5eabf76a18f71e504ad16cd2878bec398b6",
+    "originalBytes": 1775,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/004-stdio_response_barrier.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/005-cancel-host-response.mjs.gz",
+    "sha256": "79aeb6752be3acd5d240a890f5600f5aaf877b880c8030cfe2f5d45f4728c361",
+    "originalSha256": "f3fe77d8ffe39815b5b478590b2e25a1cb9ab057faed94d7a6f8e43ea08a891b",
+    "originalBytes": 1640,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/005-cancel-host-response.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/006-crash-host-gateway.mjs.gz",
+    "sha256": "aeb27979bbc11da70ec0e188a72d2e75cf80eb82e7f953dbec915197d1a47721",
+    "originalSha256": "c14ad2e7263781beb5cc516d77cfe188fba89cd50ce89b95a84d8b53c519400a",
+    "originalBytes": 1391,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/006-crash-host-gateway.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/007-drop-host-ack-response.mjs.gz",
+    "sha256": "407ad1c82bf29250768a5a8e12614dc8ec1d1e27adaaee342504decff4f1dbd3",
+    "originalSha256": "cf6cd70d35d6c9b16d87429c8be1d38f62d2718622e9e821b5f4443dc5eaae46",
+    "originalBytes": 1052,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/007-drop-host-ack-response.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/008-drop-host-response.mjs.gz",
+    "sha256": "d581dd2eb7f3334f4c834e69ec0bca542436b3535b357192c901d14fab2735f5",
+    "originalSha256": "b80337c4c9dd30697b375228ef4ceca724ff14867c9d3ca9fbe37fceb874c2fa",
+    "originalBytes": 1536,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/008-drop-host-response.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/009-force-declared-tool.mjs.gz",
+    "sha256": "b89798b4065a78de08dc4b03f88ba62da9f78cf3f2ad4992cbb78ae26dde9f4a",
+    "originalSha256": "1eab335d4be1d83f4cb1138736d76193b9e4c663a2b3b9830049e7b065b4134a",
+    "originalBytes": 1050,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/009-force-declared-tool.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/010-hold-native-dispatch.mjs.gz",
+    "sha256": "104bc650bdc6efb93223edc5f6495b77fa7fa50af10cc9050972d1bea33390d9",
+    "originalSha256": "05b2b65a2e6b1e8b0bc82b5090e53e4f562b349c284cc0aeafd53094bd1dcacf",
+    "originalBytes": 1096,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/010-hold-native-dispatch.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/011-interrupt-kernel-call.mjs.gz",
+    "sha256": "fc5f870c90d9d0c1c5f455d986a071082da9ff6a1d553fcfd2e0cece763e8d50",
+    "originalSha256": "f9175d719cf5030e78ec7d36d96c146ff2eda0740a2164dc8d45c3315b0214b3",
+    "originalBytes": 2518,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/011-interrupt-kernel-call.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/012-revoke-during-host.mjs.gz",
+    "sha256": "713dbf87c7d1899749ed06c68522c8804547c583eea3f1ea83606b057995462c",
+    "originalSha256": "8822b59146880602738b8c314e9919f16a9654c0a6c807359406254ddad5f165",
+    "originalBytes": 2130,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/012-revoke-during-host.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/013-substitute-host-result.mjs.gz",
+    "sha256": "ebd7f8319dd32a50d9b7c4e9ffba19eefa543514a06ce94dcc0df128857ae1e9",
+    "originalSha256": "babae5f7c5891610844418730c9b59f8af09b9f9dabeeeaec5e68b502ac8e91d",
+    "originalBytes": 1615,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/013-substitute-host-result.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/014-substitute-kernel-evidence.mjs.gz",
+    "sha256": "006b8f8671cec2582f1d8db6037a5f8476594c409542a82f4b0ead46c7d4cd96",
+    "originalSha256": "fdc40c17fa48f2160275fa807e00c5da3008275bc02a13c8948d4bdc99929f54",
+    "originalBytes": 2792,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/014-substitute-kernel-evidence.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/015-subscription-faults.mjs.gz",
+    "sha256": "94b3e6ff97a01bb1c214eb90defa343f2f26dd361969c58b5a0240746741804b",
+    "originalSha256": "cb23f444647929bb265c9cb6f7531545b25e06e851b00ad09881b957df5840e3",
+    "originalBytes": 4951,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/015-subscription-faults.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/016-measure-tool-interval.py.gz",
+    "sha256": "28241f3a91086a2b8ab0521ab733ea701708b821c94c08a1ab01cb7834144299",
+    "originalSha256": "d6f2d8c72000347327e5ebaeb68de1383fe04d9e7881280a207d3b05b7d5582b",
+    "originalBytes": 9019,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/016-measure-tool-interval.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/017-qualify-http-host.py.gz",
+    "sha256": "c6c2c2b735b704688a4d1c477c9f0cec6c00f3ecb3ead7c979ae70328993e5e6",
+    "originalSha256": "09ceae93ed013687ef2c1fe3202aabd0e1d38b40226963e4a21ba6bfa8a1d622",
+    "originalBytes": 19256,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/017-qualify-http-host.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/018-qualify-kernel-storage.py.gz",
+    "sha256": "004cf8a2996e3cde6ee82db8c17f409156ed41df4327d01edead016bc6e5eecd",
+    "originalSha256": "3ae54f8b69410602d141105ad8156123868d94ad97c5d94dccb7b6ab61cf8d57",
+    "originalBytes": 12010,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/018-qualify-kernel-storage.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/019-qualify-lifecycle.py.gz",
+    "sha256": "202d0491840ae2a4c9b42437cafcc69e6e42355647954105eabcc6f8d032638d",
+    "originalSha256": "76064d54d6ec54f8f7de34907a30281a3bc2abcbda49bb8ebb62cae33af07270",
+    "originalBytes": 12447,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/019-qualify-lifecycle.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/020-qualify-storage-cutpoints.py.gz",
+    "sha256": "74bef40bb63a6fdf1863236318286e65c32703cf200bdf09b4da794a59acdcb5",
+    "originalSha256": "5a43cb7700d558957d29fb5ff5ff10984f585f35822af841e3e1d987e102f30e",
+    "originalBytes": 10506,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/020-qualify-storage-cutpoints.py"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/021-live-authority.mjs.gz",
+    "sha256": "2e1c6a2444716f8e0c61dae07d3d6107a52aeac3bbd5bd4eb34dde2e6a7d92bd",
+    "originalSha256": "d4da8f2597382014fc5384c2e4865a37481a3177a22641e68c1b735818612fc7",
+    "originalBytes": 6479,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/021-live-authority.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/022-live-cancel.mjs.gz",
+    "sha256": "bf41d75c94b256c85bbd96a7857ebe0fa562848afaa477cbaf773bd39af21e73",
+    "originalSha256": "0b85ab98a2106e3ece72f20d01eabadf56992dd64bcc63cfb5df7b5fbad739f0",
+    "originalBytes": 2166,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/022-live-cancel.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/023-live-evidence-faults.mjs.gz",
+    "sha256": "6cc4212ebec52b1e54d93d66c2732f42aa8edab69d4df487de9d58710b1fef57",
+    "originalSha256": "d1d5e93b817f14e8218bdf1ac6dcf97f8ec51d96d162cecf3794300df51810f1",
+    "originalBytes": 5171,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/023-live-evidence-faults.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/024-live-kernel-cases.mjs.gz",
+    "sha256": "005c6be5bd3d77413c41d62b3bd39f42e22a82ada1b5fad002e5dc57a807fadc",
+    "originalSha256": "5bbb59b15065d2c861627a5dffe0f953118340b16deb950262ead5dd122fcb56",
+    "originalBytes": 4450,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/024-live-kernel-cases.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/025-live-no-kernel.mjs.gz",
+    "sha256": "541eef60816a8a772016aa07a17c8eb67897df371982c8c4e1e235c44a037098",
+    "originalSha256": "22b074d862649d666b220a60fe027866d71cc1ed978248573724723de6a81056",
+    "originalBytes": 3127,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/025-live-no-kernel.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/026-live-resume-timing.mjs.gz",
+    "sha256": "8265ff8f46ce62865333aa1f048c449772b99749f95931066c293ce1f332b50c",
+    "originalSha256": "d488508ee076bc954902d85e707cde2be98fcce1305a463a57116f335db3bbd0",
+    "originalBytes": 2753,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/026-live-resume-timing.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/027-live-terminal-cancel.mjs.gz",
+    "sha256": "ec2bfede4467c27a4aee9d3852e8393c384aedb38dcf64f264cc45cb6e7b1168",
+    "originalSha256": "7c280a90cc8c77714baf6b5553c0c5c2268ed016adb5092ad2e4a0b68a45c446",
+    "originalBytes": 2402,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/027-live-terminal-cancel.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/028-pack-release.mjs.gz",
+    "sha256": "e8cd8665d3b22caaadcd69594772e32f0f22d69de9876a5bdb7a658f9e4af506",
+    "originalSha256": "bc176643605e2f8ee5defa20492e330d502e68d2b4f9c41241bd4726d6c1eef7",
+    "originalBytes": 6062,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/028-pack-release.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/029-probe-parallel.mjs.gz",
+    "sha256": "190e7b2d93b8097c3eb7f87e5fb9cbdbe04454d34f5beccb886809976c4e3e2d",
+    "originalSha256": "a48e357cfee62f26479b52dfaf9ac64b328e65eb95283ca9c5f20a86d42f12c5",
+    "originalBytes": 22343,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/029-probe-parallel.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/030-probe-sandbox.mjs.gz",
+    "sha256": "5e207258fb17a3faa0a7db78abb8c45134805173a6478f238ecee8003a1d67e2",
+    "originalSha256": "9a3a4e952a057dcb9350a2efe4415ccb3b09c42859eaed39151e14e5b915f539",
+    "originalBytes": 6145,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/030-probe-sandbox.mjs"
+  },
+  {
+    "path": "raw/attempt-1/host/captured-driver-inputs/manifest.json.gz",
+    "sha256": "314f4f16d43699ca2c16f3439911fbe5f1bb5d39b56de3391b19ada1d64062d5",
+    "originalSha256": "60d004cb4c002a426aaa41548ab732efd610d4df9e39e5d5a27ee581388c73de",
+    "originalBytes": 10362,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/manifest.json"
   }
 ]
