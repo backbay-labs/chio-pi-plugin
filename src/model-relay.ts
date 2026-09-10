@@ -30,6 +30,21 @@ function textContent(value: unknown, output = false): boolean {
   return Array.isArray(value) && value.every(item => object(item) && keys(item, ["type", "text", "annotations"]) && item.type === (output ? "output_text" : "input_text") && typeof item.text === "string" && (item.annotations === undefined || Array.isArray(item.annotations) && item.annotations.length === 0));
 }
 
+/** Extract the exact representation emitted by the native Chio extension.
+ * This is parsing only. The caller must still validate the signed outcome and
+ * match its original private operation before confirming delivery. */
+export function nativeToolOutcome(output: unknown): unknown {
+  if (Array.isArray(output) && output.length === 1 && output[0]?.type === "input_text") output = output[0].text;
+  if (typeof output !== "string") return undefined;
+  const prefix = "Chio tool completed with an error: ";
+  const prefixed = output.startsWith(prefix);
+  try {
+    const value: unknown = JSON.parse(prefixed ? output.slice(prefix.length) : output);
+    if (prefixed && (!object(value) || value.state !== "completed" || !object(value.result) || value.result.isError !== true)) return undefined;
+    return value;
+  } catch { return undefined; }
+}
+
 export function validateModelRequest(body: Record<string, unknown>, model: string, provider: ModelAuthority["provider"] = "openai") {
   const allowed = new Set(["model", "input", "instructions", "tools", "tool_choice", "parallel_tool_calls", "stream", "store", "reasoning", "text", "temperature", "top_p", "max_output_tokens", "service_tier", "include", "truncation", "prompt_cache_key", "prompt_cache_retention", "prompt_cache_options"]);
   if (Object.keys(body).some(key => !allowed.has(key)) || body.model !== model || body.store !== false || body.stream !== true || !Array.isArray(body.input)) throw new Error("Model request exceeds selected mode");
@@ -91,9 +106,8 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
       const outcomes: unknown[] = [];
       for (const item of body.input as Record<string, unknown>[]) {
         if (item.type !== "function_call_output") continue;
-        let output = item.output;
-        if (Array.isArray(output) && output.length === 1 && output[0]?.type === "input_text") output = output[0].text;
-        try { outcomes.push(JSON.parse(String(output))); } catch { /* Native failures do not carry a verified result. */ }
+        const outcome = nativeToolOutcome(item.output);
+        if (outcome !== undefined) outcomes.push(outcome);
       }
       await onToolResults?.(outcomes);
       const headers: Record<string, string> = {"content-type": "application/json", accept: "text/event-stream"};

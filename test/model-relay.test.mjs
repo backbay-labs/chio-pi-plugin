@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCodexAuthority, startModelRelay, validateModelRequest } from "../dist/model-relay.js";
+import { nativeToolOutcome, readCodexAuthority, startModelRelay, validateModelRequest } from "../dist/model-relay.js";
 import { relayCredentials } from "../dist/model-credentials.js";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 import { zstdCompressSync } from "node:zlib";
@@ -9,6 +9,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const request = input => ({ model: "gpt-4.1-mini", input, store: false, stream: true });
+test("native tool-error history preserves the full outcome and never interprets arbitrary prose", () => {
+  const outcome = {state: "completed", evidence: "verified", requestId: "original", result: {isError: true, content: [{type: "text", text: "ENOENT"}]}, receipt: {signature: "unchanged"}};
+  const text = "Chio tool completed with an error: " + JSON.stringify(outcome);
+  assert.deepEqual(nativeToolOutcome(text), outcome);
+  assert.deepEqual(nativeToolOutcome([{type: "input_text", text}]), outcome);
+  assert.equal(nativeToolOutcome("untrusted prose: " + JSON.stringify(outcome)), undefined);
+  assert.equal(nativeToolOutcome("Chio tool completed with an error: " + JSON.stringify({...outcome, result: {isError: false}})), undefined);
+  assert.equal(nativeToolOutcome("Chio tool completed with an error: invalid"), undefined);
+  // Parsing never changes signatures, evidence, request identity or result.
+  const forged = {...outcome, receipt: {signature: "forged"}};
+  assert.deepEqual(nativeToolOutcome("Chio tool completed with an error: " + JSON.stringify(forged)), forged);
+});
 test("model relay requires complete text/function history and removes provider item references", () => {
   for (const input of [[{ id: "msg_other" }], [{ id: "msg_other", type: null }], [{ type: "item_reference", id: "msg_other" }], [{ role: "user", content: [{ type: "input_image", image_url: "https://example.test/private" }] }]]) {
     assert.throws(() => validateModelRequest(request(input), "gpt-4.1-mini"));

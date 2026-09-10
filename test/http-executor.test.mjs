@@ -1,4 +1,6 @@
 import {gatewayExecutor} from "../dist/http-executor.js";
+import {nativeToolOutcome} from "../dist/model-relay.js";
+import {verifyReceivedOutcome} from "@chio/bridge";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createHash,generateKeyPairSync} from "node:crypto";
@@ -9,8 +11,8 @@ const signer=publicKey.export({type:"spki",format:"der"}).subarray(-32).toString
 const seed=privateKey.export({type:"pkcs8",format:"der"}).subarray(-32).toString("hex");
 const binding={subjectKey:"ab".repeat(32),capabilityId:"cap-guest",serverId:"fs",trustedSigners:[signer]};
 const args={path:"/workspace/approved.txt"};
-function outcome(requestId){
- const result={content:[{type:"text",text:"actual result"}],isError:false};
+function outcome(requestId,isError=false){
+ const result={content:[{type:"text",text:isError?"actual tool failure":"actual result"}],isError};
  const body={timestamp:1783000000,capability_id:binding.capabilityId,tool_server:"fs",tool_name:"read_text_file",
   action:{parameters:args,parameter_hash:sha256Hex(canonicalizeJson(args))},decision:{verdict:"allow"},
   receipt_kind:"mediated_decision",boundary_class:"prevent",trust_level:"mediated",tool_origin:"caller_executed",redaction_mode:"none",
@@ -20,6 +22,19 @@ function outcome(requestId){
  const receipt={...body,id,signature:signUtf8MessageEd25519(canonicalizeJson({id,body}),seed).signature_hex};
  return {state:"completed",evidence:"verified",requestId,result,receipt,delivery:{schema:"chio.mcp.delivery-ack.v1",requestId,requestHash:"aa".repeat(32),receiptId:id,resultHash:body.content_hash,acknowledgement:"a".repeat(43)}};
 }
+test("native error-history parsing still requires trusted signed caller/request/result binding",()=>{
+ const value=outcome("original-error",true);
+ const expected={...binding,tool:"read_text_file",parameters:args,requestId:"original-error"};
+ const parse=input=>nativeToolOutcome("Chio tool completed with an error: "+JSON.stringify(input));
+ assert.equal(verifyReceivedOutcome(parse(value),expected),true);
+ for(const change of [
+  {...value,receipt:{...value.receipt,signature:"00".repeat(64)}},
+  {...value,result:{...value.result,content:[{type:"text",text:"substituted error"}]}},
+  {...value,requestId:"foreign-request"},
+ ])assert.equal(verifyReceivedOutcome(parse(change),expected),false);
+ assert.equal(verifyReceivedOutcome(parse(value),{...expected,subjectKey:"00".repeat(32)}),false);
+ assert.equal(verifyReceivedOutcome(parse(value),{...expected,trustedSigners:["11".repeat(32)]}),false);
+});
 for(const fault of ["none","result","stale-request","signature"]){
  test(`guest delivery verification: ${fault}`,async()=>{
   let calls=0,acks=0;
