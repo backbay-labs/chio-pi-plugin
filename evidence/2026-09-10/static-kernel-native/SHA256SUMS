@@ -1,6 +1,6 @@
 eedaf1730f8da7b668a600ddca9e01faf3833b5d63a1de6c1895156db6616831  README.md
-e2f16e2de761852cba3964ff96f5f50c64f8a5f1a608f4d36c44e8ecfcb38284  credential-exclusion.json
-153e9a73994161a084d3760de5231d0dc08171eebf2352f7c0a6d27f4c475bd0  files.json
+9b43bbb7f5a898f56e345ffb4b58aa36d288b4eff2e1e05a74a66c81dc26517f  credential-exclusion.json
+1ea06f6ecfa5c51fa914efcb37a60f4136239a1bf139c9cc645d39b9d3e94e8f  files.json
 2d4c1ac5172950466d7b8cca2f7d380643e96899cbfa99905af05bc900628a08  raw/attempt-1/coordinator/capacity-pause-drain.json.gz
 1a1579a9c43566e17f10da79f9eb3ad6d6983830250754578af52da0c43a0638  raw/attempt-1/coordinator/capacity-pause.json.gz
 35142d832ed10c47638f2d9659075c326bc4da0794e1528be14a69a08c68951d  raw/attempt-1/coordinator/capacity-resume.json.gz
@@ -137,6 +137,7 @@ d4daa4829fb8ca5a4e5d3fd05c6c296c5bbe6e7f373fa2646a464b6a343e7379  raw/attempt-1/
 9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64  raw/attempt-1/host/expiry-owner-start.stderr.gz
 186155d00c8132746e8283dcd38d7f160e1915fef332748cdba93e1e1496772c  raw/attempt-1/host/expiry-owner-start.stdout.gz
 2c8d6025dd88b1cab9ac55ca0af500cffe9690309c24ea726e950219077aa2c7  raw/attempt-1/host/expiry-policy.yaml.gz
+58d729cf9a53ed3a7e517e796bc0ec7e4b1e9ac1d782bfd0c2ea629338fec5a8  raw/attempt-1/host/final-artifact-verification.json.gz
 7a0907c4cfa86bf8eda1e7d4542aad2a73e4b96db924b81e832cce5bcd9cf5ac  raw/attempt-1/host/forced-parallel/after.json.gz
 fcfbc420ef0182031d30e91813fb291f1b41e364a93b49cf170e3f579553874b  raw/attempt-1/host/forced-parallel/before.json.gz
 18f7679cc80dd8a36af5634e13f8f6ce0a414c03e50d12700fbe7c0b017d7fe5  raw/attempt-1/host/forced-parallel/fixture.json.gz

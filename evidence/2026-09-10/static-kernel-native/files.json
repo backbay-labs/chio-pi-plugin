@@ -2826,5 +2826,12 @@
     "originalSha256": "60d004cb4c002a426aaa41548ab732efd610d4df9e39e5d5a27ee581388c73de",
     "originalBytes": 10362,
     "source": "/tmp/chio-final-codex-pi-static-20260910/pi/captured-driver-inputs/manifest.json"
+  },
+  {
+    "path": "raw/attempt-1/host/final-artifact-verification.json.gz",
+    "sha256": "58d729cf9a53ed3a7e517e796bc0ec7e4b1e9ac1d782bfd0c2ea629338fec5a8",
+    "originalSha256": "65e4cd9d03fb9d8a947206b1f715b63845675df384d3f46fc8c2ed5e2f7a4eff",
+    "originalBytes": 350,
+    "source": "/tmp/chio-final-codex-pi-static-20260910/pi/final-artifact-verification.json"
   }
 ]
