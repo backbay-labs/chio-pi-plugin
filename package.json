@@ -27,7 +27,8 @@
   },
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/index.js",
+    "./coding-resource": "./dist/coding-resource/participant.js"
   },
   "files": [
     "dist",
@@ -40,7 +41,8 @@
     "node": ">=22.19.0"
   },
   "bin": {
-    "chio-pi": "./dist/protected-cli.js"
+    "chio-pi": "./dist/protected-cli.js",
+    "chio-coding-resource": "./dist/coding-resource-cli.js"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "1.0.2"

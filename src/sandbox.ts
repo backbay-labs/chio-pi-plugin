@@ -7,7 +7,7 @@ export function isWithin(base: string, target: string) {
   return path === "" || (path !== ".." && !path.startsWith("../") && !isAbsolute(path));
 }
 
-async function runtimeLibraries(executable: string): Promise<string[]> {
+export async function runtimeLibraries(executable: string, declaredAliases?: Set<string>): Promise<string[]> {
   const files = new Set<string>(); const pending = [executable];
   while (pending.length) {
     const path = pending.pop()!;
@@ -25,6 +25,7 @@ async function runtimeLibraries(executable: string): Promise<string[]> {
       else if (library.startsWith("@loader_path/")) resolved = join(dirname(path), library.slice(13));
       else if (library.startsWith("@executable_path/")) resolved = join(dirname(executable), library.slice(17));
       if (!isAbsolute(resolved)) throw new Error(`Unsupported runtime library resolution: ${library}`);
+      declaredAliases?.add(resolved);
       pending.push(await realpath(resolved));
     }
   }

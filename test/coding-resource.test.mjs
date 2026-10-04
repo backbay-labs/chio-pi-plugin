@@ -1,0 +1,187 @@
+import assert from "node:assert/strict";
+import {spawn} from "node:child_process";
+import {chmod, link, readFile, readdir, symlink, writeFile} from "node:fs/promises";
+import {join} from "node:path";
+import test from "node:test";
+import {canonicalJson} from "../dist/tool-registry.js";
+import {caller, cli, command, data, fixture, hash, initialized, meta, patch, stdio} from "./helpers/coding-fixture.mjs";
+
+test("coding resource requires explicit private import before serving", async t => {
+  const f = await fixture(); t.after(() => f.close());
+  const before = await command(["serve", "--config", f.configPath]);
+  assert.notEqual(before.code, 0);
+  assert.match(before.stderr, /initializ|import/i, "serve must explain the missing initialized workspace");
+  assert.deepEqual(await readdir(f.root("state")), []);
+  const result = await command(["init", "--config", f.configPath]);
+  assert.equal(result.code, 0, result.stderr);
+  assert.match(JSON.parse(result.stdout).sourceDigest, /^[a-f0-9]{64}$/);
+  assert.equal((await command(["init", "--config", f.configPath])).code, 1);
+});
+test("native JSONL initialize lists exactly nine closed tools and no extra capabilities", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const hello = await io.request("initialize", {protocolVersion: "2024-11-05", capabilities: {}, clientInfo: {name: "native-fixture", version: "1"}});
+  assert.deepEqual(hello.result.capabilities, {tools: {}});
+  const inventory = (await io.request("tools/list")).result.tools;
+  assert.deepEqual(inventory.map(x => x.name).sort(), ["apply_patch", "publish_artifact", "read_many", "read_range", "repo_context", "repo_diff", "repo_status", "search", "test_recipe"]);
+  for (const tool of inventory) assert.equal(tool.inputSchema.additionalProperties, false);
+  assert.equal((await io.request("sampling/createMessage")).error.code, -32601);
+});
+test("missing caller and nonnative request identity refuse without source effects", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const missing = meta(); delete missing.chioCallerCapabilitySha256;
+  for (const m of [missing, meta("2", {chioRequestId: "pi-call"}), meta("3", {chioTransportKeyEpoch: 0}), meta("4", {chioCallerCapabilitySha256: "c".repeat(64)}), meta("5", {chioAttemptId: "x".repeat(513)})]) {
+    assert.equal((await io.call("apply_patch", patch(f.sourceDigest, hash("alpha\nbeta\n")), m)).isError, true);
+  }
+  assert.equal((await readdir(join(f.root("state"), "generations"))).length, 1);
+});
+test("CAS applies one fresh generation and exact historical replay precedes current source checks", async t => {
+  const f = await initialized(); t.after(() => f.close()); let io = stdio(f);
+  const args = patch(f.sourceDigest, hash("alpha\nbeta\n"));
+  const first = await io.call("apply_patch", args);
+  assert.equal(first.isError, undefined);
+  const current = data(first).sourceDigest;
+  assert.notEqual(current, f.sourceDigest);
+  const second = await io.call("apply_patch", patch(current, hash("changed\nbeta\n"), "later\n"), meta("2"));
+  assert.equal(second.isError, undefined); await io.close();
+  io = stdio(f); t.after(() => io.close());
+  assert.deepEqual(await io.call("apply_patch", args, meta("1", {chioAttemptId: "new-attempt", chioTransportKeyEpoch: 2})), first);
+  assert.equal((await readdir(join(f.root("state"), "generations"))).length, 3, "observe actual immutable generations, not ledger counts");
+  assert.equal(await readFile(join(f.root("repository"), "source.txt"), "utf8"), "alpha\nbeta\n");
+  const status = data(await io.call("repo_status", {}, meta("3")));
+  assert.equal(status.sourceDigest, data(second).sourceDigest);
+  assert.deepEqual(status.changed.map(x => x.path), ["source.txt"]);
+});
+test("operation reuse conflicts on tool arguments caller and operator snapshot", async t => {
+  const f = await initialized(); t.after(() => f.close()); let io = stdio(f);
+  const args = patch(f.sourceDigest, hash("alpha\nbeta\n")); await io.call("apply_patch", args);
+  for (const [tool, input, native] of [["apply_patch", {...args, sourceDigest: "f".repeat(64)}, meta()], ["repo_status", {}, meta()], ["apply_patch", args, meta("1", {chioCallerCapabilitySha256: "b".repeat(64)})]]) {
+    assert.match(data(await io.call(tool, input, native)).message, /conflict/i);
+  }
+  await io.close(); await f.updateConfig(c => c.bounds.maxReadMany = 7); io = stdio(f); t.after(() => io.close());
+  assert.match(data(await io.call("apply_patch", args)).message, /conflict/i);
+});
+test("crash after durable intent fences fresh work and never returns terminal MCP outcome", async t => {
+  const f = await initialized(); t.after(() => f.close()); let io = stdio(f, {fault: "afterIntent"}); t.after(() => io.close());
+  await assert.rejects(io.call("apply_patch", patch(f.sourceDigest, hash("alpha\nbeta\n"))), /transport closed/);
+  assert.equal((await io.exited).code, 92); assert.equal(io.messages.length, 0);
+  assert.equal((await command(["recover-lock", "--config", f.configPath])).code, 0);
+  io = stdio(f); await assert.rejects(io.call("repo_status", {}, meta("2")), /transport closed/); assert.equal(io.messages.length, 0);
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout);
+  assert.equal(state.fenced, true); assert.equal(state.operations[0].state, "intent");
+});
+for (const point of ["afterGeneration", "beforeCommit", "afterPublication"]) test(`post-intent storage failure at ${point} closes without ACK-able MCP error`, async t => {
+  const f = await initialized(); t.after(() => f.close());
+  const io = stdio(f, {fault: `throw:${point}`});
+  t.after(() => io.close());
+  if (point === "afterPublication") {
+    const result = data(await io.call("test_recipe", {sourceDigest: f.sourceDigest, recipe: "unit"}, meta("2")));
+    await assert.rejects(io.call("publish_artifact", {sourceDigest: f.sourceDigest, testOperationId: "2".repeat(64), testResultSha256: result.resultSha256, recipeSha256: f.config.recipes[0].recipeSha256, destination: "review"}), /transport closed/);
+  } else await assert.rejects(io.call("apply_patch", patch(f.sourceDigest, hash("alpha\nbeta\n"))), /transport closed/);
+  await io.exited;
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout);
+  assert.equal(state.sourceDigest, f.sourceDigest, "head and terminal outcome must share the final transaction"); assert.equal(state.fenced, true);
+  assert.equal(io.messages.filter(x => x.id === 1 && point !== "afterPublication").length, 0);
+});
+test("commit-before-reply crash retains exact completed result and one generation", async t => {
+  const f = await initialized(); t.after(() => f.close()); const args = patch(f.sourceDigest, hash("alpha\nbeta\n")); let io = stdio(f, {fault: "afterCommit"});
+  await assert.rejects(io.call("apply_patch", args), /transport closed/); await io.exited;
+  await command(["recover-lock", "--config", f.configPath]);
+  const exported = JSON.parse((await command(["export", "--config", f.configPath, "--operation", "1".repeat(64)])).stdout);
+  assert.equal(exported.unsigned, true); assert.equal(exported.kernelFenceClearance, false);
+  io = stdio(f); t.after(() => io.close()); assert.deepEqual(await io.call("apply_patch", args), exported.result);
+  assert.equal((await readdir(join(f.root("state"), "generations"))).length, 2);
+});
+test("paths refuse traversal aliases and edits use full file CAS with all-or-none semantics", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  for (const [i, path] of ["../operator.json", "/etc/passwd", "source.txt/../source.txt", "./source.txt", "source.txt\u0000", ".git/config"].entries()) {
+    assert.equal((await io.call("read_range", {sourceDigest: f.sourceDigest, path, startLine: 1, endLine: 2}, meta(String(i + 1)))).isError, true);
+  }
+  const stale = await io.call("apply_patch", {sourceDigest: f.sourceDigest, changes: [{path: "source.txt", expectedFileSha256: hash("alpha\nbeta\n"), edits: [{oldText: "alpha", newText: "okay"}]}, {path: "fixture-test.mjs", expectedFileSha256: "f".repeat(64), replacement: ""}]}, meta("7"));
+  assert.equal(stale.isError, true); assert.equal((await readdir(join(f.root("state"), "generations"))).length, 1);
+  assert.equal((await io.call("apply_patch", patch("f".repeat(64), hash("alpha\nbeta\n")), meta("8"))).isError, true);
+});
+test("read many preserves ordered partial truth and bounded literal search returns digests", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const batch = data(await io.call("read_many", {sourceDigest: f.sourceDigest, reads: [{path: "source.txt", startLine: 1, endLine: 1}, {path: "missing.txt", startLine: 1, endLine: 1}, {path: "source.txt", startLine: 2, endLine: 2}]}));
+  assert.equal(batch.partial, true); assert.equal(batch.results[0].text, "alpha\n"); assert.equal(batch.results[1].ok, false); assert.equal(batch.results[2].text, "beta\n");
+  assert.equal(batch.results[0].fileSha256, hash("alpha\nbeta\n"));
+  const found = data(await io.call("search", {sourceDigest: f.sourceDigest, literal: "a", maxMatches: 1}, meta("2")));
+  assert.equal(found.matches.length, 1); assert.equal(found.truncated, true);
+  const context = data(await io.call("repo_context", {sourceDigest: f.sourceDigest}, meta("3")));
+  assert.equal(context.authority, false); assert.equal(context.recipes[0].recipeSha256, f.config.recipes[0].recipeSha256);
+});
+for (const kind of ["symlink", "hardlink", "fifo"]) test(`explicit import rejects ${kind} before reading`, async t => {
+  const f = await fixture(); t.after(() => f.close()); const path = join(f.root("repository"), "unsafe");
+  if (kind === "symlink") await symlink("source.txt", path);
+  if (kind === "hardlink") await link(join(f.root("repository"), "source.txt"), path);
+  if (kind === "fifo") await new Promise((resolve, reject) => {const child = spawn("/usr/bin/mkfifo", [path]); child.once("close", code => code === 0 ? resolve() : reject(new Error("mkfifo")));});
+  const response = await command(["init", "--config", f.configPath]); assert.equal(response.code, 1); assert.match(response.stderr, /regular|link|private/i);
+});
+test("private config rejects unknown properties overlapping roots and unsafe modes", async t => {
+  const f = await fixture(); t.after(() => f.close());
+  await f.updateConfig(c => c.shell = "sh"); assert.match((await command(["init", "--config", f.configPath])).stderr, /closed schema/i);
+  await f.updateConfig(c => {delete c.shell; c.artifactRoot = c.stateRoot;}); assert.match((await command(["init", "--config", f.configPath])).stderr, /disjoint/i);
+  await f.updateConfig(c => c.artifactRoot = f.root("artifacts")); await chmod(f.configPath, 0o644); assert.match((await command(["init", "--config", f.configPath])).stderr, /private/i);
+});
+test("exclusive owner lock refuses concurrent serve and explicit dead recovery refuses a living owner", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close()); await io.call("repo_status", {});
+  assert.equal((await command(["serve", "--config", f.configPath])).code, 1); assert.equal((await command(["recover-lock", "--config", f.configPath])).code, 1);
+  await io.close(); assert.equal((await readdir(f.root("state"))).includes("owner.lock"), false);
+});
+test("bounded framing rejects a line before newline and releases only its own lock", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); await io.request("initialize");
+  io.child.stdin.write("x".repeat(f.config.bounds.maxInputBytes + 1)); const response = await io.exited;
+  assert.equal(response.code, 1); assert.equal(response.messages.length, 1); assert.equal((await readdir(f.root("state"))).includes("owner.lock"), false);
+});
+test("CLI help exposes operator safety and no model/provider authorization", async () => {
+  const result = await command(["--help"]); assert.equal(result.code, 0); assert.match(result.stdout, /kernel-owned|Chio-owned/i); assert.match(result.stdout, /unsigned/i); assert.match(result.stdout, /init/); assert.doesNotMatch(result.stdout, /--api-key|--provider/);
+});
+test("original durable binding covers source provenance and retains every native replay attempt", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); const args = patch(f.sourceDigest, hash("alpha\nbeta\n"));
+  await io.call("apply_patch", args); await io.call("apply_patch", args, meta("1", {chioAttemptId: "attempt-two", chioTransportKeyEpoch: 2})); await io.close();
+  const record = JSON.parse((await command(["export", "--config", f.configPath, "--operation", "1".repeat(64)])).stdout);
+  assert.equal(record.operation.binding, hash(canonicalJson({schema: "chio.coding-operation-binding.v1", resourceOwnerId: f.config.resourceOwnerId, workspaceId: f.config.workspaceId, configDigest: hash(canonicalJson(f.config)), caller: caller, operationId: "1".repeat(64), tool: "apply_patch", arguments: args, sourceDigest: f.sourceDigest})));
+  assert.equal(record.attempts.length, 2); assert.equal(record.attempts[1].chioAttemptId, "attempt-two");
+});
+test("overlapping literal matches refuse an ambiguous CAS edit before generation creation", async t => {
+  const f = await initialized({files: {"source.txt": "aaa"}}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const result = await io.call("apply_patch", {sourceDigest: f.sourceDigest, changes: [{path: "source.txt", expectedFileSha256: hash("aaa"), edits: [{oldText: "aa", newText: "x"}]}]});
+  assert.equal(result.isError, true); assert.equal(data(result).code, "ambiguous_edit"); assert.equal((await readdir(join(f.root("state"), "generations"))).length, 1);
+});
+test("SQLite rejects nonregular private sidecars before potentially blocking recovery open", async t => {
+  const f = await initialized(); t.after(() => f.close()); const path = join(f.root("state"), "ledger.sqlite-journal");
+  await new Promise((resolve, reject) => {const child = spawn("/usr/bin/mkfifo", [path]); child.once("close", code => code === 0 ? resolve() : reject(Error("mkfifo")));});
+  const response = await command(["inspect", "--config", f.configPath], {timeoutMs: 1000});
+  assert.equal(response.timedOut, false, "must refuse FIFO before SQLite can open it"); assert.equal(response.code, 1); assert.match(response.stderr, /regular|private|sidecar/i);
+});
+test("conflicting redelivery of incomplete intent closes without ordinary terminal conflict", async t => {
+  const f = await initialized(); t.after(() => f.close()); let io = stdio(f, {fault: "afterIntent"}); t.after(() => io.close());
+  await assert.rejects(io.call("apply_patch", patch(f.sourceDigest, hash("alpha\nbeta\n"))), /transport closed/); await io.exited; await command(["recover-lock", "--config", f.configPath]);
+  io = stdio(f); await assert.rejects(io.call("repo_status", {}), /transport closed/); await io.exited; assert.equal(io.messages.length, 0);
+});
+for (const kind of ["arguments", "metadata", "call parameters"]) test(`malformed ${kind} redelivery preserves unresolved intent without a terminal error`, async t => {
+  const f = await initialized(); t.after(() => f.close()); let io = stdio(f, {fault: "afterIntent"}); t.after(() => io.close());
+  await assert.rejects(io.call("apply_patch", patch(f.sourceDigest, hash("alpha\nbeta\n"))), /transport closed/); await io.exited;
+  assert.equal((await command(["recover-lock", "--config", f.configPath])).code, 0);
+  io = stdio(f);
+  const params = {name: "apply_patch", arguments: patch(f.sourceDigest, hash("alpha\nbeta\n")), _meta: meta()};
+  if (kind === "arguments") delete params.arguments.changes;
+  if (kind === "metadata") delete params._meta.chioCallerCapabilitySha256;
+  if (kind === "call parameters") params.extra = true;
+  await assert.rejects(io.request("tools/call", params), /transport closed/); await io.exited; assert.equal(io.messages.length, 0);
+  const original = JSON.parse((await command(["export", "--config", f.configPath, "--operation", "1".repeat(64)])).stdout);
+  assert.equal(original.operation.state, "intent"); assert.equal(original.result, null);
+});
+test("malformed private operator JSON never echoes input or fixture credential bytes", async t => {
+  const f = await fixture(); t.after(() => f.close()); await writeFile(f.configPath, "fixture-secret-private", {mode: 0o600});
+  const result = await command(["init", "--config", f.configPath]); assert.equal(result.code, 1); assert.doesNotMatch(result.stderr, /fixture-sec/); assert.match(result.stderr, /invalid.*JSON/i);
+});
+test("graceful native termination releases only the live resource owner's lock", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); await io.call("repo_status", {});
+  io.child.kill("SIGTERM"); await io.exited; assert.equal((await readdir(f.root("state"))).includes("owner.lock"), false);
+  assert.equal(JSON.parse((await command(["inspect", "--config", f.configPath])).stdout).operations[0].state, "completed");
+});
+test("recipe output pins leave capacity for worst-case JSON escaping before accepting config", async t => {
+  const f = await fixture({outputBytes: 30000}); t.after(() => f.close()); const result = await command(["init", "--config", f.configPath]);
+  assert.equal(result.code, 1); assert.match(result.stderr, /output bounds/i); assert.deepEqual(await readdir(f.root("state")), []);
+});

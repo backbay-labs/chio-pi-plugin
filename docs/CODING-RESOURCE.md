@@ -1,0 +1,236 @@
+# Kernel-owned coding resource
+
+`chio-coding-resource` is a separate MCP resource owner. Chio launches it on an
+exclusively kernel-owned stdio connection. Pi and its executor do not launch it
+or repeat its repository effects after an authorization precheck. The resource
+owns immutable source generations, confined test jobs and artifact publication.
+Chio owns admission, capabilities, approval, receipts, signatures and delivery.
+
+## Operator preparation
+
+Use Node with `node:sqlite` support. This implementation was measured on Node
+25.5.0 on macOS and Node 22.23.1 in the Linux qualification image. Node currently
+prints its experimental SQLite warning to stderr. The JSONL protocol uses stdout.
+
+Create four absolute, canonical, disjoint private roots: a source import root,
+resource state, artifacts and temporary jobs. Roots must be owned by the resource
+owner with mode `0700`. Source directories also require `0700`; source files and
+the operator JSON require `0600`, one link, the current uid and regular file
+type. Symlinks, hardlinks, special files and path aliases are refused before
+opening. On macOS, use resolved `/private/...` paths instead of `/tmp` aliases.
+Keep the private operator JSON outside those roots. Provision only the source
+that this resource may expose to admitted callers and recipes. Normal Pi profiles
+and provider credentials are not inputs to this program.
+
+The complete closed configuration has this structure. Replace the illustrative
+paths and hashes with independently selected real values:
+
+```json
+{
+  "schema": "chio.coding-resource.v1",
+  "resourceOwnerId": "coding-owner",
+  "workspaceId": "selected-workspace",
+  "repositoryRoot": "/absolute/private/import",
+  "stateRoot": "/absolute/private/state",
+  "artifactRoot": "/absolute/private/artifacts",
+  "jobRoot": "/absolute/private/jobs",
+  "allowedCallerCapabilitySha256": ["64 lowercase hex characters"],
+  "bounds": {
+    "maxFileBytes": 262144,
+    "maxRepositoryBytes": 1048576,
+    "maxFiles": 128,
+    "maxReadBytes": 65536,
+    "maxSearchMatches": 50,
+    "maxReadMany": 8,
+    "maxPatchBytes": 65536,
+    "maxInputBytes": 131072,
+    "maxQueuedCalls": 8,
+    "maxOutputBytes": 131072
+  },
+  "recipes": [{
+    "name": "unit",
+    "executable": "/absolute/canonical/node",
+    "executableSha256": "64 lowercase hex characters",
+    "argv": ["fixture-test.mjs"],
+    "timeoutMs": 2000,
+    "outputBytes": 16384,
+    "graceMs": 100,
+    "runtimeFiles": [],
+    "recipeSha256": "64 lowercase hex characters"
+  }]
+}
+```
+
+`recipeSha256` is SHA256 of `canonicalJson(recipe without recipeSha256)`, using
+the existing registry canonicalizer. After building this checkout, the same
+calculation is available as `recipeDigest` from
+`dist/coding-resource/config.js`. Pin the executable's complete file hash. Its
+path must resolve to an owned, regular executable without symlinks or hardlinks
+and without group/other write permission. Commands, environment assignments,
+shells, Git hooks, filters, fsmonitor and executable discovery are not model
+parameters. Each recipe has fixed operator-selected argv.
+
+On Linux, `runtimeFiles` must list exact canonical loader/library files with
+SHA256 hashes. An optional `mountPath` supplies an exact `/lib/`, `/lib64/`,
+`/usr/lib/` or `/usr/local/lib/` loader alias. No host library directory is mounted.
+On macOS, the existing recursive `otool -L` helper resolves the selected Node
+binary and its actual dylibs. The sandbox grants metadata access to the exact
+declared dylib aliases and intermediate symlink paths needed by the loader,
+with directory-only metadata access to their selected ancestors. File data
+access remains limited to the exact resolved runtime files, selected system
+runtime trees and the selected source generation.
+
+Explicit import is separate from serving:
+
+```sh
+node dist/coding-resource-cli.js init --config /absolute/private/operator.json
+node dist/coding-resource-cli.js inspect --config /absolute/private/operator.json
+```
+
+`init` requires empty state, artifact and job roots. It imports regular source
+files into fresh immutable inodes and records an initial manifest. `.git` is
+excluded without reading its contents. It never changes the import originals.
+An interrupted init leaves operator-visible partial private state and refuses
+automatic reuse; use a fresh empty resource deployment after inspecting it.
+
+Configure the trusted Chio launcher to execute:
+
+```sh
+node dist/coding-resource-cli.js serve --config /absolute/private/operator.json
+```
+
+The launcher must supply a trusted minimal startup environment as well as the
+kernel-owned pipe. Node can interpret `NODE_OPTIONS` before application code
+runs. Recipe isolation supplies its own fresh environment independently.
+`serve` refuses missing initialized state. It does not import or discover a
+repository, load a Pi profile, select a provider or obtain authentication.
+
+## Native connection and operation binding
+
+Every admitted `tools/call` requires exactly these native `_meta` fields:
+
+```json
+{
+  "chioRequestId": "1111111111111111111111111111111111111111111111111111111111111111",
+  "chioOperationId": "1111111111111111111111111111111111111111111111111111111111111111",
+  "chioAttemptId": "native-provider-attempt",
+  "chioTransportKeyEpoch": 1,
+  "chioCallerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
+```
+
+Request and operation IDs are the same lowercase SHA256 kernel admission ID.
+They are not Pi or bridge logical call IDs. Attempt IDs are nonempty, at most
+512 characters; the transport epoch is a positive safe integer. The caller hash
+must be selected from the operator-pinned allowset. The native process descriptor
+derives it from the canonical signed capability, not a bearer token. An older
+kernel that omits caller binding is refused. See
+[the inspected native contract](NATIVE-PREREQUISITES.md#resource-participant-binding).
+
+These bytes are connection binding on the trusted pipe. They are not a signed
+wire credential. Sending a fabricated matching JSON object to an arbitrary
+process cannot establish Chio authority. Local tests fabricate public metadata
+only to exercise this participant's behavior.
+
+## Closed tools
+
+| Tool | Exact source and bounded behavior |
+| --- | --- |
+| `read_range` | `sourceDigest`, canonical relative `path`, inclusive `startLine`/`endLine`; returns text and full-file hash. |
+| `search` | `sourceDigest`, literal string, optional paths and bounded `maxMatches`; no regular expressions or executable search. |
+| `repo_status` | Empty arguments; changed file hashes relative to the initial manifest. |
+| `repo_diff` | `sourceDigest`; bounded before/after UTF-8 content computed internally. |
+| `apply_patch` | `sourceDigest`, bounded unique file changes with complete `expectedFileSha256` and exactly replacement or unique literal edits. |
+| `test_recipe` | `sourceDigest`, an operator-pinned recipe name. |
+| `publish_artifact` | Exact source, successful retained `testOperationId`, `testResultSha256`, `recipeSha256`, and the closed approved destination `review`. |
+| `repo_context` | `sourceDigest`; requested structure, manifest provenance and recipe digests as unsigned content. |
+| `read_many` | `sourceDigest`, bounded ordered line-range reads; preserves individual errors and partial truth. |
+
+New exact-source calls use the current generation. Exact completed historical
+replay is checked first and remains available after later patches or provider
+attempts. An absent new file uses `expectedFileSha256: null` and a replacement.
+Literal edits require one match, including overlapping matches. Every file
+precondition is checked before building a new generation; a stale source or file
+refuses the whole patch. No shell or Git process applies changes. Read-only tools
+are still ordinary admitted operations; `read_many` is not native arbitrary
+codemode and context is not authority.
+
+## Durability and reconciliation
+
+One exclusive private owner lock protects a SQLite ledger using DELETE journal
+mode, `synchronous=FULL`, a busy timeout and Darwin `fullfsync` settings. Bindings
+include owner, workspace, config digest, caller, native operation, tool, canonical
+arguments and original source. Native attempt metadata is retained separately.
+An exact completed lookup returns the original MCP result before checking the
+current source. Changed caller, tool, arguments or configuration conflicts.
+
+Before effects, the resource commits and fsyncs intent. A patch writes and fsyncs
+fresh immutable files and directories, renames the complete generation and
+fsyncs its parent. A single final SQLite transaction commits the current source
+pointer and original terminal result. A crash before that transaction preserves
+the old head and unresolved intent; an orphan generation is not completion.
+A crash after commit but before reply preserves the exact replayable result.
+
+Incomplete intent fences fresh work. Post-intent storage, publication, launch or
+unproved descendant/cleanup failure closes stdio without an ordinary terminal
+MCP `isError`. Such a result would otherwise become a signed completed native
+outcome and could ACK away uncertainty. Proven pre-effect refusals may be retained
+terminal tool errors. Failed tests are retained failed test results and cannot
+authorize publication.
+
+Incomplete operations are checked before argument validation. Malformed native
+metadata while a durable fence exists, and malformed outer call parameters,
+close the transport instead of substituting a terminal error for unresolved work.
+
+These operator commands do not dispatch repository effects:
+
+```sh
+node dist/coding-resource-cli.js inspect --config /absolute/private/operator.json
+node dist/coding-resource-cli.js export --config /absolute/private/operator.json --operation NATIVE_SHA256_ID
+node dist/coding-resource-cli.js recover-lock --config /absolute/private/operator.json
+```
+
+Inspection/export are read-only and explicitly **unsigned**. They cannot clear a
+kernel fence or stand in for original kernel-signed outcome and delivery proof.
+Lock recovery requires an exact same-host pid proved dead and removes only that
+lock. It preserves all operation intent and results. Graceful close releases only
+the lock belonging to this resource instance. Use the separately qualified native
+reconciliation path for kernel state; never delete intent or infer completion
+from files, a generation count or this unsigned ledger.
+
+## Recipe and publication confinement
+
+Each job receives only the exact read-only generation and a fresh private temp
+directory. Its environment contains selected executable-directory PATH, `LANG=C`,
+job-only HOME/TMPDIR and `OPENSSL_CONF=/dev/null`. It inherits no loader, Git,
+provider, Chio or model secrets. Stdin is ignored; combined stdout/stderr, runtime
+and termination grace are bounded. Process groups receive TERM then KILL based
+on observed exit and group existence. Unproved absence or cleanup remains fenced.
+
+macOS uses real `sandbox-exec` with deny default, necessary hardware/kernel
+sysctls, exact Node/dylibs and source, job-only writes, no network, no process
+fork, no hardlinks and no symlink creation. Linux uses `/usr/bin/bwrap` with all
+namespaces unshared, a new user/PID/network namespace, parent-death termination,
+private proc/dev/tmp, exact read-only runtime files and source, and a trusted
+architecture-selected seccomp filter denying processes, sockets and links while
+allowing Node threads. Unsupported platforms/architectures and missing runtime
+pins fail closed. This is an OS boundary; an executable allowlist alone would
+not confine repository code.
+
+For macOS, a single-process Node script importing `node:test` works. Node's
+default `--test` subprocess mode is not an implicitly qualified recipe. Operator
+recipes must be measured with their actual dependencies and runtime.
+
+Publication is a separate Chio tool/capability and must carry exact retained
+successful test, source and recipe lineage. It produces an immutable
+content-addressed JSON bundle under the pinned artifact root, including source,
+manifest, internal diff and test-result digests. Larger bundles remain artifact
+bytes; the MCP reply stays bounded. Exact replay returns the original artifact
+without another publication. No local approval flag, signature or receipt is
+minted by this participant.
+
+The measured macOS and disposable Linux VM fixtures establish resource behavior
+and local confinement. They do not establish exact native kernel acceptance,
+P5 acceptance, whole-Pi Linux confinement or production deployment. Reproduce the
+platform commands and read the limits in
+[Task 3 evidence](superpowers/evidence/2026-10-04-task3-coding-resource.md).
