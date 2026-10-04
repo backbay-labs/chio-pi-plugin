@@ -233,6 +233,8 @@ await assert.rejects(submitScopedChild(parent, widening, nativePort), /scope|aut
 
 ## Task 6: Trusted parent limits and confinement capability reporting
 
+Detailed requirements are [parent limits and Linux guest contracts](../specs/2026-10-04-limits-and-linux-contracts.md).
+
 Files: `src/run-limits.ts`, `src/linux-sandbox.ts`, `src/unix-relay.ts`, model
 relay, protected CLI, guest CLI, config/operator, `test/run-limits.test.mjs`,
 `test/linux-sandbox.test.mjs`, operational guide.
