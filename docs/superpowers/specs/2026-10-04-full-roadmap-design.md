@@ -86,7 +86,8 @@ Arguments have closed schemas. Paths are relative, reject traversal and symlinks
 and stay inside the pinned repository. Search is bounded literal search with
 explicit match/truncation limits. Diff/status avoid external Git hooks and
 credentials. Patch uses exact expected source digests and all-or-none preparation;
-the receipt includes before/after digests. Publication requires the exact
+literal edits resolve against the original full-file text and their ranges must
+not overlap. The receipt includes before/after digests. Publication requires the exact
 successful test result and source digest, writes an immutable content-addressed
 deliverable, and returns its digest and lineage. Publication remains a separate
 kernel tool with separate capability scope.
@@ -109,9 +110,15 @@ the native unknown-outcome distinction. Pre-effect validation refusals can be
 retained as known terminal tool errors.
 Provide read-only outcome inspection/export for native reconciliation, without
 inventing kernel signatures.
+Before serving or advertising tools, validate the initial and current source
+manifests and immutable generation contents. Missing or corrupt required source
+state refuses startup without promoting candidates or clearing unknown intents.
 
 Recipes pin executable/argv, source digest, timeout, output bounds, and recipe
-digest. On macOS use an actual sandbox-exec child; on Linux use bubblewrap with
+digest. On macOS, the selected executable's complete non-system dylib dependency
+closure must match the configured file/hash inventory. Missing, extra or changed
+pins refuse before launch; system OS-runtime qualification remains separate.
+On macOS use an actual sandbox-exec child; on Linux use bubblewrap with
 unshared network/PID and a private snapshot. Refuse unsupported or missing
 confinement. No normal user profile, host credentials, or writable source tree
 is exposed to test code. Timeouts kill the process group and preserve uncertainty

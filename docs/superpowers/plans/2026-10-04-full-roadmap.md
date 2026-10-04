@@ -132,9 +132,15 @@ await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"
   supplied metadata as a substitute for a kernel-owned pipe. Request and
   operation IDs must match the native 64-character lowercase SHA256 identity;
   transport epochs are positive safe integers and caller digests are SHA256.
+  Validate initial/current manifests and immutable generation contents before
+  serving or advertising tools. Missing/corrupt required source refuses startup.
 - [ ] Implement CAS edits in `apply_patch` as expected full-file digest plus
   exact replacement content or bounded literal edits, not arbitrary shell patch
-  commands. Reject executable Git hooks/config helpers. Add context and bounded
+  commands. Resolve all literal matches against original content and reject
+  overlapping ranges across entries before effects. Require complete matching
+  macOS non-system dylib file/hash pins for the selected executable's dependency
+  closure; system OS-runtime qualification remains separate. Reject executable
+  Git hooks/config helpers. Add context and bounded
   aggregate reads as ordinary admitted resource tools. Test confinement on this
   macOS host with real sandbox-exec probes for allowed work, forbidden files,
   outbound network and child cleanup. Implement isolated-network Linux recipe
