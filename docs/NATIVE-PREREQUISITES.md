@@ -35,8 +35,8 @@ Native stdio `tools/call` metadata is:
 
 ```json
 {
-  "chioRequestId": "native-operation-id",
-  "chioOperationId": "native-operation-id",
+  "chioRequestId": "1111111111111111111111111111111111111111111111111111111111111111",
+  "chioOperationId": "1111111111111111111111111111111111111111111111111111111111111111",
   "chioAttemptId": "native-attempt-id",
   "chioTransportKeyEpoch": 1,
   "chioCallerCapabilitySha256": "64-lowercase-hex-characters"
@@ -44,6 +44,10 @@ Native stdio `tools/call` metadata is:
 ```
 
 The operation ID is the kernel admission identity, not the Pi call identity.
+Request and operation IDs are equal lowercase SHA256 values. The native provider
+attempt validator requires that shape and a positive transport-key epoch. The
+process host's connection descriptor supplies the public caller digest from the
+canonical signed capability; a transport token is not that capability identity.
 This metadata is connection binding on an exclusively kernel-owned pipe. A
 resource must not treat the same bytes arriving from an arbitrary caller as a
 signed credential. The resource returns ordinary MCP results; the kernel supplies
@@ -69,6 +73,17 @@ and `projection`. The schema is `chio.recovery.explanation-view.v1`. Projection
 contains a summary and candidates with `template_id` and `assessment`. Native
 validity is at most 30 seconds. Independently select the advisory signer, domain,
 issuer and recipient. Advisory and disclosure signers are separate.
+
+The planner version is `chio.recovery.planner.v1`. Opaque identifiers match
+`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`. Timestamps are safe unsigned integers,
+with `issued <= now < expires` and a positive interval of at most 30,000 ms.
+Candidates are strictly sorted by `template_id`, unique, and limited to sixteen.
+Summary values are `authorized_inspection_required`, `no_disclosable_advice`,
+`alternatives_under_snapshot`, and `search_bound_reached`; the first two have
+no candidates. Candidate assessments are `feasible_under_snapshot`,
+`requires_exact_approval`, `requires_transformation`, `requires_prerequisite`,
+`needs_fresh_evidence`, `blocked_by_capability`, `unknown_outcome`,
+`no_registered_remedy`, and `search_bound_reached`.
 
 The public view contains no workflow ID, private scope, intent digest, complete
 graph digest or report signature. Verifying that view cannot recompute the private
@@ -161,6 +176,16 @@ delivery needs a bounded authenticated native host facade installed with the
 writer and process broker, separate control capabilities and actor assignments,
 the exact native flow profile, and selected Pi ingestion/archive/model sinks.
 Schemas and callback fixtures alone do not establish those native services.
+
+## Provider-specific run limits
+
+The user selected keeping the Codex subscription profile with request, timeout
+and response-size limits while exposing its unavailable hard output-token ceiling.
+The inspected Pi 1.0.2 Codex provider does not emit `max_output_tokens`; the
+[official ChatGPT plan API limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations)
+list that parameter as unsupported. The ordinary OpenAI Responses API supports
+an output ceiling including reasoning tokens. Aborting a stream on byte/time
+bounds cannot establish the provider's total token consumption or spend.
 
 ## Source map
 

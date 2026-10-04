@@ -107,7 +107,7 @@ Files: `src/coding-resource/config.ts`, `paths.ts`, `ledger.ts`, `repository.ts`
   symlinks, stale source, recipe bounds, failed-test publication and replay.
 
 ```js
-const meta = {chioRequestId:"native-op",chioOperationId:"native-op",chioAttemptId:"attempt",chioTransportKeyEpoch:1,chioCallerCapabilitySha256:"a".repeat(64)};
+const meta = {chioRequestId:"1".repeat(64),chioOperationId:"1".repeat(64),chioAttemptId:"attempt",chioTransportKeyEpoch:1,chioCallerCapabilitySha256:"a".repeat(64)};
 const first = await participant.call("apply_patch", patch, meta);
 assert.deepEqual(await participant.call("apply_patch", patch, meta), first);
 assert.equal(await independentEffectCount(), 1);
@@ -122,7 +122,9 @@ await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"
   Use SQLite `synchronous=FULL`, durable immutable source generations, and an
   atomic transaction for current-generation pointer plus terminal outcome.
   Persist immutable source/test/artifact lineage. Do not interpret locally
-  supplied metadata as a substitute for a kernel-owned pipe.
+  supplied metadata as a substitute for a kernel-owned pipe. Request and
+  operation IDs must match the native 64-character lowercase SHA256 identity;
+  transport epochs are positive safe integers and caller digests are SHA256.
 - [ ] Implement CAS edits in `apply_patch` as expected full-file digest plus
   exact replacement content or bounded literal edits, not arbitrary shell patch
   commands. Reject executable Git hooks/config helpers. Add context and bounded
@@ -216,12 +218,18 @@ assert.equal((await openRunBudget(state, limits)).remainingRequests, 0);
 
 - [ ] Run before implementation; observe failure.
 - [ ] Persist conservative limits in parent-only state and bind them on resume.
-  Reserve requests/output tokens before network forwarding, retain uncertain
-  reservations, force bounded provider output, impose provider timeout. Enforce
+  Reserve requests before network forwarding and retain uncertain reservations.
+  The OpenAI API profile also reserves output tokens and forces its supported
+  `max_output_tokens` ceiling. The user explicitly selected keeping the Codex
+  subscription profile with honest limits: request, timeout and response-byte
+  bounds apply, while a hard output-token ceiling and remaining token count are
+  unavailable. Do not send unsupported token-cap parameters, infer token usage
+  from visible bytes, refuse Codex solely for this limitation, or switch routes.
+  Impose provider timeout. Enforce
   a wall deadline in the parent with graceful signal then bounded hard kill;
   never reset the journal or clear outcome uncertainty. Version the existing
   two fixed provider profiles without silently adding a route or fallback.
-- [ ] Implement a bubblewrap guest profile with `--unshare-all`,
+- [ ] Implement a bubblewrap guest profile with `--unshare-all`, `--unshare-user`,
   `--die-with-parent`, `--new-session`, a read-only installed Node/runtime,
   writable isolated profile, private `/tmp`, and only two mounted parent-owned
   Unix sockets. A parent `createUnixRelay(socketPath, fixedLoopbackPort)` forwards

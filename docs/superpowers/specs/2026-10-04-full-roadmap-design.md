@@ -88,6 +88,8 @@ kernel tool with separate capability scope.
 The native `_meta` contract contains `chioRequestId`, `chioOperationId`,
 `chioAttemptId`, `chioTransportKeyEpoch`, and `chioCallerCapabilitySha256`.
 The operation ID is the kernel's resource dispatch ID, not Pi's logical call ID.
+Request and operation IDs match the same 64-character lowercase SHA256 identity.
+The caller digest is SHA256 and the transport epoch is a positive safe integer.
 Missing/malformed identities fail before effects. The ledger binds owner, caller,
 operation, tool, and canonical arguments. Source generations are immutable;
 materialize and fsync a candidate, then commit the current-generation pointer and
@@ -165,7 +167,14 @@ Arbitrary effecting scripts and hidden nested delivery are refused. Pi's native
 codemode is not enabled until every partial effect has a compatible ACK contract.
 
 Add parent-enforced wall-clock deadline, provider-request cap, conservative output
-token reservations, and provider request timeout. Parent termination never proves
+token reservations where supported, provider response-byte bounds, and provider
+request timeout. The user selected keeping Codex available with honest limits.
+The OpenAI API profile reserves tokens and enforces `max_output_tokens`; the
+Codex subscription profile reports its hard output-token ceiling and remaining
+tokens as unavailable. Request/time/response-byte bounds still apply to Codex.
+Visible bytes cannot establish provider token consumption or a spend ceiling.
+Do not send unsupported parameters or silently change provider routes.
+Parent termination never proves
 non-dispatch. Enforce limits before forwarding; uncertain reservations remain
 spent. Persist limits across resume and pin them in session identity. Provider
 profiles are explicit and versioned, preserve fixed routes, and do not silently
