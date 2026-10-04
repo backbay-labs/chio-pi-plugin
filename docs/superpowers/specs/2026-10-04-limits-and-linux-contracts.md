@@ -69,6 +69,11 @@ endpoint. Do not expose prepared operator configuration, native journal,
 resource source/state/artifacts, provider credentials, home profile, Docker socket
 or other host services.
 
+Validate each selected installed/runtime mount closure before launch. Refuse host
+sockets or other special files in those trees and links resolving outside the
+selected closure; the two individually selected relay socket leaves are the only
+host service sockets. Private proc/dev mounts are constructed inside the guest.
+
 `createUnixRelay(socketPath, fixedLoopbackPort)` connects to exactly one parent
 loopback service. `createLoopbackRelay(socketPath, expectedPort)` runs inside
 the isolated guest and preserves the service's expected HTTP Host port. Do not
@@ -84,6 +89,15 @@ measured BPF profile. Allow required Node threads; deny process creation,
 response to permit the libc thread fallback. Install the filter at the intended
 stage after namespace setup, not where it prevents bubblewrap itself from
 constructing the boundary. Missing or mismatched profiles refuse launch.
+
+The recipe filter cannot be reused unchanged: it denies the socket syscalls the
+guest relays require. Use a separate guest filter allowing the qualified Unix
+stream and IPv4 TCP stream operations, while denying process creation, namespace
+changes, namespace-creation clone flags and x32 variants. Pass it through
+bubblewrap's FD3 `--seccomp` stage after namespace/loopback setup and before final
+exec, rather than filtering the parent bubblewrap process. Start both local relays
+and Pi in one Node bootstrap process; spawning relay children would conflict
+with the no-fork contract. Keep the resource recipe filter unchanged.
 
 ## Evidence
 
