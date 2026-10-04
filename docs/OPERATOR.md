@@ -7,7 +7,7 @@ configuration and its original native journal. They do not start Pi, a model
 session or a model relay, read a provider login cache, or change a Pi profile.
 
 Diagnostics contact no service. Explicit recovery actions delegate to the native
-bridge utility using Node argv, without a shell. Delivery ACK and approval actions
+bridge utility using Node argv, without a shell. Delivery ACK and approval submission
 contact the configured native endpoint. They do not dispatch a protected tool.
 
 ## Inspect before recovery
@@ -40,7 +40,7 @@ request, arguments and delivery proof. A denial requires public
 | `completed_pending_acknowledgement` | Native retained completion; inspect signed evidence, then recover original delivery explicitly. |
 | `completed_acknowledged` | Native ACK and required host delivery are recorded; inspect before trusting the effect. |
 | `unknown_after_dispatch` | Native pending or unknown operation; preserve its original identity and reconcile with the resource owner. |
-| `approval_pending` | Exact undispatched native proposal; inspect its original arguments before an operator decision. |
+| `approval_pending` | Exact undispatched native proposal; inspect/submit it. Decision retention requires a separately qualified native operator. |
 | `not_dispatched` | Native retained non-dispatch for this operation; it does not resolve another operation. |
 | `denied` | A signed denial can follow an earlier effect. Its fence remains in place. |
 
@@ -73,7 +73,7 @@ ownership, and confirmation from the retained kernel session. It sends only the
 original delivery proof, without replaying the protected effect. If ACK fails,
 retain the artifact and journal; inspect again rather than rerunning the effect.
 
-## Decide the retained approval
+## Submit the retained approval
 
 The operator file is private JSON containing a distinct `adminToken`. Supply its
 path, never the credential itself, as an argument. Normal native preparation uses
@@ -85,20 +85,29 @@ chio-pi recover --config /absolute/private/prepared.json \
   --action approval-submit --request ORIGINAL_REQUEST_ID \
   --operator /absolute/private/operator.json \
   --output /absolute/private/submitted-approval.json --json
-
-chio-pi recover --config /absolute/private/prepared.json \
-  --action approval-decide --request ORIGINAL_REQUEST_ID \
-  --operator /absolute/private/operator.json \
-  --approval ORIGINAL_APPROVAL_ID --decision approved --json
 ```
 
-Use `--decision denied` for an explicit refusal. Submission reserves its new
-private output before the admin request. Decision writes the native signed
-approval artifact into the journal's private `approvals/` subdirectory. The
-original operation remains an undispatched proposal until an explicit native
-`chio_resume` uses its exact original request, tool and arguments. A failed or
-timed-out admin response does not prove the operator decision was unchanged;
-reconcile that original approval before repeating an admin action.
+Submission reserves its new private output outside the authoritative journal
+before the admin request. It neither decides the approval nor installs a native
+resume credential. The original operation remains an undispatched proposal.
+A failed or timed-out submission does not prove the admin record was unchanged;
+reconcile that original proposal before repeating submission.
+
+`approval-decide` is unavailable for both `approved` and `denied`. The adapter
+refuses it before reading configuration, launching a native child, contacting an
+admin endpoint or creating an artifact. The frozen utility verifies a signed
+exact-request credential but does not bind its decision and approval ID to the
+operator's requested values before retaining it. A valid approved credential
+returned for a requested denial can then be consumed automatically by native
+`chio_resume`. Checking it after retention cannot prevent that activation.
+
+Decision retention requires a separately qualified native operator that checks
+the requested decision **and** approval ID against the signed credential before
+the artifact is retained. The gateway's exact original signed-resume contract is
+preserved: an independently qualified original credential may authorize only its
+retained request, tool and arguments. Utility existence or version 0.3.0 does not
+qualify this missing decision-binding contract. See
+[native prerequisites](NATIVE-PREREQUISITES.md).
 
 ## Recover a dead gateway owner lock
 
@@ -116,8 +125,10 @@ fence remains in place. This action does not reconcile an unknown effect.
 
 Private configuration, journal, input and output paths must be owned by the
 current user. Files are private regular files with no leaf symlinks and a 1 MiB
-limit. Journal authority and any retained `pi-host.binding` must match the
-prepared configuration. Unexpected or duplicate arguments fail before a native
+limit. File type, ownership, permissions and size are checked before opening;
+nonblocking, no-follow opens and descriptor revalidation reject FIFO and other
+nonregular inputs without waiting for a writer. Journal authority and any retained
+`pi-host.binding` must match the prepared configuration. Unexpected or duplicate arguments fail before a native
 subprocess or mutation. Existing outputs and any output inside the authoritative
 journal are refused. Native child stdout/stderr and raw parse errors are not
 forwarded. Sensitive auth fields and known secret values are redacted from both

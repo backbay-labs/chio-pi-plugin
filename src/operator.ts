@@ -39,7 +39,7 @@ export function summarizeGatewayStatus(status: unknown): {sessionId: string; ope
         break;
       case "awaiting_approval":
         state = "approval_pending";
-        nextAction = "Inspect the exact retained proposal, then explicitly submit or decide its original approval. Resume only that original request after a trusted decision.";
+        nextAction = "Inspect and submit the exact retained proposal. Decision retention requires a separately qualified native operator binding the requested decision and approval ID; the frozen adapter refuses approval-decide. Resume only the original request after a trusted decision.";
         break;
       case "not_dispatched":
         state = "not_dispatched";
@@ -89,9 +89,10 @@ async function privateDirectory(path: string): Promise<string> {
 async function privateText(path: string): Promise<{path: string; text: string}> {
   absolutePath(path);
   const requested = await lstat(path);
-  if (requested.isSymbolicLink()) refuse("private_path_required", "Operator files cannot be symbolic links.");
+  if (!requested.isFile() || requested.isSymbolicLink() || requested.mode & 0o077 || requested.uid !== process.getuid?.() || requested.size > LIMIT)
+    refuse("private_path_required", "Operator files must be private regular files owned by the current user, at most 1 MiB.");
   const canonical = join(await privateDirectory(dirname(path)), basename(path));
-  const file = await open(canonical, constants.O_RDONLY | constants.O_NOFOLLOW);
+  const file = await open(canonical, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
     const before = await file.stat();
     if (!before.isFile() || before.mode & 0o077 || before.uid !== process.getuid?.() || before.size > LIMIT
@@ -222,7 +223,7 @@ export async function resolveNativeOperator(): Promise<NativeOperator> {
     return refuse("native_operator_unavailable", "Trusted operator entrypoint escapes or differs from its installed bridge package.");
   return {entrypoint, version: typeof metadata.version === "string" ? metadata.version : "unknown", operatorSha256: hash(await readFile(entrypoint, "utf8"))};
 }
-export type NativeAction = "status" | "recover-lock" | "delivery-export" | "delivery-acknowledge" | "approval-submit" | "approval-decide";
+export type NativeAction = "status" | "recover-lock" | "delivery-export" | "delivery-acknowledge" | "approval-submit";
 export async function invokeNative(operator: NativeOperator, action: NativeAction, configPath: string, args: string[] = []): Promise<Record<string, unknown>> {
   const executable = await realpath(process.execPath);
   const result = await new Promise<string>((done, reject) => {

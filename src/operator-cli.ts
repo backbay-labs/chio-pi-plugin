@@ -9,13 +9,13 @@ const HELP = `Usage:
   chio-pi recover --config CONFIG --action delivery-export --request ORIGINAL_REQUEST_ID --output NEW_PRIVATE_FILE [--json]
   chio-pi recover --config CONFIG --action delivery-acknowledge --input RECEIVED_ORIGINAL_ARTIFACT [--json]
   chio-pi recover --config CONFIG --action approval-submit --request ORIGINAL_REQUEST_ID --operator PRIVATE_OPERATOR_FILE --output NEW_PRIVATE_FILE [--json]
-  chio-pi recover --config CONFIG --action approval-decide --request ORIGINAL_REQUEST_ID --operator PRIVATE_OPERATOR_FILE --approval APPROVAL_ID --decision approved|denied [--json]
 Diagnostics launch no model and contact no service. Recovery delegates only the named native operator action. Listing and export never ACK. Unknown outcomes retain their original fence.
+approval-decide is unavailable in this frozen artifact. A separately qualified native operator must check the requested decision and approval ID against the signed credential before retention.
 Owner-result import, capability attenuation, semantic recovery and whole-host Linux execution are unavailable. See docs/OPERATOR.md and docs/NATIVE-PREREQUISITES.md.
 `;
 const recoveryOptions: Record<string, readonly string[]> = {
   "recover-lock": [], "delivery-export": ["--request", "--output"], "delivery-acknowledge": ["--input"],
-  "approval-submit": ["--request", "--operator", "--output"], "approval-decide": ["--request", "--operator", "--approval", "--decision"],
+  "approval-submit": ["--request", "--operator", "--output"],
 };
 const unavailable = new Set(["owner-result-import", "capability-attenuation", "semantic-recovery", "coding-resource", "durable-host-recovery", "whole-host-linux"]);
 interface Parsed {command: "doctor" | "status" | "inspect" | "recover"; values: Map<string, string>; json: boolean;}
@@ -36,10 +36,10 @@ function parse(args: string[]): Parsed {
   if (command === "inspect") allowed.push("--request");
   if (command === "recover") {
     const action = values.get("--action");
+    if (action === "approval-decide") throw new OperatorError("native_prerequisite_unavailable", "Approval decision is unavailable in this frozen artifact. A separately qualified native operator must verify the requested decision and approval ID against the signed credential before retention. Original proposal, journal and fence remain; see docs/NATIVE-PREREQUISITES.md.");
     if (action && unavailable.has(action)) throw new OperatorError("capability_unavailable", "Requested native capability is unavailable in this pinned artifact. Preserve original state; see docs/NATIVE-PREREQUISITES.md and the separately qualified utility in docs/FINAL-QUALIFICATION.md.");
     if (!action || !Object.hasOwn(recoveryOptions, action)) invalid();
     allowed.push("--action", ...recoveryOptions[action]);
-    if (action === "approval-decide" && !["approved", "denied"].includes(values.get("--decision") ?? "")) invalid();
   }
   if (allowed.some(name => !values.has(name)) || [...values.keys()].some(name => !allowed.includes(name))) invalid();
   for (const name of ["--config", "--input", "--output", "--operator"]) if (values.has(name)) absolutePath(values.get(name)!);
@@ -63,7 +63,7 @@ function doctor(context: OperatorContext, status: Record<string, unknown>, bridg
       local("original-delivery-export", "Native utility exports only an exact verified original completion, without dispatch or ACK."),
       local("original-delivery-acknowledge", "Explicit received original artifact and exclusive native gateway ownership are required; the kernel must confirm ACK."),
       local("original-approval-submit", "Explicit operator credential and original retained proposal; the native endpoint performs no protected dispatch."),
-      local("original-approval-decide", "Explicit original approval ID and decision; native exact-action signature verification is required."),
+      missing("original-approval-decide", "The frozen utility does not bind the requested decision and approval ID to the signed credential before artifact retention. A separately qualified native operator is required."),
       missing("owner-result-import", "Absent from the bundled operator. Requires the separately qualified native exporter/importer in FINAL-QUALIFICATION.md."),
       missing("capability-attenuation", "No native issuer-backed child authority contract is exposed here; retained-session tool filtering is not attenuation."),
       missing("semantic-recovery", "No qualified native semantic host facade is configured; schema existence does not establish a service."),
@@ -77,21 +77,20 @@ async function recover(parsed: Parsed, context: OperatorContext, status: Record<
   const action = values.get("--action") as NativeAction;
   const requestId = values.get("--request");
   const args: string[] = [];
-  if (action === "delivery-export" || action.startsWith("approval-")) {
+  if (action === "delivery-export" || action === "approval-submit") {
     const original = inspectOperation(context, requestId!, status);
     const expected = action === "delivery-export" ? "completed" : "awaiting_approval";
     if (!object(original.operation) || original.operation.originalState !== expected)
       throw new OperatorError("original_state_refused", "Native recovery action does not match the original retained operation state; its fence is preserved.");
     args.push(requestId!);
   }
-  if (action.startsWith("approval-")) {
+  if (action === "approval-submit") {
     const operator = await privateJson(values.get("--operator")!); context.redactor.collect(operator.value);
     if (!object(operator.value) || typeof operator.value.adminToken !== "string" || !operator.value.adminToken || operator.value.adminToken === context.config.execution.bearerToken)
       throw new OperatorError("operator_credential_required", "A distinct private operator-only admin credential is required.");
     args.push(operator.path);
   }
   if (action === "delivery-export" || action === "approval-submit") args.push(await newArtifactPath(context, values.get("--output")!));
-  if (action === "approval-decide") args.push(values.get("--approval")!, values.get("--decision")!);
   if (action === "delivery-acknowledge") {
     const received = await privateJson(values.get("--input")!); context.redactor.collect(received.value);
     if (!object(received.value) || received.value.schema !== "chio.gateway.delivered-outcome.v1" || !object(received.value.outcome)
@@ -112,7 +111,7 @@ async function recover(parsed: Parsed, context: OperatorContext, status: Record<
   return {schema: "chio.pi.operator.recover.v1", action, sessionId: context.config.sessionId, protectedDispatch: false, nativeResult,
     nextAction: action === "delivery-export" ? "Receive and inspect the original private artifact, then explicitly acknowledge it. Export has not cleared the fence."
       : action === "recover-lock" ? "Only the dead owner lock was removed. Original journals and unresolved fences remain; inspect the original request before any continuation."
-      : action.startsWith("approval-") ? "Approval does not execute the effect. Preserve the retained proposal and explicitly resume that exact original request through the native gateway."
+      : action === "approval-submit" ? "Submission does not execute the effect or supply a trusted decision credential. Preserve the original proposal; decision retention requires a separately qualified native operator."
       : "Only original delivery acknowledgement was requested. Preserve the received artifact and confirm native status before continuing."};
 }
 function readable(view: Record<string, unknown>): string {

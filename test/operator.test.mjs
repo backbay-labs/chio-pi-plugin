@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import {createHash, generateKeyPairSync} from "node:crypto";
-import {spawn} from "node:child_process";
-import {chmod, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile} from "node:fs/promises";
+import {execFileSync, spawn} from "node:child_process";
+import {createHook} from "node:async_hooks";
+import {chmod, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, unlink, writeFile} from "node:fs/promises";
 import {createServer} from "node:http";
 import {hostname, tmpdir} from "node:os";
 import {dirname, join} from "node:path";
@@ -40,13 +41,13 @@ function signedOutcome(config, request, state = "completed") {
       receiptId: receipt.id, resultHash: receipt.content_hash, acknowledgement: "a".repeat(43)}};
 }
 
-function approvedParams(config, requestId, args) {
+function approvedParams(config, requestId, args, options = {}) {
   const now = Math.floor(Date.now() / 1000);
   const intent = {server_id: config.execution.serverId, tool_name: "read_text_file",
     body: {kind: "bound_tool_invocation", value: {capability_id: config.execution.capabilityId, parameters_hash: "0x" + sha256Hex(canonicalizeJson(args))}},
     context: {mcpSessionId: config.execution.sessionId, capabilityId: config.execution.capabilityId}};
-  const tokenBody = {id: "fixture-approval", approver: signer, subject: config.execution.subjectKey, governed_intent_hash: sha256Hex(canonicalizeJson(intent)),
-    request_id: requestId, issued_at: now - 1, expires_at: now + 300, decision: "approved"};
+  const tokenBody = {id: options.approvalId ?? "fixture-approval", approver: signer, subject: config.execution.subjectKey, governed_intent_hash: sha256Hex(canonicalizeJson(intent)),
+    request_id: requestId, issued_at: now - 1, expires_at: now + 300, decision: options.decision ?? "approved"};
   return {name: "read_text_file", arguments: args, _meta: {chioRequestId: requestId, chioGovernedIntent: intent,
     chioApprovalToken: {...tokenBody, signature: signUtf8MessageEd25519(canonicalizeJson(tokenBody), seed).signature_hex}}};
 }
@@ -107,12 +108,14 @@ async function snapshot(path) {
 function assertRedacted(result) {
   for (const secret of [...secrets, "a".repeat(43)]) assert.equal(`${result.stdout}${result.stderr}`.includes(secret), false, "operator output must suppress every known credential");
 }
-function subprocess(file, args, env = {}) {
+function subprocess(file, args, env = {}, options = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [file, ...args], {shell: false, env: {PATH: dirname(process.execPath), LANG: "en_US.UTF-8", ...env}, stdio: ["ignore", "pipe", "pipe"]});
-    let stdout = ""; let stderr = "";
+    let stdout = ""; let stderr = ""; let timedOut = false;
+    const timer = options.timeoutMs ? setTimeout(() => {timedOut = true; child.kill("SIGKILL");}, options.timeoutMs) : undefined;
     child.stdout.on("data", value => stdout += value); child.stderr.on("data", value => stderr += value);
-    child.once("error", reject); child.once("exit", code => resolve({code, stdout, stderr}));
+    child.once("error", error => {clearTimeout(timer); reject(error);});
+    child.once("close", code => {clearTimeout(timer); resolve({code, stdout, stderr, timedOut});});
   });
 }
 
@@ -338,7 +341,7 @@ test("delivery export uses native exact completion without dispatch, ACK, overwr
   } finally {await f.close();}
 });
 
-test("native approval submit and signed decision retain the exact proposal and never dispatch its protected tool", async () => {
+test("native approval submission retains the exact proposal without a decision credential or protected dispatch", async () => {
   const f = await fixture("awaiting_approval");
   try {
     const originalRecord = await readFile(f.recordPath, "utf8");
@@ -349,18 +352,10 @@ test("native approval submit and signed decision retain the exact proposal and n
     f.setHandler(async (req, res) => {
       let raw = ""; for await (const part of req) raw += part;
       requests.push({route: req.url, authorization: req.headers.authorization, body: JSON.parse(raw)});
-      const now = Math.floor(Date.now() / 1000);
-      const intent = {server_id: f.config.execution.serverId, tool_name: proposal.tool_name,
-        body: {kind: "bound_tool_invocation", value: {capability_id: f.config.execution.capabilityId, parameters_hash: "0x" + sha256Hex(canonicalizeJson(proposal.arguments))}},
-        context: {mcpSessionId: f.config.execution.sessionId, capabilityId: f.config.execution.capabilityId}};
-      const tokenBody = {id: "fixture-approval", approver: signer, subject: f.config.execution.subjectKey, governed_intent_hash: sha256Hex(canonicalizeJson(intent)),
-        request_id: f.original.requestId, issued_at: now - 1, expires_at: now + 300, decision: "approved"};
-      const params = {name: proposal.tool_name, arguments: proposal.arguments, _meta: {chioRequestId: f.original.requestId, chioGovernedIntent: intent,
-        chioApprovalToken: {...tokenBody, signature: signUtf8MessageEd25519(canonicalizeJson(tokenBody), seed).signature_hex}}};
       res.writeHead(200, {"Content-Type": "application/json"});
-      res.end(JSON.stringify({dispatchPerformedByThisEndpoint: false, status: req.url.endsWith("/decision") ? "approved" : "pending",
+      res.end(JSON.stringify({dispatchPerformedByThisEndpoint: false, status: "pending",
         record: {id: "fixture-approval", request_id: f.original.requestId, session_id: f.config.execution.sessionId, capability_id: f.config.execution.capabilityId},
-        ...(req.url.endsWith("/decision") ? {toolCallParams: params} : {}), adminToken: secrets[3]}));
+        adminToken: secrets[3]}));
     });
     const output = join(f.directory, "submitted.json");
     const submitted = await capture(["recover", "--config", f.configPath, "--action", "approval-submit", "--request", f.original.requestId, "--operator", operatorPath, "--output", output, "--json"]);
@@ -368,20 +363,89 @@ test("native approval submit and signed decision retain the exact proposal and n
     assert.equal(JSON.parse(submitted.stdout).nativeResult.protectedDispatch, false);
     assert.equal((await lstat(output)).mode & 0o077, 0);
     assert.deepEqual(requests[0], {route: "/admin/approvals", authorization: `Bearer ${secrets[3]}`, body: proposal});
-    const decided = await capture(["recover", "--config", f.configPath, "--action", "approval-decide", "--request", f.original.requestId, "--operator", operatorPath, "--approval", "fixture-approval", "--decision", "approved", "--json"]);
-    assert.equal(decided.code, 0, decided.stderr); assertRedacted(decided);
-    assert.deepEqual(requests[1], {route: "/admin/approvals/fixture-approval/decision", authorization: `Bearer ${secrets[3]}`, body: {decision: "approved"}});
-    const approvedPath = join(f.journalDir, "approvals", operationKey(f.original.requestId) + ".json");
-    assert.equal((await lstat(approvedPath)).mode & 0o077, 0);
-    assert.equal(JSON.parse(await readFile(approvedPath, "utf8")).toolCallParams._meta.chioRequestId, f.original.requestId);
+    assert.equal(await lstat(join(f.journalDir, "approvals")).then(() => true, error => error.code === "ENOENT" ? false : Promise.reject(error)), false);
     assert.equal(await readFile(f.recordPath, "utf8"), originalRecord);
-    assert.deepEqual(f.counts(), {network: 2, dispatches: 0, acknowledgements: 0});
+    assert.deepEqual(f.counts(), {network: 1, dispatches: 0, acknowledgements: 0});
     const before = await snapshot(f.journalDir);
     const invalidOutput = await capture(["recover", "--config", f.configPath, "--action", "approval-submit", "--request", f.original.requestId, "--operator", operatorPath, "--output", join(f.journalDir, "foreign-proposal.json"), "--json"]);
     assert.equal(invalidOutput.code, 1); assertRedacted(invalidOutput);
-    assert.deepEqual(f.counts(), {network: 2, dispatches: 0, acknowledgements: 0});
+    assert.deepEqual(f.counts(), {network: 1, dispatches: 0, acknowledgements: 0});
     assert.deepEqual(await snapshot(f.journalDir), before);
   } finally {await f.close();}
+});
+
+for (const decision of ["denied", "approved"]) test(`approval-decide ${decision} is unavailable before native children, admin work or retaining an activatable credential`, async () => {
+  const f = await fixture("awaiting_approval");
+  let resumedGateway;
+  try {
+    const before = await snapshot(f.journalDir);
+    const operatorPath = join(f.directory, "operator.json"); await writeFile(operatorPath, JSON.stringify({adminToken: secrets[3]}), {mode: 0o600});
+    let adminRequests = 0; let nativeChildren = 0; let protectedDispatches = 0;
+    f.setHandler(async (req, res) => {
+      for await (const part of req) {};
+      adminRequests++;
+      const params = approvedParams(f.config, f.original.requestId, requestArgs, {approvalId: decision === "approved" ? "foreign-signed-approval" : "fixture-approval"});
+      res.writeHead(200, {"Content-Type": "application/json"});
+      res.end(JSON.stringify({dispatchPerformedByThisEndpoint: false, status: decision,
+        record: {id: "fixture-approval", request_id: f.original.requestId, session_id: f.config.execution.sessionId, capability_id: f.config.execution.capabilityId}, toolCallParams: params}));
+    });
+    // Observe real process creation without replacing or importing native code.
+    const processes = createHook({init(id, type) {if (type === "PROCESSWRAP") nativeChildren++;}});
+    let result;
+    processes.enable();
+    try {result = await capture(["recover", "--config", f.configPath, "--action", "approval-decide", "--request", f.original.requestId,
+      "--operator", operatorPath, "--approval", "fixture-approval", "--decision", decision, "--json"]);}
+    finally {processes.disable();}
+    resumedGateway = createGateway(f.config, {async execute(request) {protectedDispatches++; return signedOutcome(f.config, request);}}, {requireHostAcknowledgement: true});
+    const resumed = await resumedGateway.call("retained-resume", "chio_resume", {requestId: f.original.requestId, tool: "read_text_file", arguments: requestArgs});
+    resumedGateway.close(); resumedGateway = undefined;
+    const artifactExists = await lstat(join(f.journalDir, "approvals", operationKey(f.original.requestId) + ".json")).then(() => true, error => {if (error.code === "ENOENT") return false; throw error;});
+    assert.deepEqual({code: result.code, adminRequests, nativeChildren, protectedDispatches, state: resumed.state, artifactExists},
+      {code: 1, adminRequests: 0, nativeChildren: 0, protectedDispatches: 0, state: "awaiting_approval", artifactExists: false},
+      "frozen native utility cannot retain a requested decision or approval ID safely");
+    assert.match(result.stderr, /unavailable|native.*prerequisite/i); assertRedacted(result);
+    assert.deepEqual(await snapshot(f.journalDir), before);
+  } finally {resumedGateway?.close(); await f.close();}
+});
+
+test("operator help and doctor expose submission while marking frozen native decision binding unavailable", async () => {
+  const help = await capture(["recover", "--help"]);
+  assert.equal(help.code, 0); assert.match(help.stdout, /approval-decide[^\n]*unavailable/i);
+  assert.match(help.stdout, /decision and approval ID[^\n]*before/i);
+  const f = await fixture("awaiting_approval");
+  try {
+    const result = await capture(["doctor", "--config", f.configPath, "--json"]);
+    assert.equal(result.code, 0, result.stderr);
+    const diagnosis = JSON.parse(result.stdout);
+    assert.equal(diagnosis.capabilities.find(value => value.id === "original-approval-submit").available, true);
+    const decision = diagnosis.capabilities.find(value => value.id === "original-approval-decide");
+    assert.equal(decision.available, false); assert.match(decision.reason, /decision and approval ID/); assert.match(decision.reason, /before.*retention/);
+    assert.equal(f.counts().network, 0);
+  } finally {await f.close();}
+});
+
+for (const seam of ["config", "journal", "delivery-input", "operator-input"]) test(`private ${seam} FIFO is refused promptly without native/admin effects`, async () => {
+  const f = await fixture(seam === "operator-input" ? "awaiting_approval" : "completed");
+  let restoreRecord;
+  try {
+    const fifo = seam === "journal" ? f.recordPath : join(f.directory, "private-fifo");
+    if (seam === "journal") {restoreRecord = await readFile(f.recordPath, "utf8"); await unlink(f.recordPath);}
+    execFileSync("mkfifo", [fifo]); await chmod(fifo, 0o600);
+    const before = await lstat(fifo);
+    const args = seam === "config" ? ["status", "--config", fifo, "--json"]
+      : seam === "journal" ? ["status", "--config", f.configPath, "--json"]
+      : seam === "delivery-input" ? ["recover", "--config", f.configPath, "--action", "delivery-acknowledge", "--input", fifo, "--json"]
+      : ["recover", "--config", f.configPath, "--action", "approval-submit", "--request", f.original.requestId, "--operator", fifo, "--output", join(f.directory, "new-submission.json"), "--json"];
+    const result = await subprocess(fileURLToPath(new URL("../dist/protected-cli.js", import.meta.url)), args, {}, {timeoutMs: 6000});
+    assert.equal(result.timedOut, false, `${seam} FIFO must be refused before a blocking open`);
+    assert.equal(result.code, 1); assertRedacted(result);
+    const after = await lstat(fifo); assert.equal(after.ino, before.ino); assert.equal(after.isFIFO(), true);
+    assert.equal(f.counts().network, 0);
+    assert.equal(await lstat(join(f.directory, "new-submission.json")).then(() => true, error => error.code === "ENOENT" ? false : Promise.reject(error)), false);
+  } finally {
+    if (restoreRecord !== undefined) {await unlink(f.recordPath); await writeFile(f.recordPath, restoreRecord, {mode: 0o600});}
+    await f.close();
+  }
 });
 
 test("native delivery ACK requires the exact received artifact and exclusive gateway ownership, without replaying the effect", async () => {

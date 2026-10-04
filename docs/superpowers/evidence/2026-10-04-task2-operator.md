@@ -43,26 +43,29 @@ which retains a proposal without a separate request field.
 Native delivery export creates a new private original artifact without ACK or
 dispatch. Explicit ACK requires the exact received original outcome and exclusive gateway
 ownership; the fixture endpoint sees only `chio/acknowledge`, with no protected
-tool replay. Native approval submission and signed decision use the retained
-proposal and the normal prepare utility's bare-origin execution endpoint. The
-private decision artifact is native-owned under `approvals/`; the original
-operation remains unchanged until native resume. Foreign delivery/approval
+tool replay. Native approval submission uses the retained proposal and the normal
+prepare utility's bare-origin execution endpoint. It creates no native resume
+credential. Decision retention is unavailable in this frozen adapter because
+the native utility lacks requested-decision and approval-ID binding before
+retention; the quality review below records that gate. Foreign delivery/approval
 outputs inside the authoritative journal are refused before export/admin work.
 Dead-owner recovery releases only a provably dead same-host lock and retains all
 original operation files, including unresolved fences.
 
 ## Verification
 
-The focused operator suite passes 21 tests with zero failures or skips. It uses
+The initial focused operator suite passed 21 tests with zero failures or skips. It used
 the actual bundled utility, ephemeral Ed25519 keys, private temporary journals,
 a scripted resource executor and local HTTP fixtures. It covers actual native
-export, ACK, approval submit/decision and dead-lock actions, plus conservative
+export, ACK, matching approval submission/decision fixtures and dead-lock actions, plus conservative
 status, import safety, executable symlinks, exact proof substitution and auth
 redaction. Diagnostic fixture counters show no network, model, ACK or protected
 dispatch activity; before/after journal snapshots are identical.
 
-`npm run typecheck && npm test && git diff --check` passes 80 tests with zero
-failures or skips after the final implementation and redaction fixes. The focused
+`npm run typecheck && npm test && git diff --check` passed 80 tests with zero
+failures or skips after the initial implementation and redaction fixes. These
+matching decision fixtures did not establish the missing native decision/ID
+binding contract; the current gate is recorded below. The focused
 command is `npm run build && node --test test/operator.test.mjs`; the final
 proposal-redaction gate also passes with
 `node --test --test-name-pattern='proposal arguments' test/operator.test.mjs`.
@@ -100,11 +103,58 @@ passes two tests with zero failures or skips. Fresh
 `npm run typecheck && npm test && git diff --check` passes all 81 tests, including
 22 operator tests, with zero failures or skips after this correction.
 
+## Quality review corrections: decision retention and nonregular files
+
+Quality review found that the frozen native utility verifies an approval
+credential's signature and exact request but does not compare its signed decision
+and ID with the operator's requested decision and approval ID before writing the
+native activation artifact. Post-write checking cannot close that boundary.
+
+RED was observed with
+`npm run build && node --test --test-name-pattern='approval-decide .*unavailable|private .*FIFO' test/operator.test.mjs`:
+both decision cases returned code 0, launched two real native children, made an
+admin request, retained an activation artifact, and caused actual native
+`chio_resume` to call the scripted protected executor once. Requested denial
+received a genuinely signed approved token; requested approval received a
+genuinely signed token for a different approval ID. The fixture used the actual
+bundled operator and gateway, ephemeral Ed25519 authority and a local admin
+endpoint. No real protected resource or credential was involved.
+
+The adapter now refuses `approval-decide` during argument parsing for both
+directions, before configuration reads, any native child/admin request or any
+artifact creation. The native action union and recovery dispatch no longer
+include decision retention. Doctor and help report it unavailable, with a
+separately qualified native operator required to verify the requested decision
+and approval ID against the signed credential before retention. Submission and
+the gateway's exact original signed-resume contract remain intact. No vendor or
+installed native code, journal migration, local authority substitute, artifact
+quarantine or fence clearing was introduced.
+
+The same RED command also bounded and hard-killed all four FIFO cases after six
+seconds: config, journal operation, received ACK input and operator/admin input.
+The shared reader now checks regular-file type, ownership, mode and size before
+opening, then uses `O_NONBLOCK | O_NOFOLLOW` and descriptor revalidation to reject
+nonregular replacements. All four GREEN subprocess cases refuse in under one
+second, without admin requests or output artifacts. Tests clean up killed
+processes and private temporary FIFOs explicitly.
+
+Fresh `npm run build && node --test test/operator.test.mjs` passes 29 operator
+tests with zero failures or skips. The decision refusal regressions observe zero
+native children without replacing native code; the original proposal/journal and
+fence remain identical, no credential artifact exists, and native resume performs
+no protected dispatch. The public help/doctor distinction is tested separately.
+
+Fresh `npm run typecheck && npm test && git diff --check` passes all 88 tests,
+including 29 operator tests, with zero failures or skips after both quality
+corrections. These are component/native-utility checks, not live-kernel,
+provider or whole-host confinement qualification.
+
 ## Honest unavailable capabilities
 
 Doctor reports unknown token/budget counters as `null` and configured expiry
-without live validation. The current bridge lacks owner-result import and native
-capability attenuation. Semantic recovery, coding-resource delivery, cross-host
+without live validation. The frozen operator lacks qualified approval decision/ID
+binding; the current bridge lacks owner-result import and native capability
+attenuation. Semantic recovery, coding-resource delivery, cross-host
 Durable recovery and whole-Pi Linux confinement remain later tasks or separately
 qualified native prerequisites. No DTO or retained-session transport token is
 treated as child authority. No historical qualification record, real credential
