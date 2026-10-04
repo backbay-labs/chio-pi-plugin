@@ -87,7 +87,18 @@ and stay inside the pinned repository. Search is bounded literal search with
 explicit match/truncation limits. Diff/status avoid external Git hooks and
 credentials. Patch uses exact expected source digests and all-or-none preparation;
 literal edits resolve against the original full-file text and their ranges must
-not overlap. The receipt includes before/after digests. Publication requires the exact
+not overlap. Validate the complete candidate namespace before materialization,
+including file/ancestor conflicts and aliases of every directory or file prefix.
+The fixed portable namespace supports well-formed NFC paths containing assigned,
+visible Unicode 15.1 scalars, with pinned official full case-fold data for alias
+keys. Controls, default-ignorable characters and unsupported newer scalars refuse
+explicitly; ordinary supported Unicode remains available. Bound each component
+to 255 UTF-8 bytes and the actual managed absolute destination to the supported
+platform path capacity. Preserve source originals during import. This is a
+declared naming profile, not a claim of arbitrary filesystem equivalence.
+Verify each newly materialized immutable generation before the atomic head
+commit; unexpected filesystem behavior cannot promote an unloadable manifest.
+The receipt includes before/after digests. Publication requires the exact
 successful test result and source digest, writes an immutable content-addressed
 deliverable, and returns its digest and lineage. Publication remains a separate
 kernel tool with separate capability scope.
@@ -118,6 +129,12 @@ Recipes pin executable/argv, source digest, timeout, output bounds, and recipe
 digest. On macOS, the selected executable's complete non-system dylib dependency
 closure must match the configured file/hash inventory. Missing, extra or changed
 pins refuse before launch; system OS-runtime qualification remains separate.
+Reply capacity includes both JSON encoding layers for recipe output and the
+worst permitted JSON-RPC ID and envelope. Apply the same capacity rule before
+effects and to retained replay; never substitute or redispatch an original result
+because it cannot be delivered. Linux x64 syscall filtering explicitly refuses
+x32-number variants before ordinary comparisons. Static filter verification and
+actual x64 runtime acceptance remain separate.
 On macOS use an actual sandbox-exec child; on Linux use bubblewrap with
 unshared network/PID and a private snapshot. Refuse unsupported or missing
 confinement. No normal user profile, host credentials, or writable source tree

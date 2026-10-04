@@ -134,10 +134,17 @@ await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"
   transport epochs are positive safe integers and caller digests are SHA256.
   Validate initial/current manifests and immutable generation contents before
   serving or advertising tools. Missing/corrupt required source refuses startup.
+  Bound fresh and retained replies using both recipe JSON encoding layers and
+  the full worst permitted JSON-RPC envelope; preserve original replay identity.
 - [ ] Implement CAS edits in `apply_patch` as expected full-file digest plus
   exact replacement content or bounded literal edits, not arbitrary shell patch
   commands. Resolve all literal matches against original content and reject
-  overlapping ranges across entries before effects. Require complete matching
+  overlapping ranges across entries before effects. Validate the full candidate
+  namespace for file/ancestor and every-prefix spelling/type conflicts. Use a
+  documented well-formed NFC Unicode 15.1 naming profile with pinned official
+  full case-fold data, explicit unsupported-scalar refusals, component byte bounds
+  and actual managed absolute path bounds. Verify newly materialized generations
+  before committing the head. Require complete matching
   macOS non-system dylib file/hash pins for the selected executable's dependency
   closure; system OS-runtime qualification remains separate. Reject executable
   Git hooks/config helpers. Add context and bounded
@@ -145,6 +152,8 @@ await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"
   macOS host with real sandbox-exec probes for allowed work, forbidden files,
   outbound network and child cleanup. Implement isolated-network Linux recipe
   invocation through bubblewrap; do not call it accepted without Linux evidence.
+  Refuse x32 syscall-number variants in the x64 filter and evaluate the actual
+  compiled filter independently of real x64 runtime qualification.
 - [ ] Run typecheck/full tests and stdio binary smoke; record implementation and
   platform acceptance separately; commit `feat: add recoverable coding resource
   participant`. Obtain both reviews and fix findings before Task 4.
