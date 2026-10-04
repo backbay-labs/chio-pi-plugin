@@ -20,7 +20,7 @@ parallel. Read-only contract research has already established native boundaries.
 | Registry/current host | `src/tool-registry.ts`, extension/session/relay/config files | Native schemas and exact host exposure |
 | Operator | `src/operator.ts`, `src/operator-cli.ts`, protected CLI | Trusted diagnostics/native recovery actions |
 | Coding resource | `src/coding-resource/*.ts`, `src/coding-resource-cli.ts` | Kernel-owned effects, ledger, tests, artifacts |
-| Continuation/Durable | `src/continuation.ts`, `src/durable.ts` | Immutable original identity and host recovery |
+| Continuation/Durable | `src/continuation.ts`, `src/durable.ts`, trusted gateway mapping helper, protected launcher | Immutable original identity and host recovery |
 | Native governance | `src/governance.ts`, relay, `src/delegation.ts` | Native-port admission and explicit refusal |
 | Operational limits | `src/run-limits.ts`, protected CLI, relay | Trusted parent budgets/deadlines |
 | Linux guest | `src/linux-sandbox.ts`, `src/unix-relay.ts`, CLI | Network-isolated guest with two fixed Unix relay endpoints |
@@ -145,7 +145,8 @@ await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"
 
 ## Task 4: Original-operation handoff and Pi Durable
 
-Files: `src/continuation.ts`, `src/durable.ts`, index/package manifests,
+Files: `src/continuation.ts`, `src/durable.ts`, a focused trusted gateway mapping
+helper and its protected-launch wiring, index/package manifests,
 `test/continuation.test.mjs`, `test/durable.test.mjs`, continuation guide.
 
 - [ ] Add tamper/caller/arguments/signature/authority mismatch and unknown fence
@@ -172,6 +173,15 @@ await assert.rejects(importContinuation(tampered, binding), /binding|digest|veri
   replay. Implement explicit recovery of the original request through native
   retained outcome lookup/verified replay, never a newly generated operation.
   Keep delivery and native ACK separate until full history is observed.
+  Capture the exact HTTP gateway request identity in private parent state before
+  forwarding the first call. The bundled public gateway has no before-dispatch
+  hook, so a fixed-target trusted proxy is permitted for this mapping. Preserve
+  the native MCP session/header/ID contract and expose no new execution or admin
+  route. Persist original logical request plus actual native request ID outside
+  the guest, without adding root-level journal JSON. A changed connection must
+  not reconstruct the old identity. Test gateway response loss, parent restart,
+  mapping tampering and native status compatibility. Missing original identity
+  or missing native original evidence refuses recovery without a new dispatch.
 - [ ] Run typecheck/full tests, record evidence, commit `feat: add Chio Durable
   tools and original-operation continuation`. Obtain both reviews and fix.
 

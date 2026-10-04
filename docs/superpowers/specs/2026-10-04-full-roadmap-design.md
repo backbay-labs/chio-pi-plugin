@@ -128,6 +128,15 @@ receiving operator's pinned authority. Different authority refuses adoption.
 Unknown work stays fenced; completed work can be delivered as its original result.
 Context never authorizes an effect or erases a fence.
 
+The HTTP gateway's native request ID includes its ephemeral MCP connection
+identity. Capture the exact original logical-to-native mapping in trusted parent
+state before forwarding, not after receiving an outcome. The bundled public
+gateway has no before-dispatch hook; a fixed-target bounded trusted proxy may
+record that mapping while preserving native headers, IDs and route restrictions.
+Mapping state stays outside the guest and outside root-level journal JSON.
+Changing transport sessions never creates a replacement operation for recovery.
+Absent identity or absent native original evidence refuses without dispatch.
+
 Implement native Pi Durable ToolRegistration definitions on version 1.0.2. Map
 conversation/task/call identity immutably to the existing KernelRequest identity,
 using Durable's persisted memo before execution. Keep replay `unsafe` and provide
