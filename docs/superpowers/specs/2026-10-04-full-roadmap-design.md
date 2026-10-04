@@ -162,6 +162,11 @@ discard native monotone knowledge. Current P4 archive transfer refuses changed
 process/tenant/authority; do not claim cross-authority adoption. P5 real Linux
 acceptance remains a native qualification prerequisite. Unavailable native
 profiles fail closed and appear explicitly in doctor and qualification documents.
+Required model egress must use a native committed release into an independently
+selected trusted provider sink. A local admission precheck followed by a separate
+fetch does not establish this boundary. Lost native commit acknowledgement
+withholds bytes. Normalize and impose provider limits before native admission,
+then deliver the exact immutable admitted bytes, without later mutation.
 
 ## 6. Context, aggregation, limits, and portability
 

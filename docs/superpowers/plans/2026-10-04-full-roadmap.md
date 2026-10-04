@@ -195,6 +195,11 @@ await assert.rejects(submitScopedChild(parent, widening, nativePort), /scope|aut
   disclosure admission binds request bytes and provider account/model/purpose;
   the trusted relay awaits independent native verification before egress. Do
   not expose arbitrary guest callbacks as a launchable authorization provider.
+  Required governed egress uses the native committed-release path into a selected
+  trusted provider sink. An adapter precheck followed by an independent fetch is
+  insufficient. Lost native commit acknowledgement withholds bytes. Freeze the
+  final outbound payload after all host normalization and provider-limit changes
+  before native admission, then deliver those exact bytes through the sink.
 - [ ] Child submission requires actual native child-capability issuance and
   persisted budget/cancellation identity, not transport filtering. The installed
   bridge's unsupported attenuation yields explicit unavailable status. Protect
