@@ -73,6 +73,49 @@ release, or fall back to raw blobs/files/SQLite. Current archive transfer requir
 the same native process, tenant, authority and retained provenance inventory.
 A changed Pi session ID does not establish compatible native process custody.
 
+## Pi session mediation
+
+Use the installed Pi 1.0.2 public lifecycle contracts. Its extension runner catches
+thrown handlers and continues. Trusted handlers must catch custody failures and
+explicitly return `{cancel: true}` from `session_before_compact`,
+`session_before_fork`, `session_before_switch` and `session_before_tree`.
+Missing ports, timeouts, rejected evidence and changed bindings cancel alike.
+Post-action notifications cannot veto or roll back an action.
+
+Required initial custody is checked in the trusted host before opening/restoring
+a SessionManager or calling `createAgentSession`. There is no cancellable initial
+start/resume event; `session_start` ignores return values. Repeat checks in the
+public runtime factory for replacement sessions and in `session_before_switch`
+before opening a later resume target. Imported-source validation stays in the
+trusted wrapper because the switch event names the destination, not that source.
+
+Mediated compaction or requested tree summaries use the supported custom-result
+return only after native custody retains provenance/checkpoint and releases the
+admitted summary. Failure cancels the action. Do not use
+`skipConversationRestore`: the 1.0.2 declaration includes it, but the runtime
+fork adapter returns only cancellation and does not honor that field.
+
+These hooks are action gates, not a complete history reference monitor. Boundary
+drafts returned from `turn_end` or `agent_before_settle` append compaction/context
+edits without the before-compaction hook. Public SessionManager append/branch
+methods also bypass it. Keep arbitrary extension discovery disabled. A trusted
+SDK boundary-operation seam refuses unmediated drafts and invokes existing public
+methods for mediated operations; it cannot claim to intercept arbitrary direct
+SessionManager mutation.
+
+Native monotone knowledge stays outside Pi's projected transcript. Omitting or
+replacing visible messages, compaction and navigation to an earlier leaf cannot
+lower that basis. Recheck it during native model release. `context`,
+`context_with_system` and `before_provider_request` are transformation hooks with
+no cancellation result and swallowed exceptions. They cannot enforce disclosure.
+Default compaction/tree summarizers bypass the ordinary conversation context hook,
+so the governed release boundary must cover their provider calls too.
+
+Component tests use the installed public dispatcher/session APIs to demonstrate
+swallowed exceptions, explicit cancellation before mutation, initial preflight,
+the unhonored fork option, unmediated boundary-draft refusal and preserved native
+knowledge despite projection changes. These are not native custody qualification.
+
 ## Child authority
 
 Use native submission, reconciliation, cancellation and optional wait/settlement
