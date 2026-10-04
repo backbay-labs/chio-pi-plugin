@@ -82,6 +82,13 @@ Pin Durable 1.0.2 as an optional exact peer and a development dependency. Expose
 it through `./durable`; the base runtime and base declarations must not import
 the optional package. Register actual native ToolRegistration definitions with
 the immutable registry schemas, sequential execution and `replay: "unsafe"`.
+Durable validates and coerces arguments before `beforeTool`. Use the actual
+ToolRegistration `prepareArguments` hook to strictly validate the raw arguments
+against the registry before that coercion, then validate the eventual execution
+arguments again. Malformed raw calls must not become admitted effects through
+coercion. A committed assistant call must agree with the retained original
+request; a later argument-changing hook cannot supply delivery provenance for
+different arguments.
 
 Persist the immutable conversation/task/call-to-KernelRequest mapping with the
 native durable memo before executor dispatch. Bind the host store identity so
