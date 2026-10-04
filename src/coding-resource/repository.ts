@@ -4,12 +4,16 @@ import {canonicalJson} from "../tool-registry.js";
 import {sha256, type CodingConfig} from "./config.js";
 import {installImmutableTree, privateDirectory, regularFile, resourcePath} from "./paths.js";
 import type {ResourceLedger} from "./ledger.js";
+import {portableFileInventory} from "./namespace.js";
 
 export interface ManifestFile {path: string; sha256: string; bytes: number}
 export interface SourceManifest {schema: "chio.coding-source.v1"; files: ManifestFile[]}
 export interface SourceGeneration {digest: string; manifest: string; files: Map<string, Buffer>}
 export class ToolRefusal extends Error {constructor(readonly code: string, message: string) {super(message); this.name = "ToolRefusal";}}
 export function generationFor(files: Map<string, Buffer>, config: Readonly<CodingConfig>): SourceGeneration {
+  // Validate the full candidate, including every directory prefix, before inodes.
+  try {portableFileInventory(files.keys(), join(config.stateRoot, "generations", "0".repeat(64)));}
+  catch (error) {throw new ToolRefusal("invalid_patch", error instanceof Error ? error.message : "Candidate source namespace is unavailable");}
   let bytes = 0;
   const manifest: SourceManifest = {schema: "chio.coding-source.v1", files: [...files].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([path, value]) => {
     resourcePath(path); if (value.length > config.bounds.maxFileBytes) throw new ToolRefusal("source_bound", "Source file exceeds selected byte limit"); bytes += value.length;
@@ -37,8 +41,10 @@ export async function importSource(config: Readonly<CodingConfig>): Promise<Sour
 export class Repository {
   constructor(readonly config: Readonly<CodingConfig>, private readonly ledger: ResourceLedger) {}
   path(digest: string): string {return join(this.config.stateRoot, "generations", digest);}
-  async load(digest: string): Promise<SourceGeneration> {
-    const manifest = this.ledger.manifest(digest);
+  async load(digest: string, preparedManifest?: string): Promise<SourceGeneration> {
+    // The optional manifest is trusted prepared content for verification before
+    // the atomic head/outcome transaction. It does not add retained lineage.
+    const manifest = preparedManifest ?? this.ledger.manifest(digest);
     if (sha256(manifest) !== digest) throw new Error("Retained source manifest digest is corrupt");
     const parsed = JSON.parse(manifest) as SourceManifest;
     if (parsed.schema !== "chio.coding-source.v1" || !Array.isArray(parsed.files)) throw new Error("Retained source manifest is corrupt");
@@ -66,7 +72,7 @@ export class Repository {
     if (!Array.isArray(changes)) throw new ToolRefusal("invalid_patch", "Patch changes are unavailable");
     const files = new Map(source.files); const seen = new Set<string>(); let changedBytes = 0;
     for (const change of changes as {path: string; expectedFileSha256: string | null; replacement?: string; edits?: {oldText: string; newText: string}[]}[]) {
-      const path = resourcePath(change.path);
+      let path: string; try {path = resourcePath(change.path);} catch (error) {throw new ToolRefusal("invalid_patch", error instanceof Error ? error.message : "Patch path is unavailable");}
       if (seen.has(path) || (change.replacement === undefined) === (change.edits === undefined)) throw new ToolRefusal("invalid_patch", "Each unique file requires exactly replacement or bounded literal edits"); seen.add(path);
       const original = files.get(path);
       if (change.expectedFileSha256 === null ? original !== undefined : original === undefined || sha256(original) !== change.expectedFileSha256) throw new ToolRefusal("stale_file", "Expected full-file digest or explicit absent precondition differs");

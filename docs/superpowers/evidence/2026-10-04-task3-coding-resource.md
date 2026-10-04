@@ -98,6 +98,145 @@ length-changing/replacement-induced-match edits produced the expected bytes.
 Raw selected RED/GREEN logs are retained locally at
 `/tmp/chio-task3-spec-fixes-red.txt` and `/tmp/chio-task3-spec-fixes-green.txt`.
 
+## Independent quality review fixes
+
+The quality review of `987875a` reproduced three important categories: candidate
+file/ancestor collisions became post-intent materialization failures; output
+capacity omitted nested escaping and the full permitted JSON-RPC envelope; and
+the x64 filter permitted x32-number variants of denied syscalls. The previous
+134 macOS and 42 Linux tests did not cover these cases.
+
+Observed RED before these production fixes:
+
+```sh
+npm run build
+node --test --test-name-pattern='candidate namespace|nested recipe output|full response envelope|actual compiled x64|real confined NUL' \
+  test/coding-resource.test.mjs test/coding-confinement.test.mjs
+```
+
+Nine selected tests reported 7 failed and 2 passed. All four namespace cases
+closed transport: an existing file as ancestor, an existing directory represented
+by its retained descendants, and a new file/child in both batch orders. Unsafe
+20,480-byte recipe output capacity was accepted. An 18,500-NUL source read with a
+512-NUL JSON-RPC ID closed transport after terminal commit. The actual compiled
+x64 filter returned ALLOW for the x32-number variant of denied syscall 57.
+
+A separate real macOS baseline probe ran
+`process.stdout.write(Buffer.alloc(20480))` with `outputBytes=20480` and
+`maxOutputBytes=131072`. It observed process/job cleanup, resource exit 1, zero
+tool replies and an unresolved retained intent. The fixture contained fabricated
+native metadata, not real kernel authority.
+
+Focused GREEN after each fix was 4/4 namespace cases, 1/1 compiled-filter case and
+4/4 output/envelope cases. Candidate preparation now validates every canonical
+file and its ancestors in the complete final inventory. Known `invalid_patch`
+results replay exactly, while actual generation listings contain only the prior
+head and no staging debris; inspection reports completed refusal and no fence.
+
+Output pins now account for seven wire bytes per worst-case captured byte,
+8,192 bytes for result metadata and a computed 3,108-byte maximum ID/envelope
+reserve. Fresh prepared read/patch/publication results and exact replay use the
+same serialized capacity check. The unsafe recipe budget refuses before import;
+the real 20,480-NUL recipe passes with an adequate 196,608-byte frame bound. It
+replays with a 512-NUL ID, zero observed new job events and a before-intent fault
+seam that would fail any reexecution. An oversized control read returns a retained
+known bound refusal with the longest ID, and the successful bounded control read
+delivers its exact original result on longest-ID replay. No original terminal is
+substituted on delivery failure.
+
+The architecture-independent filter test loads the actual compiled production
+module, changes only test export visibility/import resolution, selects its
+trusted process architecture synchronously and independently interprets classic
+BPF instructions against `seccomp_data`. Native fork/socket/link/process-clone
+denials, ordinary native calls, thread-only clone, clone3 fallback and mismatched
+architecture controls remain intact. All x32-number variants are denied before
+native matching. The shared x64/x32 audit architecture and required syscall-bit
+handling are documented in [seccomp(2)](https://man7.org/linux/man-pages/man2/seccomp.2.html).
+This is static bytecode evidence for both selected filter architectures, not real x64 kernel or
+x32 runtime qualification. The measured Linux runtime remains arm64.
+
+The raw selected RED log is retained locally at
+`/tmp/chio-task3-quality-fixes-red.txt`.
+
+## Portable namespace extension
+
+Root's subsequent actual macOS probes confirmed deterministic post-intent
+failures for a 256-byte filename component, `source.txt`/`SOURCE.txt` and
+`é.txt`/`e\u0301.txt`. Directory-segment aliases could also produce an immutable
+generation whose manifest could not reload. The accepted narrow fix uses fixed
+Unicode data, component/full-destination byte limits and one spelling/type for
+every prefix, with new-generation verification before the head/outcome commit.
+
+Additional RED was observed before production changes:
+
+```sh
+npm run build
+node --test --test-name-pattern='portable namespace|newly materialized immutable' \
+  test/coding-resource.test.mjs
+```
+
+All 27 selected regressions failed. The byte/component and absolute-destination
+cases, ASCII/full-fold/canonical Unicode aliases, directory aliases in both
+batch orders, well-formed NFC/scalar checks, import/read consistency and corrupt
+candidate promotion each exposed the intended missing invariant. Ordinary NFC
+Unicode operations succeeded in the positive fixture before its noncanonical
+read assertion exposed the missing shared policy. The raw RED log is
+`/tmp/chio-task3-namespace-extension-red.txt`.
+
+Focused GREEN with the original four ancestor conflicts included reported
+31/31 passed, zero failed/cancelled/skipped. Actual generation listings contain
+only the prior generation after deterministic refusals, known outcomes replay
+exactly and inspection reports no unresolved fence. The ordinary NFC fixture
+imports, patches and reads accented, Greek, Japanese and emoji names, preserving
+the import originals. Non-NFC input is refused without rewriting it. A trusted
+post-materialization corruption seam now closes transport with zero replies,
+retains the original intent and corrupt candidate for investigation, and leaves
+the source head unchanged. `Repository.load` validates candidate contents against
+the prepared manifest before the atomic head/outcome transaction; it does not
+add an orphan to retained lineage. Initial import uses the same verification.
+The focused GREEN log is `/tmp/chio-task3-namespace-extension-green.txt`.
+
+The policy requires visible, assigned Unicode 15.1 scalars in categories letters,
+marks, numbers, punctuation, symbols or space separators, excluding default
+ignorables. Other categories, unassigned/newer scalars and unpaired surrogates
+are refused before UTF-8 name conversion. NFC is checked consistently through
+the shared source-path validator. Full-fold collision keys use official default
+C + F mappings, not JavaScript lowercase, locale-specific or Turkic mappings.
+Each prefix retains its complete canonical spelling and file/directory type.
+Components permit at most 255 UTF-8 bytes, relative paths 1,024 bytes, and full
+managed destinations 1,023 bytes on macOS or 4,095 bytes on Linux. Local macOS
+`getconf PATH_MAX /` and `getconf NAME_MAX /` returned 1,024 and 255, respectively;
+the former includes the terminating NUL. The Linux fixture positively exercises
+the longer nested destination admitted by its platform bound.
+
+This is a documented conservative portable namespace, not proof of arbitrary
+host filesystem equivalence. Unexpected aliases or corruption still fail
+verification with an unresolved original intent rather than promoting an
+unloadable head. No filesystem trial effects run during preparation.
+
+The generated data's official byte pins are:
+
+| Input | Exact source | SHA256 |
+| --- | --- | --- |
+| `CaseFolding.txt` | [Unicode 15.1](https://www.unicode.org/Public/15.1.0/ucd/CaseFolding.txt) | `4e55acfdc32825a22e87670e9056a3bf94ad7c5400065778e9e10f8314372bcf` |
+| `UnicodeData.txt` | [Unicode 15.1](https://www.unicode.org/Public/15.1.0/ucd/UnicodeData.txt) | `2fc713e6a31a87c4850a37fe2caffa4218180fadb5de86b43a143ddb4581fb86` |
+| `DerivedCoreProperties.txt` | [Unicode 15.1](https://www.unicode.org/Public/15.1.0/ucd/DerivedCoreProperties.txt) | `f55d0db69123431a7317868725b1fcbf1eab6b265d756d1bd7f0f6d9f9ee108b` |
+| Unicode License V3 | [Official license](https://www.unicode.org/license.txt), measured 2026-10-04 | `e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96` |
+
+Trusted regeneration, after independently obtaining the exact pinned downloads:
+
+```sh
+node test/helpers/generate-coding-unicode.mjs /tmp/chio-task3-unicode-15.1
+```
+
+The generator verifies all four input hashes. It produces 149,374 supported
+scalars in 716 ranges and 1,530 full folds. The 94,493-byte generated TypeScript
+module SHA256 is
+`9ef45c7dc7a512985c71dd0a74d19102e8bc6bcd9c7135318f56f9ddcbb58495`.
+The complete license, copyright notice, source URLs and hashes remain in the
+generated module and compiled distribution. Production performs no download or
+model-selected discovery.
+
 ## Verified behavior
 
 The fixtures observe actual generation/publication directory counts, imported
@@ -179,7 +318,8 @@ Fresh checks on the final implementation before commit:
 
 ```sh
 npm run typecheck
-npm test
+npm run build
+node --test test/*.test.mjs
 node dist/coding-resource-cli.js --help
 ```
 
@@ -189,23 +329,33 @@ The real binary smoke initialized a fresh private fixture, negotiated MCP
 `c5caa8eeffc8ec8f5fb60d27513d919b66c7edc744e651648170fb5743291f4f`.
 The updated guide's actual macOS provisioning command generated all 21 selected
 non-executable dependency hash pins. The smoke used that generated recipe and
-passed a real confined `test_recipe` call through the binary as well.
+passed a real confined `test_recipe` call through the binary as well. The exact
+read response used an admitted 512-NUL JSON-RPC transport ID and stayed within
+the complete response-frame bound.
 The SQLite experimental notice on stderr is a Node runtime property, not stdout
 protocol output.
 
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | Exit 0. |
-| `npm test` on macOS 26.4 arm64 / Node 25.5.0 | Exit 0; 134 tests passed, 0 failed/cancelled/skipped. This includes all seven real macOS confinement/publication probes and four observed zero-job runtime-pin refusal cases. |
-| Pinned disposable Linux arm64 / Node 22.23.1 / bwrap 0.8.0 command above | Exit 0; 42 focused resource/confinement tests passed, 0 failed/cancelled/skipped, including all seven real Linux probes. macOS pin cases are registered only on macOS. |
-| Actual CLI `--help` and fresh JSONL MCP subprocess smoke | Exit 0; explicit init, initialize, exact nine-tool inventory, exact read bytes and the complete generated macOS recipe passed. |
+| Build and full `node --test test/*.test.mjs` on macOS 26.4 arm64 / Node 25.5.0 (same suite as `npm test`) | Exit 0; 170 tests passed, 0 failed/cancelled/skipped. This includes all eight real macOS confinement/publication probes and four observed zero-job runtime-pin refusal cases. |
+| Pinned disposable Linux arm64 / Node 22.23.1 / bwrap 0.8.0 command above | Exit 0; 78 focused resource/confinement tests passed, 0 failed/cancelled/skipped, including all eight real Linux probes. macOS pin cases are registered only on macOS. |
+| Actual CLI `--help` and fresh JSONL MCP subprocess smoke | Exit 0; explicit init, initialize, exact nine-tool inventory, exact read bytes with longest control ID, and the complete generated macOS recipe passed. |
 | `git diff --check` | Exit 0. |
 
-Full-suite duration was 30.052 seconds; Linux focused-suite duration was 37.919
+Full-suite duration was 56.632 seconds; Linux focused-suite duration was 76.857
 seconds. Final raw command logs were retained locally at
-`/tmp/chio-task3-spec-fixes-fullsuite.txt` and
-`/tmp/chio-task3-spec-fixes-linux.txt`. These temporary paths are diagnostic
+`/tmp/chio-task3-quality-fixes-final-fullsuite.txt`,
+`/tmp/chio-task3-quality-fixes-final-linux.txt` and
+`/tmp/chio-task3-quality-fixes-final-cli.txt`. These temporary paths are diagnostic
 logs, not native signed acceptance evidence.
+
+Scoped self-review checked namespace validation before effect preparation,
+complete directory-prefix spelling/type records, packaged Unicode data/license
+and regeneration pins, pre-head candidate reload without orphan promotion,
+worst-case nested result/ID envelope accounting, exact replay preservation and
+the compiled x32 syscall-bit filter semantics. No changes were made to native
+authority, Pi launch/profile behavior, root-owned plans or frozen bridge evidence.
 
 ## Qualification boundary
 

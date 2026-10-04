@@ -73,6 +73,17 @@ and without group/other write permission. Commands, environment assignments,
 shells, Git hooks, filters, fsmonitor and executable discovery are not model
 parameters. Each recipe has fixed operator-selected argv.
 
+Recipe output capacity includes both JSON encodings: stdout/stderr become part
+of the test-result JSON, which becomes MCP `content.text`. One NUL output byte
+requires seven wire bytes. Configuration requires
+`outputBytes * 7 + 8192 + 3108 <= maxOutputBytes`, reserving test metadata and
+the largest permitted serialized JSON-RPC ID plus response envelope. For example,
+20,480 output bytes require at least 154,660 output-frame bytes; 131,072 is refused
+before import or jobs. Exact prepared results also use the complete envelope
+reserve before effects. Retained replay uses the same capacity rule and preserves
+the original result; an original record that cannot fit remains available for
+unsigned forensic export rather than being replaced or reexecuted.
+
 On Linux, `runtimeFiles` must list exact canonical loader/library files with
 SHA256 hashes. An optional `mountPath` supplies an exact `/lib/`, `/lib64/`,
 `/usr/lib/` or `/usr/local/lib/` loader alias. No host library directory is mounted.
@@ -130,6 +141,40 @@ files into fresh immutable inodes and records an initial manifest. `.git` is
 excluded without reading its contents. It never changes the import originals.
 An interrupted init leaves operator-visible partial private state and refuses
 automatic reuse; use a fresh empty resource deployment after inspecting it.
+
+Source paths use a fixed portable namespace during import, reads, patches and
+generation verification. Names must be well-formed NFC Unicode, with assigned
+Unicode 15.1 letters, marks, numbers, punctuation, symbols or space separators.
+Controls, format characters, private-use characters, line/paragraph separators,
+default-ignorable characters, unpaired surrogates and scalars not assigned in
+15.1 are refused. Ordinary NFC Unicode names, including accented letters, Greek,
+Japanese and single-scalar emoji, remain supported. Noncanonical spellings are
+refused instead of rewriting import originals or model arguments.
+
+Each component may use at most 255 UTF-8 bytes and each relative path at most
+1,024 bytes. The complete destination
+`stateRoot/generations/<64-character digest>/<relative path>` must also fit
+1,023 bytes on macOS or 4,095 bytes on Linux. The complete file inventory retains
+one spelling and one file/directory type for every prefix under the pinned
+default full Unicode case fold. Thus `source.txt`/`SOURCE.txt`,
+`Straße.txt`/`STRASSE.txt`, `Dir/a.txt`/`dir/b.txt` and any file/ancestor-directory
+conflict are refused, including either order within one patch. This intentionally
+restricts names even on case-sensitive filesystems; it does not claim equality
+with every host filesystem's alias rules. New immutable generations must reload
+and match their prepared manifest before the head and terminal result commit.
+Unexpected materialization or verification failures preserve the prior head and
+unresolved intent.
+
+The namespace data is generated from pinned official
+[UnicodeData 15.1](https://www.unicode.org/Public/15.1.0/ucd/UnicodeData.txt),
+[CaseFolding 15.1](https://www.unicode.org/Public/15.1.0/ucd/CaseFolding.txt) and
+[DerivedCoreProperties 15.1](https://www.unicode.org/Public/15.1.0/ucd/DerivedCoreProperties.txt).
+The shipped generated module includes complete Unicode License V3 and source
+hashes. The trusted maintenance generator verifies every download's hash before
+generating 149,374 supported scalars and 1,530 default full-fold entries. Runtime
+requests perform no data downloads, locale selection or guest callbacks. Source
+URLs, exact hashes and regeneration evidence are retained in the
+[Task 3 evidence](superpowers/evidence/2026-10-04-task3-coding-resource.md#portable-namespace-extension).
 
 Configure the trusted Chio launcher to execute:
 
@@ -197,7 +242,11 @@ including detection of overlapping occurrences. Every entry's original range
 must be pairwise disjoint; edits apply from the highest offset downward, so
 replacement lengths or introduced text cannot change another precondition.
 Every file precondition is checked before building a new generation; a stale
-source or file refuses the whole patch. No shell or Git process applies changes. Read-only tools
+source or file refuses the whole patch. The complete final file inventory also
+refuses any file that would be another file's ancestor directory, including new
+paths in either batch order. These deterministic namespace conflicts are retained
+`invalid_patch` outcomes and create no candidate, staging directory or unresolved
+intent fence. No shell or Git process applies changes. Read-only tools
 are still ordinary admitted operations; `read_many` is not native arbitrary
 codemode and context is not authority.
 
@@ -212,7 +261,8 @@ current source. Changed caller, tool, arguments or configuration conflicts.
 
 Before effects, the resource commits and fsyncs intent. A patch writes and fsyncs
 fresh immutable files and directories, renames the complete generation and
-fsyncs its parent. A single final SQLite transaction commits the current source
+fsyncs its parent. It then reloads and verifies the complete immutable generation
+against its prepared manifest. A single final SQLite transaction commits the current source
 pointer and original terminal result. A crash before that transaction preserves
 the old head and unresolved intent; an orphan generation is not completion.
 A crash after commit but before reply preserves the exact replayable result.
@@ -259,7 +309,10 @@ fork, no hardlinks and no symlink creation. Linux uses `/usr/bin/bwrap` with all
 namespaces unshared, a new user/PID/network namespace, parent-death termination,
 private proc/dev/tmp, exact read-only runtime files and source, and a trusted
 architecture-selected seccomp filter denying processes, sockets and links while
-allowing Node threads. Unsupported platforms/architectures and missing runtime
+allowing Node threads. The x64 filter refuses the x32 syscall-number bit before
+matching native syscall numbers, because the two ABIs share their audit
+architecture. See [seccomp(2)](https://man7.org/linux/man-pages/man2/seccomp.2.html).
+Unsupported platforms/architectures and missing runtime
 pins fail closed. This is an OS boundary; an executable allowlist alone would
 not confine repository code.
 

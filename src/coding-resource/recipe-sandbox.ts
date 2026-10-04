@@ -87,6 +87,9 @@ function linuxRecipeFilter(): Buffer {
   };
   const profile = profiles[process.arch]; if (!profile) throw new ToolRefusal("unsupported_sandbox", "Linux recipe seccomp architecture is unsupported");
   const instructions: [number, number, number, number][] = [[0x20, 0, 0, 4], [0x15, 1, 0, profile.arch], [0x06, 0, 0, 0x80000000], [0x20, 0, 0, 0]];
+  // x32 shares AUDIT_ARCH_X86_64. Refuse its syscall-number bit before matching
+  // the native x64 syscall inventory, so it cannot bypass process/socket/link rules.
+  if (process.arch === "x64") instructions.push([0x45, 0, 1, 0x40000000], [0x06, 0, 0, 0x00050001]);
   for (const syscall of profile.denied) instructions.push([0x15, 0, 1, syscall], [0x06, 0, 0, 0x00050001]);
   instructions.push([0x15, 0, 1, profile.clone3], [0x06, 0, 0, 0x00050026]); // ENOSYS, libc may retry thread-only clone.
   instructions.push([0x15, 0, 4, profile.clone], [0x20, 0, 0, 16], [0x54, 0, 0, 0x10000], [0x15, 1, 0, 0x10000], [0x06, 0, 0, 0x00050001], [0x06, 0, 0, 0x7fff0000]);

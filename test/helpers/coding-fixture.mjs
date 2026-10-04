@@ -78,12 +78,12 @@ export function stdio(f, options = {}) {
   child.once("close", () => {closed = true; for (const pair of pending.values()) pair.reject(new Error("resource transport closed")); pending.clear();});
   const exited = new Promise(resolve => child.once("close", code => resolve({code, stderr, stdout, messages})));
   child.stdin.on("error", () => {});
-  return {child, messages, exited, async request(method, params = {}) {
+  return {child, messages, exited, async request(method, params = {}, transportId) {
     if (closed) throw new Error("resource transport closed");
-    const requestId = ++id;
+    const requestId = transportId ?? ++id;
     const promise = new Promise((resolve, reject) => pending.set(requestId, {resolve, reject}));
     child.stdin.write(JSON.stringify({jsonrpc: "2.0", id: requestId, method, params}) + "\n");
     return await promise;
-  }, async call(name, args, nativeMeta = meta()) {const response = await this.request("tools/call", {name, arguments: args, _meta: nativeMeta}); if (response.error) throw new Error(response.error.message); return response.result;}, async close() {child.stdin.end(); return await exited;}};
+  }, async call(name, args, nativeMeta = meta(), transportId) {const response = await this.request("tools/call", {name, arguments: args, _meta: nativeMeta}, transportId); if (response.error) throw new Error(response.error.message); return response.result;}, async close() {child.stdin.end(); return await exited;}};
 }
 export const patch = (sourceDigest, expectedFileSha256, replacement = "changed\nbeta\n") => ({sourceDigest, changes: [{path: "source.txt", expectedFileSha256, replacement}]});

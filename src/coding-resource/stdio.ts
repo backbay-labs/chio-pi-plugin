@@ -1,6 +1,7 @@
 import {TextDecoder} from "node:util";
 import type {Readable, Writable} from "node:stream";
 import type {CodingResource} from "./participant.js";
+import {MAX_JSONRPC_ID_LENGTH} from "./config.js";
 
 interface Request {jsonrpc: "2.0"; id?: string | number; method: string; params?: Record<string, unknown>}
 export async function serveCodingResource(participant: CodingResource, input: Readable, output: Writable): Promise<number> {
@@ -51,7 +52,7 @@ export async function serveCodingResource(participant: CodingResource, input: Re
         if (newline < 0) break;
         const line = new TextDecoder("utf8", {fatal: true}).decode(Buffer.concat(partial, partialBytes)); partial = []; partialBytes = 0;
         const message = JSON.parse(line) as Request;
-        if (!message || typeof message !== "object" || Array.isArray(message) || message.jsonrpc !== "2.0" || typeof message.method !== "string" || message.method.length > 128 || message.id !== undefined && !(typeof message.id === "string" && message.id.length <= 512 || typeof message.id === "number" && Number.isSafeInteger(message.id)) || message.params !== undefined && (typeof message.params !== "object" || message.params === null || Array.isArray(message.params)) || Object.keys(message).some(key => !["jsonrpc", "id", "method", "params"].includes(key))) throw new Error("Invalid bounded JSONL request");
+        if (!message || typeof message !== "object" || Array.isArray(message) || message.jsonrpc !== "2.0" || typeof message.method !== "string" || message.method.length > 128 || message.id !== undefined && !(typeof message.id === "string" && message.id.length <= MAX_JSONRPC_ID_LENGTH || typeof message.id === "number" && Number.isSafeInteger(message.id)) || message.params !== undefined && (typeof message.params !== "object" || message.params === null || Array.isArray(message.params)) || Object.keys(message).some(key => !["jsonrpc", "id", "method", "params"].includes(key))) throw new Error("Invalid bounded JSONL request");
         if (queue.length >= participant.bounds.maxQueuedCalls) throw new Error("Input queue exceeds bound"); queue.push(message); start = newline + 1;
       }
       void pump();

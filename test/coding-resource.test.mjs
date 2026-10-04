@@ -5,6 +5,7 @@ import {join} from "node:path";
 import test from "node:test";
 import {canonicalJson} from "../dist/tool-registry.js";
 import {caller, cli, command, data, fixture, hash, initialized, meta, patch, stdio} from "./helpers/coding-fixture.mjs";
+import {compiledRecipeFilter, evaluateClassicBpf} from "./helpers/coding-seccomp.mjs";
 
 test("coding resource requires explicit private import before serving", async t => {
   const f = await fixture(); t.after(() => f.close());
@@ -122,6 +123,122 @@ test("paths refuse traversal aliases and edits use full file CAS with all-or-non
   const stale = await io.call("apply_patch", {sourceDigest: f.sourceDigest, changes: [{path: "source.txt", expectedFileSha256: hash("alpha\nbeta\n"), edits: [{oldText: "alpha", newText: "okay"}]}, {path: "fixture-test.mjs", expectedFileSha256: "f".repeat(64), replacement: ""}]}, meta("7"));
   assert.equal(stale.isError, true); assert.equal((await readdir(join(f.root("state"), "generations"))).length, 1);
   assert.equal((await io.call("apply_patch", patch("f".repeat(64), hash("alpha\nbeta\n")), meta("8"))).isError, true);
+});
+for (const kind of ["existing file ancestor", "existing directory ancestor", "same batch ancestor first", "same batch child first"]) test(`candidate namespace refuses ${kind} as a retained known patch error`, async t => {
+  const f = await initialized(kind === "existing directory ancestor" ? {files: {"folder/leaf.txt": "retained"}} : {}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const fresh = path => ({path, expectedFileSha256: null, replacement: "new"});
+  let changes = [fresh("source.txt/child.txt")];
+  if (kind === "existing directory ancestor") changes = [fresh("folder")];
+  if (kind.startsWith("same batch")) {changes = [fresh("new-file"), fresh("new-file/child.txt")]; if (kind.endsWith("child first")) changes.reverse();}
+  const args = {sourceDigest: f.sourceDigest, changes}; const original = await io.call("apply_patch", args);
+  assert.equal(original.isError, true); assert.equal(data(original).code, "invalid_patch");
+  assert.deepEqual(await io.call("apply_patch", args, meta("1", {chioAttemptId: "known-namespace-replay"})), original);
+  assert.deepEqual(await readdir(join(f.root("state"), "generations")), [f.sourceDigest], "no candidate or staging directory materialized");
+  await io.close(); const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout);
+  assert.equal(state.sourceDigest, f.sourceDigest); assert.equal(state.fenced, false); assert.equal(state.operations.length, 1); assert.equal(state.operations[0].state, "completed");
+});
+for (const [kind, path] of [
+  ["256-byte component", "x".repeat(256)], ["multibyte component", "é".repeat(128)],
+  ["non-NFC spelling", "e\u0301.txt"], ["unpaired surrogate", "\ud800.txt"],
+  ["default-ignorable scalar", "name\u200d.txt"], ["unassigned scalar", "name\u0378.txt"],
+  ["newer than Unicode 15.1", "name\u{1c89}.txt"],
+]) test(`portable namespace rejects ${kind} with an exact retained patch refusal`, async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const args = {sourceDigest: f.sourceDigest, changes: [{path, expectedFileSha256: null, replacement: "valid"}]};
+  const original = await io.call("apply_patch", args); assert.equal(original.isError, true); assert.equal(data(original).code, "invalid_patch");
+  assert.deepEqual(await io.call("apply_patch", args, meta("1", {chioAttemptId: "namespace-replay"})), original);
+  assert.deepEqual(await readdir(join(f.root("state"), "generations")), [f.sourceDigest]); await io.close();
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout);
+  assert.equal(state.sourceDigest, f.sourceDigest); assert.equal(state.fenced, false); assert.equal(state.operations.length, 1); assert.equal(state.operations[0].state, "completed");
+});
+test("portable namespace accounts for the full managed absolute destination capacity", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const path = Array(5).fill("x".repeat(200)).join("/"); const args = {sourceDigest: f.sourceDigest, changes: [{path, expectedFileSha256: null, replacement: "valid"}]};
+  const original = await io.call("apply_patch", args);
+  if (process.platform === "darwin") {
+    assert.equal(original.isError, true); assert.equal(data(original).code, "invalid_patch");
+    assert.deepEqual(await readdir(join(f.root("state"), "generations")), [f.sourceDigest]);
+  } else {
+    assert.equal(original.isError, undefined); assert.equal(data(await io.call("read_range", {sourceDigest: data(original).sourceDigest, path, startLine: 1, endLine: 1}, meta("2"))).text, "valid");
+  }
+  assert.deepEqual(await io.call("apply_patch", args, meta("1", {chioAttemptId: "destination-replay"})), original); await io.close();
+  assert.equal(JSON.parse((await command(["inspect", "--config", f.configPath])).stdout).fenced, false);
+});
+for (const [kind, existing, added] of [
+  ["ASCII file", "source.txt", "SOURCE.txt"], ["full Unicode fold", "Straße.txt", "STRASSE.txt"],
+  ["directory", "Dir/a.txt", "dir/b.txt"], ["folded ancestor type", "Folder", "folder/child.txt"],
+]) for (const order of ["existing", "same batch forward", "same batch reversed"]) test(`portable namespace refuses ${kind} aliases ${order}`, async t => {
+  const f = await initialized({files: order === "existing" ? {[existing]: "retained"} : {"retained.txt": "retained"}}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  let names = order === "existing" ? [added] : [existing, added]; if (order.endsWith("reversed")) names.reverse();
+  const args = {sourceDigest: f.sourceDigest, changes: names.map(path => ({path, expectedFileSha256: null, replacement: "valid"}))};
+  const original = await io.call("apply_patch", args); assert.equal(original.isError, true); assert.equal(data(original).code, "invalid_patch");
+  assert.deepEqual(await io.call("apply_patch", args, meta("1", {chioAttemptId: "alias-replay"})), original);
+  assert.deepEqual(await readdir(join(f.root("state"), "generations")), [f.sourceDigest]); await io.close();
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout);
+  assert.equal(state.sourceDigest, f.sourceDigest); assert.equal(state.fenced, false); assert.equal(state.operations[0].state, "completed");
+});
+for (const order of ["existing NFC", "NFC first", "NFD first"]) test(`portable namespace rejects canonical Unicode aliases ${order}`, async t => {
+  const f = await initialized({files: order === "existing NFC" ? {"é.txt": "retained"} : {"retained.txt": "retained"}}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  let names = order === "existing NFC" ? ["e\u0301.txt"] : ["é.txt", "e\u0301.txt"]; if (order === "NFD first") names.reverse();
+  const args = {sourceDigest: f.sourceDigest, changes: names.map(path => ({path, expectedFileSha256: null, replacement: "valid"}))};
+  const original = await io.call("apply_patch", args); assert.equal(original.isError, true); assert.equal(data(original).code, "invalid_patch");
+  assert.deepEqual(await io.call("apply_patch", args, meta("1", {chioAttemptId: "unicode-replay"})), original);
+  assert.deepEqual(await readdir(join(f.root("state"), "generations")), [f.sourceDigest]); await io.close();
+  assert.equal(JSON.parse((await command(["inspect", "--config", f.configPath])).stdout).fenced, false);
+});
+test("portable namespace supports ordinary NFC Unicode import patch and read", async t => {
+  const originals = {"café/Δ.txt": "initial", "日本語/😀.txt": "symbol"}; const f = await initialized({files: originals}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const args = {sourceDigest: f.sourceDigest, changes: [{path: "café/Δ.txt", expectedFileSha256: hash("initial"), replacement: "changed"}, {path: "résumé.txt", expectedFileSha256: null, replacement: "new"}]};
+  const applied = await io.call("apply_patch", args); assert.equal(applied.isError, undefined); const current = data(applied).sourceDigest;
+  for (const [index, [path, text]] of Object.entries({"café/Δ.txt": "changed", "日本語/😀.txt": "symbol", "résumé.txt": "new"}).entries()) assert.equal(data(await io.call("read_range", {sourceDigest: current, path, startLine: 1, endLine: 1}, meta(String(index + 2)))).text, text);
+  const noncanonical = await io.call("read_range", {sourceDigest: current, path: "cafe\u0301/Δ.txt", startLine: 1, endLine: 1}, meta("5")); assert.equal(noncanonical.isError, true); assert.equal(data(noncanonical).code, "invalid_path");
+  for (const [path, text] of Object.entries(originals)) assert.equal(await readFile(join(f.root("repository"), path), "utf8"), text);
+});
+for (const name of ["e\u0301.txt", "name\u200d.txt"]) test(`portable namespace import refuses unsupported spelling ${JSON.stringify(name)}`, async t => {
+  const f = await fixture({files: {[name]: "retained"}}); t.after(() => f.close());
+  const imported = await command(["init", "--config", f.configPath]); assert.equal(imported.code, 1); assert.match(imported.stderr, /canonical|Unicode|Path must/i);
+  assert.deepEqual(await readdir(f.root("state")), []); assert.equal(await readFile(join(f.root("repository"), name), "utf8"), "retained");
+});
+test("newly materialized immutable generation must reload before head and outcome commit", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f, {fault: "corrupt:afterGeneration"}); t.after(() => io.close());
+  await assert.rejects(io.call("apply_patch", patch(f.sourceDigest, hash("alpha\nbeta\n"))), /transport closed/); await io.exited; assert.equal(io.messages.length, 0);
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout);
+  assert.equal(state.sourceDigest, f.sourceDigest); assert.equal(state.fenced, true); assert.equal(state.operations[0].state, "intent");
+  assert.equal((await readdir(join(f.root("state"), "generations"))).length, 2, "retain the corrupt candidate for investigation without promotion");
+});
+test("nested recipe output capacity rejects unsafe NUL-byte budget before source import", async t => {
+  const f = await fixture({files: {"source.txt": "alpha", "fixture-test.mjs": "process.stdout.write(Buffer.alloc(20480))"}, outputBytes: 20480}); t.after(() => f.close());
+  const refused = await command(["init", "--config", f.configPath]); assert.equal(refused.code, 1); assert.match(refused.stderr, /output bounds/i);
+  for (const root of ["state", "jobs", "artifacts"]) assert.deepEqual(await readdir(f.root(root)), []);
+});
+test("full response envelope refuses oversized control read and replays its retained original", async t => {
+  const f = await initialized({files: {"source.txt": "\0".repeat(18500)}}); t.after(() => f.close()); let io = stdio(f); t.after(() => io.close());
+  const args = {sourceDigest: f.sourceDigest, path: "source.txt", startLine: 1, endLine: 1}; const transportId = "\0".repeat(512);
+  const original = await io.call("read_range", args, meta(), transportId); assert.equal(original.isError, true); assert.equal(data(original).code, "result_bound");
+  assert.equal(io.messages[0].id, transportId); assert.ok(Buffer.byteLength(JSON.stringify(io.messages[0]) + "\n") <= f.config.bounds.maxOutputBytes); await io.close();
+  io = stdio(f, {fault: "throw:beforeIntent"}); assert.deepEqual(await io.call("read_range", args, meta("1", {chioAttemptId: "short-id-replay"})), original); await io.close();
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout); assert.equal(state.fenced, false); assert.equal(state.operations.length, 1); assert.equal(state.operations[0].state, "completed");
+});
+test("full response envelope delivers successful control reads and exact replay with the largest ID", async t => {
+  const source = "\0".repeat(18000); const f = await initialized({files: {"source.txt": source}}); t.after(() => f.close()); let io = stdio(f); t.after(() => io.close());
+  const args = {sourceDigest: f.sourceDigest, path: "source.txt", startLine: 1, endLine: 1}; const original = await io.call("read_range", args); assert.equal(original.isError, undefined); assert.equal(data(original).text, source); await io.close();
+  io = stdio(f, {fault: "throw:beforeIntent"}); const transportId = "\0".repeat(512);
+  assert.deepEqual(await io.call("read_range", args, meta("1", {chioAttemptId: "largest-id-replay"}), transportId), original);
+  assert.equal(io.messages[0].id, transportId); assert.ok(Buffer.byteLength(JSON.stringify(io.messages[0]) + "\n") <= f.config.bounds.maxOutputBytes); await io.close();
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout); assert.equal(state.fenced, false); assert.equal(state.operations.length, 1); assert.equal(state.operations[0].state, "completed");
+});
+test("actual compiled x64 seccomp rejects x32 syscall variants and preserves native controls", async () => {
+  const denied = 0x00050001; const allowed = 0x7fff0000; const arch = 0xc000003e; const filter = await compiledRecipeFilter("x64");
+  for (const nr of [57, 41, 86, 56]) {
+    assert.equal(evaluateClassicBpf(filter, {arch, nr}), denied);
+    assert.equal(evaluateClassicBpf(filter, {arch, nr: nr | 0x40000000}), denied, `x32 variant of syscall ${nr} must not bypass policy`);
+  }
+  assert.equal(evaluateClassicBpf(filter, {arch, nr: 39}), allowed);
+  assert.equal(evaluateClassicBpf(filter, {arch, nr: 39 | 0x40000000}), denied);
+  assert.equal(evaluateClassicBpf(filter, {arch, nr: 56, argument0: 0x10000}), allowed);
+  assert.equal(evaluateClassicBpf(filter, {arch, nr: 435}), 0x00050026);
+  assert.equal(evaluateClassicBpf(filter, {arch: 0xc00000b7, nr: 39}), 0x80000000);
+  const arm = await compiledRecipeFilter("arm64"); assert.equal(evaluateClassicBpf(arm, {arch: 0xc00000b7, nr: 198}), denied); assert.equal(evaluateClassicBpf(arm, {arch: 0xc00000b7, nr: 220, argument0: 0x10000}), allowed);
 });
 test("read many preserves ordered partial truth and bounded literal search returns digests", async t => {
   const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());

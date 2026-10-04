@@ -33,6 +33,14 @@ test("real confined recipe passes single-process node:test and retains exact tes
   assert.deepEqual(await io.call("test_recipe", args, meta("1", {chioAttemptId: "other-attempt"})), first);
   assert.deepEqual(await readdir(f.root("jobs")), []);
 });
+test("real confined NUL stdout fits nested output framing and largest-ID exact replay", {skip: !local}, async t => {
+  const f = await initialized({files: {"source.txt": "alpha", "fixture-test.mjs": "process.stdout.write(Buffer.alloc(20480))"}, outputBytes: 20480, bounds: {maxOutputBytes: 196608}}); t.after(() => f.close()); let io = stdio(f); t.after(() => io.close());
+  const args = {sourceDigest: f.sourceDigest, recipe: "unit"}; const original = await io.call("test_recipe", args); assert.equal(original.isError, undefined); assert.equal(data(original).success, true); assert.equal(data(original).stdout, "\0".repeat(20480)); await io.close();
+  const observedJobs = []; const observer = watch(f.root("jobs"), (_, path) => observedJobs.push(String(path))); t.after(() => observer.close());
+  io = stdio(f, {fault: "throw:beforeIntent"}); const transportId = "\0".repeat(512);
+  assert.deepEqual(await io.call("test_recipe", args, meta("1", {chioAttemptId: "control-output-replay"}), transportId), original); assert.equal(io.messages[0].id, transportId); assert.ok(Buffer.byteLength(JSON.stringify(io.messages[0]) + "\n") <= f.config.bounds.maxOutputBytes); await io.close(); await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(observedJobs, []); assert.deepEqual(await readdir(f.root("jobs")), []); const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout); assert.equal(state.fenced, false); assert.equal(state.operations.length, 1); assert.equal(state.operations[0].state, "completed");
+});
 test("real sandbox denies outside state artifacts credentials writes links fork and network", {skip: !local}, async t => {
   const f = await fixture(); t.after(() => f.close());
   const secret = join(f.base, "fixture-credential.json"); await writeFile(secret, "fixture-credential", {mode: 0o600});

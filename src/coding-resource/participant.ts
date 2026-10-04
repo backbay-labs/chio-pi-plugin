@@ -1,7 +1,7 @@
 import {lstat} from "node:fs/promises";
 import {join} from "node:path";
 import {canonicalJson, frozenJson} from "../tool-registry.js";
-import {loadCodingConfig, sha256, type LoadedConfig} from "./config.js";
+import {fitsMcpTransport, loadCodingConfig, sha256, type LoadedConfig} from "./config.js";
 import {FatalResourceError, ResourceLedger, type McpResult, type NativeMetadata} from "./ledger.js";
 import {acquireOwnerLock, fsyncDirectory, installImmutableTree, privateDirectory, regularFile, requireEmpty, recoverOwnerLock} from "./paths.js";
 import {Repository, ToolRefusal, createGenerationsDirectory, decodeText, importSource, type SourceGeneration} from "./repository.js";
@@ -57,8 +57,10 @@ export class CodingResource {
     const binding = sha256(canonicalJson({schema: "chio.coding-operation-binding.v1", resourceOwnerId: this.selected.config.resourceOwnerId, workspaceId: this.selected.config.workspaceId, configDigest: this.selected.digest, caller: meta.chioCallerCapabilitySha256, operationId: meta.chioOperationId, tool, arguments: args, sourceDigest: retained?.sourceDigest ?? this.ledger.sourceDigest}));
     if (retained) {
       if (retained.binding !== binding) return refusal("operation_conflict", "Original operation binding conflict: caller, tool, arguments or operator configuration changed");
+      const original = JSON.parse(retained.result!) as McpResult;
+      if (!fitsMcpTransport(original, this.bounds.maxOutputBytes)) throw new FatalResourceError("Retained original exceeds transport capacity; native reconciliation is required");
       try {await this.ledger.recordReplayAttempt(meta);} catch {throw new FatalResourceError("Replay attempt provenance could not be durably retained");}
-      return frozenJson(JSON.parse(retained.result!) as McpResult);
+      return frozenJson(original);
     }
     if (!this.selected.config.allowedCallerCapabilitySha256.includes(meta.chioCallerCapabilitySha256)) return refusal("caller_binding", "Caller capability digest is outside the operator-pinned assignment");
     let prepared: Prepared;
@@ -73,7 +75,7 @@ export class CodingResource {
       await this.ledger.intent(binding, tool, args, this.ledger.sourceDigest, meta);
       this.seam.fault?.("afterIntent");
       const outcome = await prepared.execute();
-      if (Buffer.byteLength(canonicalJson(outcome)) + 128 > this.bounds.maxOutputBytes) throw new FatalResourceError("Terminal result exceeds the selected transport bound");
+      if (!fitsMcpTransport(outcome, this.bounds.maxOutputBytes)) throw new FatalResourceError("Terminal result exceeds the selected transport bound");
       this.seam.fault?.("beforeCommit");
       await this.ledger.complete(meta.chioOperationId, outcome, prepared.generation);
       this.seam.fault?.("afterCommit");
@@ -88,18 +90,21 @@ export class CodingResource {
     if (args.sourceDigest !== undefined && args.sourceDigest !== current) throw new ToolRefusal("stale_source", "Expected exact source digest differs from the current immutable generation");
     const source = await this.repository.load(current);
     const initial = async () => await this.repository.load(this.ledger.meta("initialDigest")!);
-    const ready = (body: unknown): Prepared => {
-      const value = result(body); if (Buffer.byteLength(canonicalJson(value)) + 128 > this.bounds.maxOutputBytes) throw new ToolRefusal("result_bound", "Requested tool result exceeds selected output bound");
-      return {execute: async () => value};
+    const bounded = (body: unknown): McpResult => {
+      const value = result(body); if (!fitsMcpTransport(value, this.bounds.maxOutputBytes)) throw new ToolRefusal("result_bound", "Requested tool result exceeds selected output bound"); return value;
     };
+    const ready = (body: unknown): Prepared => {const value = bounded(body); return {execute: async () => value};};
     switch (tool) {
       case "read_range": return ready(this.repository.read(source, args as unknown as {path: string; startLine: number; endLine: number}));
       case "repo_status": return ready(this.repository.status(await initial(), source));
       case "repo_diff": return ready(this.repository.diff(await initial(), source));
       case "apply_patch": {
         const next = this.repository.patch(source, args.changes);
-        const outcome = result({sourceDigest: next.digest, previousSourceDigest: source.digest, manifestSha256: next.digest, changedPaths: (args.changes as {path: string}[]).map(change => change.path)});
-        return {generation: {digest: next.digest, manifest: next.manifest, parent: current}, execute: async () => {await this.repository.install(next); this.seam.fault?.("afterGeneration"); return outcome;}};
+        const outcome = bounded({sourceDigest: next.digest, previousSourceDigest: source.digest, manifestSha256: next.digest, changedPaths: (args.changes as {path: string}[]).map(change => change.path)});
+        return {generation: {digest: next.digest, manifest: next.manifest, parent: current}, execute: async () => {
+          await this.repository.install(next); this.seam.fault?.("afterGeneration");
+          await this.repository.load(next.digest, next.manifest); return outcome;
+        }};
       }
       case "search": return ready(this.search(source, args));
       case "read_many": {
@@ -137,7 +142,7 @@ export class CodingResource {
         const encoded = JSON.stringify(bundle); const artifactSha256 = sha256(encoded);
         const artifactByteLimit = this.selected.config.bounds.maxRepositoryBytes * 2 + 1024 * 1024;
         if (Buffer.byteLength(encoded) > artifactByteLimit) throw new ToolRefusal("artifact_bound", "Content-addressed bundle exceeds its selected source-derived byte bound");
-        const outcome = result({artifactSha256, sourceDigest: current, diffSha256: diff.diffSha256, testOperationId: original.operationId, testResultSha256: resultSha256, recipeSha256: recipe.recipeSha256, destination: args.destination, unsigned: true, authority: false});
+        const outcome = bounded({artifactSha256, sourceDigest: current, diffSha256: diff.diffSha256, testOperationId: original.operationId, testResultSha256: resultSha256, recipeSha256: recipe.recipeSha256, destination: args.destination, unsigned: true, authority: false});
         return {execute: async () => {
           const parent = this.selected.config.artifactRoot; await privateDirectory(parent);
           const artifact = join(parent, artifactSha256);
@@ -174,6 +179,7 @@ export async function initializeCodingResource(configPath: string): Promise<Reco
   try {
     ledger = await ResourceLedger.open(selected, {initialize: true}); await createGenerationsDirectory(selected.config);
     await installImmutableTree(join(selected.config.stateRoot, "generations"), source.digest, source.files);
+    await new Repository(selected.config, ledger).load(source.digest, source.manifest);
     await fsyncDirectory(selected.config.stateRoot); await ledger.initialize(source.digest, source.manifest);
     return {schema: "chio.coding-resource-import.v1", unsigned: true, sourceDigest: source.digest, files: source.files.size, resourceOwnerId: selected.config.resourceOwnerId, workspaceId: selected.config.workspaceId};
   } finally {ledger?.close(); await release();}

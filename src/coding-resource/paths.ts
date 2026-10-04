@@ -3,15 +3,14 @@ import {chmod, lstat, mkdir, open, readdir, realpath, rename, rm, unlink} from "
 import {hostname} from "node:os";
 import {dirname, isAbsolute, join, normalize, relative, sep} from "node:path";
 import {randomUUID} from "node:crypto";
+import {canonicalSourcePath} from "./namespace.js";
 
 export function within(base: string, target: string): boolean {
   const value = relative(base, target);
   return value === "" || value !== ".." && !value.startsWith(`..${sep}`) && !isAbsolute(value);
 }
 export function resourcePath(value: string): string {
-  if (!value || value.length > 1024 || value.includes("\\") || value.includes("\0") || isAbsolute(value)
-    || value.split("/").some(part => !part || part === "." || part === ".." || part === ".git") || normalize(value) !== value) throw new Error("Path must be a canonical relative source path without aliases or traversal");
-  return value;
+  return canonicalSourcePath(value);
 }
 export async function noSymlinkPath(path: string): Promise<void> {
   if (!isAbsolute(path) || normalize(path) !== path || path.includes("\0")) throw new Error("Paths must be canonical absolute paths");

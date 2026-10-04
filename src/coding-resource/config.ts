@@ -4,6 +4,11 @@ import {canonicalJson, frozenJson} from "../tool-registry.js";
 import {privateDirectory, regularFile, within} from "./paths.js";
 
 export const sha256 = (value: Buffer | string): string => createHash("sha256").update(value).digest("hex");
+export const MAX_JSONRPC_ID_LENGTH = 512;
+// Include the longest serialized admitted ID, fixed JSON-RPC result wrapper and
+// trailing newline. Payload capacity must survive any later native redelivery ID.
+export const MCP_RESULT_ENVELOPE_BYTES = Buffer.byteLength(JSON.stringify({jsonrpc: "2.0", id: "\0".repeat(MAX_JSONRPC_ID_LENGTH), result: null}) + "\n") - 4;
+export function fitsMcpTransport(value: unknown, maxOutputBytes: number): boolean {return Buffer.byteLength(JSON.stringify(value)) + MCP_RESULT_ENVELOPE_BYTES <= maxOutputBytes;}
 export interface Recipe {name: string; executable: string; executableSha256: string; argv: string[]; timeoutMs: number; outputBytes: number; graceMs: number; runtimeFiles: {path: string; sha256: string; mountPath?: string}[]; recipeSha256: string}
 export interface ResourceBounds {maxFileBytes: number; maxRepositoryBytes: number; maxFiles: number; maxReadBytes: number; maxSearchMatches: number; maxReadMany: number; maxPatchBytes: number; maxInputBytes: number; maxQueuedCalls: number; maxOutputBytes: number}
 export interface CodingConfig {schema: "chio.coding-resource.v1"; resourceOwnerId: string; workspaceId: string; repositoryRoot: string; stateRoot: string; artifactRoot: string; jobRoot: string; allowedCallerCapabilitySha256: string[]; bounds: ResourceBounds; recipes: Recipe[]}
@@ -28,10 +33,12 @@ export async function loadCodingConfig(path: string): Promise<LoadedConfig> {
   for (const root of roots) await privateDirectory(root);
   for (let i = 0; i < roots.length; i++) for (let j = i + 1; j < roots.length; j++) if (within(roots[i], roots[j]) || within(roots[j], roots[i])) throw new Error("Repository, state, artifact and job roots must be disjoint");
   if (roots.some(root => within(root, path))) throw new Error("Private operator configuration must be outside resource roots");
-  if (config.bounds.maxReadBytes + 8192 > config.bounds.maxOutputBytes || config.bounds.maxPatchBytes + 8192 > config.bounds.maxInputBytes) throw new Error("Configured input and output bounds cannot contain admitted work");
+  if (config.bounds.maxReadBytes + 8192 + MCP_RESULT_ENVELOPE_BYTES > config.bounds.maxOutputBytes || config.bounds.maxPatchBytes + 8192 > config.bounds.maxInputBytes) throw new Error("Configured input and output bounds cannot contain admitted work");
   const names = new Set<string>();
   for (const recipe of config.recipes) {
-    if (names.has(recipe.name) || recipeDigest(recipe) !== recipe.recipeSha256 || recipe.outputBytes * 6 + 8192 > config.bounds.maxOutputBytes) throw new Error("Recipe identity, digest or output bounds differ from selected pins");
+    // Stdout/stderr are encoded into RecipeResult JSON, then content.text JSON.
+    // A NUL input byte needs seven wire bytes after both encodings.
+    if (names.has(recipe.name) || recipeDigest(recipe) !== recipe.recipeSha256 || recipe.outputBytes * 7 + 8192 + MCP_RESULT_ENVELOPE_BYTES > config.bounds.maxOutputBytes) throw new Error("Recipe identity, digest or output bounds differ from selected pins");
     names.add(recipe.name);
     if (roots.some(root => within(root, recipe.executable))) throw new Error("Recipe executable cannot be resource-controlled");
     const files = new Set<string>();
