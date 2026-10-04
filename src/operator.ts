@@ -7,6 +7,7 @@ import {basename, dirname, isAbsolute, join, relative, resolve} from "node:path"
 import {fileURLToPath} from "node:url";
 import {preparedAuthorityDigest, type PreparedPiConfig} from "./configured.js";
 import {canonicalJson, registryForConfig, validateKernelArguments, type ToolRegistry} from "./tool-registry.js";
+import {readPrivateText} from "./private-state.js";
 
 export interface OperationSummary {
   requestId: string;
@@ -88,22 +89,14 @@ async function privateDirectory(path: string): Promise<string> {
 }
 async function privateText(path: string): Promise<{path: string; text: string}> {
   absolutePath(path);
-  const requested = await lstat(path);
-  if (!requested.isFile() || requested.isSymbolicLink() || requested.mode & 0o077 || requested.uid !== process.getuid?.() || requested.size > LIMIT)
-    refuse("private_path_required", "Operator files must be private regular files owned by the current user, at most 1 MiB.");
-  const canonical = join(await privateDirectory(dirname(path)), basename(path));
-  const file = await open(canonical, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
-    const before = await file.stat();
-    if (!before.isFile() || before.mode & 0o077 || before.uid !== process.getuid?.() || before.size > LIMIT
-      || before.dev !== requested.dev || before.ino !== requested.ino)
-      refuse("private_path_required", "Operator files must be private regular files owned by the current user, at most 1 MiB.");
-    const text = await file.readFile("utf8");
-    const after = await file.stat();
-    if (Buffer.byteLength(text) > LIMIT || before.size !== after.size || before.mtimeMs !== after.mtimeMs)
-      refuse("state_changed", "Operator state changed while reading; preserve the original operation and inspect again.");
-    return {path: canonical, text};
-  } finally {await file.close();}
+    return await readPrivateText(path, LIMIT);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") throw error;
+    if (error instanceof Error && error.message.includes("changed")) return refuse("state_changed", "Operator state changed while reading; preserve the original operation and inspect again.");
+    if (error instanceof Error && error.message.includes("UTF-8")) return refuse("invalid_private_json", "Private operator JSON requires strict UTF-8; no diagnostic source text is printed.");
+    return refuse("private_path_required", "Operator files must be private regular files owned by the current user, at most 1 MiB.");
+  }
 }
 export async function privateJson(path: string): Promise<{path: string; value: unknown}> {
   const file = await privateText(path);

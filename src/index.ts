@@ -6,3 +6,8 @@ export { createToolRegistry, type ChioToolSpec, type ToolRegistry, type ToolMode
 export { createHostDeliveryObserver } from "./host-delivery.js";
 export { summarizeGatewayStatus, type OperationSummary } from "./operator.js";
 export { runOperatorCommand } from "./operator-cli.js";
+export { startParentGatewayProxy, type ParentNativeGateway } from "./parent-gateway.js";
+export { createNativeOriginalOperationPort, recoverOriginalOperation, exportContinuation, importContinuation,
+  type OriginalOperationPort, type NativeOriginalOperationPort, type OriginalOperation, type OriginalInventory,
+  type ContinuationEnvelope, type NativeDeliveryTransport } from "./continuation.js";
+export { type ContinuationBinding, type HostCommitReference } from "./parent-mappings.js";

@@ -4,6 +4,7 @@ import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { PreparedPiConfig } from "./configured.js";
+import type {NativeOriginalOperationPort} from "./continuation.js";
 import { canonicalJson, frozenJson, registryForConfig, validateKernelArguments, type ToolRegistry } from "./tool-registry.js";
 
 interface NativeHistoryTransport {
@@ -45,7 +46,7 @@ async function verifyRetainedDenial(config: PreparedPiConfig & {journalDir: stri
 
 /** Install in the trusted parent before model egress. Completed history delegates
  * to the native gateway's exact result proof and ACK; denied history never ACKs. */
-export function createHostDeliveryObserver(config: PreparedPiConfig & {journalDir: string}, transport: NativeHistoryTransport): (outcomes: unknown[]) => Promise<void> {
+export function createHostDeliveryObserver(config: PreparedPiConfig & {journalDir: string}, transport: NativeHistoryTransport, originals?: NativeOriginalOperationPort): (outcomes: unknown[]) => Promise<void> {
   config = frozenJson(config);
   if (resolve(config.journalDir) !== config.journalDir) throw new Error("Trusted parent journal path must be absolute");
   const registry = registryForConfig(config);
@@ -60,7 +61,7 @@ export function createHostDeliveryObserver(config: PreparedPiConfig & {journalDi
         if (outcome.evidence !== "verified" || typeof outcome.requestId !== "string" || !outcome.requestId) throw new Error("Native completed history lacks its verified original identity");
         const identity = hash(JSON.stringify(outcome));
         if (confirmed.has(identity)) continue;
-        const result = await transport.acknowledgeReceivedOutcome(outcome);
+        const result = originals ? await originals.acknowledgeHistory(outcome, transport) : await transport.acknowledgeReceivedOutcome(outcome);
         if (!result.acknowledged) throw new Error("Native host result delivery remains unconfirmed; no next model turn");
         confirmed.add(identity);
       }

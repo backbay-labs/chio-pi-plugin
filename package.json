@@ -22,13 +22,15 @@
   "devDependencies": {
     "@earendil-works/pi-ai": "1.0.2",
     "@earendil-works/pi-coding-agent": "1.0.2",
+    "@earendil-works/pi-durable": "1.0.2",
     "@types/node": "26.5.0",
     "typescript": "7.0.2"
   },
   "types": "dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
-    "./coding-resource": "./dist/coding-resource/participant.js"
+    "./coding-resource": "./dist/coding-resource/participant.js",
+    "./durable": "./dist/durable.js"
   },
   "files": [
     "dist",
@@ -45,10 +47,16 @@
     "chio-coding-resource": "./dist/coding-resource-cli.js"
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "1.0.2"
+    "@earendil-works/pi-coding-agent": "1.0.2",
+    "@earendil-works/pi-durable": "1.0.2"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/backbay-labs/chio-pi-plugin.git"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-durable": {
+      "optional": true
+    }
   }
 }

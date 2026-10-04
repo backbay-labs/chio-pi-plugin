@@ -7,7 +7,8 @@ import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { constants } from "node:fs";
 import { startGatewayHttp } from "@chio/bridge";
-import { pinHostRegistry, readPreparedConfig } from "./configured.js";
+import { pinHostRegistry, preparedAuthorityDigest, readPreparedConfig } from "./configured.js";
+import {startParentGatewayProxy} from "./parent-gateway.js";
 import { createHostDeliveryObserver } from "./host-delivery.js";
 import { canonicalJson, registryForConfig } from "./tool-registry.js";
 import { readCodexAuthority, startModelRelay, type ModelAuthority } from "./model-relay.js";
@@ -78,18 +79,21 @@ async function main() {
   if (journal !== config.journalDir || isWithin(profile, journal) || isWithin(installation, journal)
     || isWithin(journal, profile) || isWithin(journal, installation) || isWithin(journal, configPath)) throw new Error("Authoritative gateway journal must be outside guest-readable and writable state");
   values.set("--config", configPath); values.set("--profile", profile); values.set("--cwd", cwd);
+  await pinHostRegistry(prepared, registry, journal);
   const transport = await startGatewayHttp(config);
+  let proxy: Awaited<ReturnType<typeof startParentGatewayProxy>> | undefined;
   let relay: Awaited<ReturnType<typeof startModelRelay>> | undefined;
   try {
-    await pinHostRegistry(prepared, registry, journal);
-    relay = await startModelRelay(authority, values.get("--model")!, createHostDeliveryObserver({...prepared, journalDir: journal}, transport), registry);
+    const parentBinding = {authorityDigest: preparedAuthorityDigest(prepared, registry), registryDigest: registry.digest};
+    proxy = await startParentGatewayProxy({configPath, binding: parentBinding, native: transport});
+    relay = await startModelRelay(authority, values.get("--model")!, createHostDeliveryObserver({...prepared, journalDir: journal}, transport, proxy.originals), registry);
     const guestConfig = join(profile, "gateway-transport.json");
     await writeFile(guestConfig, JSON.stringify({schema: "chio.pi.transport.v1", sessionId: config.sessionId,
-      transport: {url: transport.url, token: transport.token}, tools: config.tools, approvals: Boolean(config.approval),
+      transport: {url: proxy.url, token: proxy.token}, parentBinding, tools: config.tools, approvals: Boolean(config.approval),
       toolMode: registry.mode, registryDigest: registry.digest,
       binding: {subjectKey: config.execution.subjectKey, capabilityId: config.execution.capabilityId, serverId: config.execution.serverId, trustedSigners: config.execution.trustedSigners}}), {mode: 0o600});
     values.set("--config", guestConfig);
-    const policy = await buildSandboxPolicy({ executable, installation, profile, cwd, gatewayPort: transport.port, modelPort: relay.port });
+    const policy = await buildSandboxPolicy({ executable, installation, profile, cwd, gatewayPort: proxy.port, modelPort: relay.port });
     const control = await mkdtemp(join(tmpdir(), "chio-pi-sandbox-"));
     const policyPath = join(control, "profile.sb");
     await writeFile(policyPath, policy, { mode: 0o600 });
@@ -104,7 +108,7 @@ async function main() {
     try {
       process.exitCode = await new Promise<number>((resolve, reject) => { child.once("error", reject); child.once("exit", (code, signal) => resolve(code ?? (signal === "SIGINT" ? 130 : signal === "SIGTERM" ? 143 : 1))); });
     } finally { process.off("SIGINT", interrupt); process.off("SIGTERM", terminate); }
-  } finally { await transport.close(); await relay?.close(); }
+  } finally { await proxy?.close(); await transport.close(); await relay?.close(); }
 }
 
 if (process.argv[1] && await realpath(process.argv[1]).catch(() => undefined) === await realpath(fileURLToPath(import.meta.url)))
