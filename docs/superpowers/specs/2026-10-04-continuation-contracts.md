@@ -44,6 +44,16 @@ tools listing/calls, initialized notification and cancellation. Bound frame
 sizes, pending work, responses, and request lifetimes. Failed or ambiguous
 initialization never silently creates a replacement transport.
 
+A restarted proxy may return a verified original outcome from an earlier MCP
+connection. Its tools/call result may include a small parent-produced identity
+record containing only the exact retained logical/native request IDs and public
+authority/registry digests. The transport independently pins those digests and
+checks the logical request. It must not reconstruct the old native identity from
+the new connection. This metadata cannot replace full signed-outcome and original
+request verification. Trusted delivery observation resolves the private parent
+mapping rather than accepting a guest-asserted native ID. Substituted metadata or
+an outcome for another original operation refuses delivery and ACK.
+
 Reject guest `chio/acknowledge` requests. The frozen native HTTP route passes
 their delivery proof to `acknowledgeDelivery`, which sets
 `hostDeliveryConfirmed`. Receiving a proof in the guest is insufficient evidence
