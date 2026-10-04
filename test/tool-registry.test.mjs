@@ -73,6 +73,12 @@ test("schema array accessors are refused without executing operator-supplied cod
   assert.equal(reads, 0);
 });
 
+test("asynchronous schemas are refused before typed or legacy argument dispatch", () => {
+  for (const mode of ["typed", "legacy"]) for (const dialect of [{}, {$schema: "https://json-schema.org/draft/2020-12/schema"}]) {
+    assert.throws(() => registry([{name: "read_text_file", inputSchema: {...schema, ...dialect, $async: true}}], mode), /schema|synchronous|async/i);
+  }
+});
+
 test("legacy wrapper is an explicitly selected, schema-pinned comparison mode", () => {
   const value = registry(specs, "legacy");
   assert.equal(value.mode, "legacy");

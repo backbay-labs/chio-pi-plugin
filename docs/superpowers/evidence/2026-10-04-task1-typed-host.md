@@ -31,6 +31,43 @@ schema/name/description/mode resume bindings, full verified gateway outcomes,
 typed approval native history, declaration/choice/history refusal before relay
 egress, signed transport substitution and retained uncertainty regressions.
 
+## Spec review fixes
+
+Review of `c9270b3` found that the parent metadata's `.json` suffix collided with
+the native gateway's operation scan, and that protected relay observation skipped
+denied history verification. A separate probe found asynchronous Ajv schemas could
+return a Promise from the adapter's synchronous argument-validation contract.
+
+RED was observed before these fixes:
+
+* `node --test --test-name-pattern='metadata coexists' test/configured.test.mjs`
+  failed inside the actual bundled `createGateway`: `operation journal is missing
+  its authority binding`.
+* `node --test test/host-delivery.test.mjs` failed all 14 new parent-observer cases
+  because the verification contract was absent.
+* `node --test --test-name-pattern='asynchronous' test/tool-registry.test.mjs`
+  failed with `Missing expected exception` for an asynchronous pinned schema.
+
+The host binding is now `pi-host.binding`, outside the bundled operation scan.
+The integration test exercises actual bundled startup, status, close, restart and
+incompatible host binding without kernel dispatch. Protected denial observation
+reads the private original operation, compares the entire retained outcome,
+validates its pinned arguments and request digest, and calls public
+`verifyBoundReceipt` against the original request and operator authority. It also
+requires the signed denial verdict and original reason. It never writes the denial
+journal, acknowledges a denial or clears its fence.
+
+Signed fixtures cover genuine retained denial egress; forged signature, caller,
+resource, request, missing operation, reason and result refusal before egress;
+untrusted signatures and substituted bindings even when present in the retained
+record; and native completed-result ACK preservation. Async schemas are rejected
+at registry creation for typed and legacy modes and both supported dialects.
+
+GREEN after the review fixes: `npm run typecheck && npm test && git diff --check`
+passes 59 tests with zero failures or skips. These tests use the actual bundled
+gateway and Pi host with scripted providers and ephemeral signed fixtures. They
+do not qualify a real kernel or confinement backend.
+
 `npm ls @earendil-works/pi-ai @earendil-works/pi-coding-agent @earendil-works/pi-agent-core @earendil-works/pi-codemode @earendil-works/pi-mcp --all`
 confirms 1.0.2 throughout the installed Pi graph. The host peer and CI consumer
 also pin 1.0.2. Package-lock SHA-256:

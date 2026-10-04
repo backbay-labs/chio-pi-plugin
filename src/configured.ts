@@ -47,7 +47,8 @@ export async function pinHostRegistry(config: PreparedPiConfig, registry: ToolRe
   await mkdir(journalDirectory, {recursive: true, mode: 0o700});
   const directory = await lstat(journalDirectory);
   if (!directory.isDirectory() || directory.isSymbolicLink() || directory.mode & 0o077 || directory.uid !== process.getuid?.()) throw new Error("Trusted parent journal must be a private operator-owned directory");
-  const path = join(journalDirectory, "pi-host.binding.json");
+  // The native gateway reserves every top-level *.json file for an operation.
+  const path = join(journalDirectory, "pi-host.binding");
   async function check() {
     const stat = await lstat(path);
     if (!stat.isFile() || stat.isSymbolicLink() || stat.mode & 0o077 || stat.uid !== process.getuid?.() || stat.size > 1024 * 1024) throw new Error("Trusted host binding must be a private regular file");

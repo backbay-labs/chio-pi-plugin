@@ -3,3 +3,4 @@ export { createChioPiSession, type ChioPiOptions } from "./session.js";
 export { bridgeExecutor, type McpExecutionClient } from "./bridge-executor.js";
 export { readPreparedConfig, configuredExecutor, type PreparedPiConfig } from "./configured.js";
 export { createToolRegistry, type ChioToolSpec, type ToolRegistry, type ToolMode } from "./tool-registry.js";
+export { createHostDeliveryObserver } from "./host-delivery.js";

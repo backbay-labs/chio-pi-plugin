@@ -99,7 +99,9 @@ function compileSchema(schema: Record<string, unknown>): ValidateFunction {
   try {
     const options = {strict: true, strictRequired: true, allErrors: false, coerceTypes: false, useDefaults: false, removeAdditional: false, ownProperties: true};
     const validator = schema.$schema === "https://json-schema.org/draft/2020-12/schema" ? new Ajv2020(options) : new Ajv(options);
-    return validator.compile(schema);
+    const compiled = validator.compile(schema);
+    if ((compiled as ValidateFunction & {$async?: true}).$async) throw new Error("Asynchronous pinned schemas are unavailable");
+    return compiled;
   } catch {throw new Error("Invalid or unsupported pinned JSON schema");}
 }
 function alias(name: string): string {
@@ -155,7 +157,7 @@ export function validateKernelArguments(registry: ToolRegistry, tool: string, ar
   if (!validator && !(registry.mode === "legacy" && value.inventory.length === 0)) throw new Error("Tool is outside the pinned registry");
   if (!isObject(args)) throw new Error("Tool arguments must be a JSON object");
   const snapshot = JSON.parse(canonicalJson(args)) as Record<string, unknown>;
-  if (validator && !validator(snapshot)) throw new Error("Tool arguments differ from the pinned input schema");
+  if (validator && validator(snapshot) !== true) throw new Error("Tool arguments differ from the pinned input schema");
   if (tool === CHIO_RESUME_SPEC.name) {
     if (snapshot.tool === CHIO_RESUME_SPEC.name || typeof snapshot.tool !== "string") throw new Error("Original approval tool is outside the pinned registry");
     validateKernelArguments(registry, snapshot.tool, snapshot.arguments);
@@ -168,6 +170,6 @@ export function resolveRegistryCall(registry: ToolRegistry, name: string, args: 
   if (!definition) throw new Error("Tool alias is outside the pinned registry");
   if (registry.mode === "typed") return {tool: definition.kernelTool, arguments: validateKernelArguments(registry, definition.kernelTool, args)};
   const snapshot = JSON.parse(canonicalJson(args)) as {tool: string; arguments: unknown};
-  if (!value.legacyValidator(snapshot)) throw new Error("Invalid legacy wrapper arguments");
+  if (value.legacyValidator(snapshot) !== true) throw new Error("Invalid legacy wrapper arguments");
   return {tool: snapshot.tool, arguments: validateKernelArguments(registry, snapshot.tool, snapshot.arguments)};
 }

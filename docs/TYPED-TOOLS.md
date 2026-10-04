@@ -33,9 +33,12 @@ Changing mode, schemas, descriptions or mappings cannot resume a bound profile.
 
 Protected gateway mode returns the entire verified gateway outcome in native Pi
 history, including original request ID, signed receipt and delivery material.
-The trusted parent observes that history before kernel ACK. Approval adds only
+The trusted parent observes that history before kernel ACK. Denied history must
+match the exact original private operation, reason and receipt, and pass public
+receipt verification against the retained caller, resource, request and arguments.
+Denials never ACK or clear their retained fence. Approval adds only
 the bridge's exact `chio_resume` contract and retains the original tool and
-arguments. The parent-only journal stores `pi-host.binding.json`, binding Pi
+arguments. The parent-only journal stores `pi-host.binding`, binding Pi
 version, registry digest and retained authority independently of guest-writable
 profile metadata. Incompatible frozen profiles are refused without migration.
 

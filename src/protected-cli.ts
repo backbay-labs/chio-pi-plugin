@@ -8,6 +8,7 @@ import { spawn } from "node:child_process";
 import { constants } from "node:fs";
 import { startGatewayHttp } from "@chio/bridge";
 import { pinHostRegistry, readPreparedConfig } from "./configured.js";
+import { createHostDeliveryObserver } from "./host-delivery.js";
 import { canonicalJson, registryForConfig } from "./tool-registry.js";
 import { readCodexAuthority, startModelRelay, type ModelAuthority } from "./model-relay.js";
 import { buildSandboxPolicy, isWithin, requireSessionCredential } from "./sandbox.js";
@@ -76,22 +77,7 @@ async function main() {
   let relay: Awaited<ReturnType<typeof startModelRelay>> | undefined;
   try {
     await pinHostRegistry(prepared, registry, journal);
-    const confirmed = new Set<string>();
-    let confirmations = Promise.resolve();
-    relay = await startModelRelay(authority, values.get("--model")!, async outcomes => {
-      confirmations = confirmations.then(async () => {
-        for (const raw of outcomes) {
-          const outcome = raw as {state?: string; evidence?: string; requestId?: string};
-          if (outcome?.state !== "completed" || outcome.evidence !== "verified" || typeof outcome.requestId !== "string") continue;
-          const identity = createHash("sha256").update(JSON.stringify(outcome)).digest("hex");
-          if (confirmed.has(identity)) continue;
-          const result = await transport.acknowledgeReceivedOutcome(outcome);
-          if (!result.acknowledged) throw new Error("Native host result delivery remains unconfirmed; no next model turn");
-          confirmed.add(identity);
-        }
-      });
-      await confirmations;
-    }, registry);
+    relay = await startModelRelay(authority, values.get("--model")!, createHostDeliveryObserver({...prepared, journalDir: journal}, transport), registry);
     const guestConfig = join(profile, "gateway-transport.json");
     await writeFile(guestConfig, JSON.stringify({schema: "chio.pi.transport.v1", sessionId: config.sessionId,
       transport: {url: transport.url, token: transport.token}, tools: config.tools, approvals: Boolean(config.approval),
