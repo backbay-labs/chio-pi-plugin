@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { nativeToolOutcome, readCodexAuthority, startModelRelay, validateModelRequest } from "../dist/model-relay.js";
+import { nativeToolOutcome, readCodexAuthority, startModelRelay as nativeStartModelRelay, validateModelRequest as nativeValidateModelRequest } from "../dist/model-relay.js";
+import { createToolRegistry } from "../dist/index.js";
 import { relayCredentials } from "../dist/model-credentials.js";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 import { zstdCompressSync } from "node:zlib";
@@ -9,6 +10,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const request = input => ({ model: "gpt-4.1-mini", input, store: false, stream: true });
+// These historical wrapper transport fixtures deliberately select legacy mode.
+const legacyRegistry = createToolRegistry([], "legacy");
+const validateModelRequest = (body, model, provider) => nativeValidateModelRequest(body, model, provider, legacyRegistry);
+const startModelRelay = (authority, model, observer) => nativeStartModelRelay(authority, model, observer, legacyRegistry);
 test("native tool-error history preserves the full outcome and never interprets arbitrary prose", () => {
   const outcome = {state: "completed", evidence: "verified", requestId: "original", result: {isError: true, content: [{type: "text", text: "ENOENT"}]}, receipt: {signature: "unchanged"}};
   const text = "Chio tool completed with an error: " + JSON.stringify(outcome);
@@ -28,7 +33,7 @@ test("model relay requires complete text/function history and removes provider i
   const valid = request([
     { role: "system", content: "Use Chio" }, { role: "user", content: [{ type: "input_text", text: "Read the file" }] },
     { type: "message", role: "assistant", content: [{ type: "output_text", text: "Reading", annotations: [] }], id: "msg_old", status: "completed" },
-    { type: "function_call", id: "fc_old", call_id: "call_1", name: "chio_execute", arguments: "{}" },
+    { type: "function_call", id: "fc_old", call_id: "call_1", name: "chio_execute", arguments: '{"tool":"read_text_file","arguments":{}}' },
     { type: "function_call_output", call_id: "call_1", output: "verified content" },
   ]);
   validateModelRequest(valid, "gpt-4.1-mini");
@@ -84,7 +89,8 @@ test("native Codex transport uses local-only auth, bounded compressed history an
     requests.push({url, init});
     return new Response("data: [DONE]\n\n", {headers: {"content-type": "text/event-stream"}});
   };
-  const relay = await startModelRelay({provider: "openai-codex", accessToken: "private-provider-token", accountId: "private-provider-account"}, "gpt-5.5", async outcomes => {assert.deepEqual(outcomes, [{state: "completed"}]); confirmed = true;});
+  const outcome = {state: "completed", evidence: "verified", requestId: "original", receipt: {tool_name: "read_text_file", action: {parameters: {}}}, result: {content: [{type: "text", text: "complete fixture"}]}};
+  const relay = await startModelRelay({provider: "openai-codex", accessToken: "private-provider-token", accountId: "private-provider-account"}, "gpt-5.5", async outcomes => {assert.deepEqual(outcomes, [outcome]); confirmed = true;});
   try {
     assert.ok(!relay.token.includes("private-provider"));
     const credentials = relayCredentials("openai-codex", relay.token);
@@ -93,7 +99,7 @@ test("native Codex transport uses local-only auth, bounded compressed history an
     assert.equal(auth.auth.apiKey, relay.token);
     assert.equal(runtime.getModel("openai-codex", "gpt-5.5").api, "openai-codex-responses");
     await assert.rejects(credentials.modify("openai-codex", async value => value), /cannot/);
-    const body = {model: "gpt-5.5", store: false, stream: true, input: [{type: "function_call_output", call_id: "call_1", output: '{"state":"completed"}'}]};
+    const body = {model: "gpt-5.5", store: false, stream: true, input: [{type: "function_call", call_id: "call_1", name: "chio_execute", arguments: '{"tool":"read_text_file","arguments":{}}'}, {type: "function_call_output", call_id: "call_1", output: JSON.stringify(outcome)}]};
     const send = (route, bytes, encoding = "zstd") => fetch(`http://127.0.0.1:${relay.port}${route}`, {method: "POST", headers: {authorization: `Bearer ${relay.token}`, "content-encoding": encoding, "chatgpt-account-id": "guest-forged-account"}, body: bytes});
     const result = await send("/v1/codex/responses", zstdCompressSync(JSON.stringify(body)));
     assert.equal(result.status, 200); await result.text();

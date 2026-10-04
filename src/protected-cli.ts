@@ -7,7 +7,8 @@ import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { constants } from "node:fs";
 import { startGatewayHttp } from "@chio/bridge";
-import { readPreparedConfig } from "./configured.js";
+import { pinHostRegistry, readPreparedConfig } from "./configured.js";
+import { canonicalJson, registryForConfig } from "./tool-registry.js";
 import { readCodexAuthority, startModelRelay, type ModelAuthority } from "./model-relay.js";
 import { buildSandboxPolicy, isWithin, requireSessionCredential } from "./sandbox.js";
 
@@ -39,8 +40,10 @@ async function main() {
   if (basename(dirname(packageRoot)) !== "@chio" || basename(installation) !== "node_modules") throw new Error("Protected launcher requires the installed artifact, not a source checkout");
   const executable = await realpath(process.execPath);
   const configPath = await realpath(values.get("--config")!);
-  await readPreparedConfig(configPath);
+  const prepared = await readPreparedConfig(configPath);
   const config = await requireSessionCredential(configPath);
+  if (canonicalJson({...config, toolMode: config.toolMode ?? "typed"}) !== canonicalJson(prepared)) throw new Error("Prepared operator configuration changed during launch");
+  const registry = registryForConfig(prepared);
   const endpoint = new URL(config.execution.endpoint);
   if (endpoint.protocol !== "http:" || endpoint.hostname !== "127.0.0.1" || !endpoint.port || endpoint.username || endpoint.password) throw new Error("Protected candidate requires an explicit local kernel HTTP endpoint");
   const requestedProfile = resolve(values.get("--profile")!);
@@ -54,10 +57,10 @@ async function main() {
     const markerStat = await lstat(profileMarker);
     if (!markerStat.isFile() || markerStat.isSymbolicLink() || markerStat.mode & 0o077) throw new Error("Existing profile lacks a private Chio ownership marker");
     const marker = JSON.parse(await readFile(profileMarker, "utf8"));
-    if (marker.schema !== "chio.pi.profile.v1" || marker.sessionId !== config.execution.sessionId) throw new Error("Profile belongs to another kernel session");
+    if (marker.schema !== "chio.pi.profile.v2" || marker.sessionId !== config.execution.sessionId || marker.registryDigest !== registry.digest || marker.piVersion !== "1.0.2") throw new Error("Profile host or registry binding is incompatible; frozen profiles are not migrated");
   } else {
     const marker = await open(profileMarker, "wx", 0o600);
-    try { await marker.writeFile(JSON.stringify({ schema: "chio.pi.profile.v1", sessionId: config.execution.sessionId })); await marker.sync(); }
+    try { await marker.writeFile(JSON.stringify({ schema: "chio.pi.profile.v2", sessionId: config.execution.sessionId, registryDigest: registry.digest, piVersion: "1.0.2" })); await marker.sync(); }
     finally { await marker.close(); }
   }
   const requestedCwd = resolve(values.get("--cwd")!);
@@ -72,6 +75,7 @@ async function main() {
   const transport = await startGatewayHttp(config);
   let relay: Awaited<ReturnType<typeof startModelRelay>> | undefined;
   try {
+    await pinHostRegistry(prepared, registry, journal);
     const confirmed = new Set<string>();
     let confirmations = Promise.resolve();
     relay = await startModelRelay(authority, values.get("--model")!, async outcomes => {
@@ -87,10 +91,11 @@ async function main() {
         }
       });
       await confirmations;
-    });
+    }, registry);
     const guestConfig = join(profile, "gateway-transport.json");
     await writeFile(guestConfig, JSON.stringify({schema: "chio.pi.transport.v1", sessionId: config.sessionId,
       transport: {url: transport.url, token: transport.token}, tools: config.tools, approvals: Boolean(config.approval),
+      toolMode: registry.mode, registryDigest: registry.digest,
       binding: {subjectKey: config.execution.subjectKey, capabilityId: config.execution.capabilityId, serverId: config.execution.serverId, trustedSigners: config.execution.trustedSigners}}), {mode: 0o600});
     values.set("--config", guestConfig);
     const policy = await buildSandboxPolicy({ executable, installation, profile, cwd, gatewayPort: transport.port, modelPort: relay.port });

@@ -1,5 +1,7 @@
 import {gatewayExecutor} from "../dist/http-executor.js";
 import {nativeToolOutcome} from "../dist/model-relay.js";
+import {validateModelRequest} from "../dist/model-relay.js";
+import {CHIO_RESUME_SPEC, resolveRegistryCall} from "../dist/tool-registry.js";
 import {verifyReceivedOutcome} from "@chio/bridge";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -59,3 +61,51 @@ for(const fault of ["none","result","stale-request","signature"]){
   }finally{globalThis.fetch=original;}
  });
 }
+
+test("private gateway inventory refuses same-name schema substitution before any dispatch", async () => {
+ const original=globalThis.fetch;let calls=0;
+ globalThis.fetch=async(_url,init)=>{
+  const rpc=JSON.parse(init.body);
+  if(rpc.method==="tools/call")calls++;
+  const result=rpc.method==="initialize"?{capabilities:{experimental:{chioDeliveryAcknowledgement:{version:"1"}}}}
+   :{tools:[{name:"read_text_file",inputSchema:{type:"object",additionalProperties:true}}]};
+  return new Response(JSON.stringify({jsonrpc:"2.0",id:rpc.id,result}),{headers:{"mcp-session-id":"mcp-session"}});
+ };
+ try {
+  await assert.rejects(gatewayExecutor({schema:"chio.pi.transport.v1",sessionId:"gateway",transport:{url:"http://127.0.0.1:12345/mcp",token:"local-test"},binding,tools:[{name:"read_text_file",inputSchema:{type:"object",additionalProperties:false}}],approvals:false}),/inventory|schema/);
+  assert.equal(calls,0);
+ }finally{globalThis.fetch=original;}
+});
+
+test("typed approval inventory and relay history retain the exact original tool and arguments", async () => {
+ const original=globalThis.fetch;let resourceDispatches=0;
+ const tools=[{name:"read_text_file",description:"Read source",inputSchema:{type:"object",properties:{path:{type:"string"}},required:["path"],additionalProperties:false}}];
+ globalThis.fetch=async(_url,init)=>{
+  const rpc=JSON.parse(init.body);let result;
+  if(rpc.method==="initialize")result={capabilities:{experimental:{chioDeliveryAcknowledgement:{version:"1"}}}};
+  else if(rpc.method==="tools/list")result={tools:[...tools,CHIO_RESUME_SPEC]};
+  else{
+   assert.equal(rpc.params.name,"chio_resume");resourceDispatches++;
+   result={content:[{type:"text",text:JSON.stringify(outcome(rpc.params.arguments.requestId))}]};
+  }
+  return new Response(JSON.stringify({jsonrpc:"2.0",id:rpc.id,result}),{headers:{"mcp-session-id":"mcp-session"}});
+ };
+ try{
+  const client=await gatewayExecutor({schema:"chio.pi.transport.v1",sessionId:"gateway",transport:{url:"http://127.0.0.1:12345/mcp",token:"local-test"},binding,tools,approvals:true});
+  assert.deepEqual(client.registry.tools.map(tool=>tool.name).sort(),["chio_read","chio_resume"]);
+  const resume={requestId:"retained-original",tool:"read_text_file",arguments:args};
+  assert.throws(()=>resolveRegistryCall(client.registry,"chio_resume",{...resume,arguments:{path:7}}),/schema/);
+  assert.throws(()=>resolveRegistryCall(client.registry,"chio_resume",{...resume,tool:"unconfigured"}),/registry/);
+  const value=await client.executor.execute({sessionId:"host",toolCallId:"resume-call",tool:"chio_resume",arguments:resume});
+  assert.equal(value.retainedOutcome.requestId,"retained-original");
+  assert.deepEqual(JSON.parse(value.content),value.retainedOutcome);
+  const body={model:"gpt-4.1-mini",store:false,stream:true,
+   tools:client.registry.tools.map(tool=>({type:"function",name:tool.name,description:tool.description,parameters:tool.parameters,strict:false})),
+   tool_choice:{type:"function",name:"chio_resume"},input:[
+    {type:"function_call",name:"chio_resume",call_id:"resume-call",arguments:JSON.stringify(resume)},
+    {type:"function_call_output",call_id:"resume-call",output:value.content},
+   ]};
+  validateModelRequest(body,"gpt-4.1-mini","openai",client.registry);
+  assert.equal(resourceDispatches,1);
+ }finally{globalThis.fetch=original;}
+});

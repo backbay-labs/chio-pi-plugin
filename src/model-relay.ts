@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
 import { zstdDecompressSync } from "node:zlib";
 import { lstat, readFile } from "node:fs/promises";
+import { canonicalJson, registryInventory, resolveRegistryCall, type ToolRegistry } from "./tool-registry.js";
 
 export type ModelAuthority = { provider: "openai"; apiKey: string } | { provider: "openai-codex"; accessToken: string; accountId: string };
 
@@ -45,13 +46,29 @@ export function nativeToolOutcome(output: unknown): unknown {
   } catch { return undefined; }
 }
 
-export function validateModelRequest(body: Record<string, unknown>, model: string, provider: ModelAuthority["provider"] = "openai") {
+export function validateModelRequest(body: Record<string, unknown>, model: string, provider: ModelAuthority["provider"] = "openai", registry?: ToolRegistry) {
+  if (!registry) throw new Error("An explicit pinned tool registry is required");
+  registryInventory(registry);
   const allowed = new Set(["model", "input", "instructions", "tools", "tool_choice", "parallel_tool_calls", "stream", "store", "reasoning", "text", "temperature", "top_p", "max_output_tokens", "service_tier", "include", "truncation", "prompt_cache_key", "prompt_cache_retention", "prompt_cache_options"]);
   if (Object.keys(body).some(key => !allowed.has(key)) || body.model !== model || body.store !== false || body.stream !== true || !Array.isArray(body.input)) throw new Error("Model request exceeds selected mode");
-  if (body.tools !== undefined && (!Array.isArray(body.tools) || body.tools.some(tool => !object(tool) || tool.type !== "function" || tool.name !== "chio_execute"))) throw new Error("Hosted or alternate tools are unavailable");
+  const aliases = new Map(registry.tools.map(tool => [tool.name, tool]));
+  if (body.tools !== undefined) {
+    if (!Array.isArray(body.tools) || body.tools.length !== registry.tools.length) throw new Error("Model declarations differ from the pinned registry");
+    const declared = new Set<string>();
+    for (const tool of body.tools) {
+      if (!object(tool) || !keys(tool, ["type", "name", "description", "parameters", "strict"]) || tool.type !== "function"
+        || typeof tool.name !== "string" || declared.has(tool.name)
+        || ![undefined, null, false].includes(tool.strict as undefined | null | false)) throw new Error("Hosted, deferred or alternate tools are unavailable");
+      const pinned = aliases.get(tool.name);
+      if (!pinned || tool.description !== pinned.description || canonicalJson(tool.parameters) !== canonicalJson(pinned.parameters)) throw new Error("Model tool schema or description differs from the pinned registry");
+      declared.add(tool.name);
+    }
+  }
   if (body.include !== undefined && (!Array.isArray(body.include) || body.include.some(value => provider !== "openai-codex" || value !== "reasoning.encrypted_content"))) throw new Error("Alternate provider expansions are unavailable");
   const choice = body.tool_choice;
-  if (choice !== undefined && !["auto", "none", "required"].includes(choice as string) && !(object(choice) && keys(choice, ["type", "name"]) && choice.type === "function" && choice.name === "chio_execute")) throw new Error("Alternate tool choice is unavailable");
+  if (choice !== undefined && !["auto", "none", "required"].includes(choice as string) && !(object(choice) && keys(choice, ["type", "name"]) && choice.type === "function" && typeof choice.name === "string" && aliases.has(choice.name))) throw new Error("Alternate tool choice is unavailable");
+  const calls = new Map<string, {tool: string; arguments: Record<string, unknown>}>();
+  const delivered = new Set<string>();
   for (const item of body.input) {
     if (!object(item)) throw new Error("Input must contain complete inline items");
     if ((item.type === undefined || item.type === "message") && keys(item, ["type", "role", "content", "id", "status", "phase"]) && ["system", "developer", "user", "assistant"].includes(item.role as string) && textContent(item.content, item.role === "assistant")) {
@@ -59,9 +76,23 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
       if (provider === "openai-codex" && item.phase !== undefined && (item.role !== "assistant" || !["commentary", "final_answer"].includes(item.phase as string))) throw new Error("Unsupported native assistant phase");
       delete item.id; delete item.status;
       if (provider !== "openai-codex") delete item.phase;
-    } else if (item.type === "function_call" && keys(item, ["type", "id", "call_id", "name", "arguments", "status"]) && item.name === "chio_execute" && typeof item.arguments === "string" && typeof item.call_id === "string") {
+    } else if (item.type === "function_call" && keys(item, ["type", "id", "call_id", "name", "arguments", "status"]) && typeof item.name === "string" && typeof item.arguments === "string" && typeof item.call_id === "string" && item.call_id.length > 0 && item.call_id.length <= 256) {
+      if (calls.has(item.call_id)) throw new Error("Duplicate native function call identity");
+      calls.set(item.call_id, resolveRegistryCall(registry, item.name, JSON.parse(item.arguments)));
       delete item.id; delete item.status;
     } else if (item.type === "function_call_output" && keys(item, ["type", "call_id", "output", "id", "status"]) && typeof item.call_id === "string" && textContent(item.output)) {
+      const call = calls.get(item.call_id);
+      if (!call || delivered.has(item.call_id)) throw new Error("Native function output is missing its exact original call");
+      const outcome = nativeToolOutcome(item.output);
+      if (object(outcome) && ["completed", "denied"].includes(outcome.state as string)) {
+        const original = call.tool === "chio_resume" ? {tool: call.arguments.tool, arguments: call.arguments.arguments} : call;
+        if (outcome.evidence !== "verified" || typeof outcome.requestId !== "string" || !outcome.requestId || !object(outcome.receipt)
+          || outcome.receipt.tool_name !== original.tool || !object(outcome.receipt.action)
+          || canonicalJson(outcome.receipt.action.parameters) !== canonicalJson(original.arguments)
+          || outcome.state === "completed" && outcome.result === undefined
+          || call.tool === "chio_resume" && outcome.requestId !== call.arguments.requestId) throw new Error("Native outcome differs from the pinned function argument binding");
+      }
+      delivered.add(item.call_id);
       delete item.id; delete item.status;
     } else if (provider === "openai-codex" && item.type === "reasoning" && keys(item, ["type", "id", "summary", "encrypted_content", "status", "content"])
       && typeof item.encrypted_content === "string" && /^[A-Za-z0-9_=-]+$/.test(item.encrypted_content)
@@ -76,7 +107,9 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
 
 /** Operator-owned model transport. It exposes only the selected provider's
  * synchronous function-calling response route, never arbitrary proxying. */
-export async function startModelRelay(authority: ModelAuthority, model: string, onToolResults?: (outcomes: unknown[]) => Promise<void>) {
+export async function startModelRelay(authority: ModelAuthority, model: string, onToolResults?: (outcomes: unknown[]) => Promise<void>, registry?: ToolRegistry) {
+  if (!registry) throw new Error("An explicit pinned tool registry is required");
+  registryInventory(registry);
   const nonce = randomBytes(32).toString("hex");
   // Native Pi extracts an account claim before making its request. This is
   // an opaque local credential, never an upstream login or signed JWT.
@@ -101,7 +134,7 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
       if (request.headers["content-encoding"] === "zstd" && authority.provider === "openai-codex") raw = zstdDecompressSync(raw, {maxOutputLength: 8 * 1024 * 1024});
       else if (request.headers["content-encoding"]) throw new Error("Unsupported model body encoding");
       const body = JSON.parse(raw.toString()) as Record<string, unknown>;
-      validateModelRequest(body, model, authority.provider);
+      validateModelRequest(body, model, authority.provider, registry);
       body.parallel_tool_calls = false;
       const outcomes: unknown[] = [];
       for (const item of body.input as Record<string, unknown>[]) {

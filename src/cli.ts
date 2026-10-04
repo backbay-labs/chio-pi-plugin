@@ -45,7 +45,7 @@ async function main() {
     ({ session } = await createChioPiSession({ cwd, agentDir, modelRuntime, provider: values.get("--provider")!, model: values.get("--model")!, executor: controlled.executor,
       modelBaseUrl: process.env.CHIO_PI_MODEL_BASE_URL,
       sessionManager: resume ? SessionManager.open(await realpath(resume), sessions, cwd) : SessionManager.create(cwd, sessions),
-      toolInventory: gateway?.tools ?? config!.tools, trustedGatewayTransport: Boolean(gateway),
+      registry: controlled.registry, trustedGatewayTransport: Boolean(gateway),
     }));
     const current = session;
     const interrupt = () => { termination = "SIGINT"; void current.abort(); };

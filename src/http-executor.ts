@@ -2,13 +2,16 @@ import { lstat, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { verifyBoundReceipt, verifyReceivedOutcome } from "@chio/bridge";
 import type { KernelExecutor } from "./extension.js";
+import { canonicalJson, frozenJson, registryForConfig, registryInventory, validateKernelArguments, type ChioToolSpec, type ToolMode } from "./tool-registry.js";
 
 export interface PiTransportConfig {
   schema: "chio.pi.transport.v1";
   sessionId: string;
   transport: { url: string; token: string };
   binding: { subjectKey: string; capabilityId: string; serverId: string; trustedSigners: string[] };
-  tools: { name: string; description?: string; inputSchema: Record<string, unknown> }[];
+  tools: readonly ChioToolSpec[];
+  toolMode?: ToolMode;
+  registryDigest?: string;
   approvals: boolean;
 }
 export async function readTransportConfig(path: string): Promise<PiTransportConfig> {
@@ -19,7 +22,9 @@ export async function readTransportConfig(path: string): Promise<PiTransportConf
   if (config.schema !== "chio.pi.transport.v1" || !config.sessionId || !config.transport.token
     || url.protocol !== "http:" || url.hostname !== "127.0.0.1" || !url.port || url.pathname !== "/mcp"
     || url.username || url.password || url.search || url.hash || !Array.isArray(config.tools) || !config.tools.length) throw new Error("Invalid launcher transport configuration");
-  return config;
+  const registry = registryForConfig(config);
+  if (config.registryDigest !== undefined && config.registryDigest !== registry.digest) throw new Error("Transport registry digest differs from pinned operator tools");
+  return frozenJson({...config, toolMode: registry.mode, registryDigest: registry.digest});
 }
 
 /** The trusted launcher owns verification, the durable journal, and kernel ACK.
@@ -28,6 +33,9 @@ export async function readTransportConfig(path: string): Promise<PiTransportConf
  * that result in native model history before acknowledging it at the kernel.
  * It never retries an effecting operation itself. */
 export async function gatewayExecutor(config: PiTransportConfig) {
+  config = frozenJson(config);
+  const registry = registryForConfig(config);
+  if (config.registryDigest !== undefined && config.registryDigest !== registry.digest) throw new Error("Transport registry digest differs from pinned operator tools");
   let session = "";
   const state = { unresolved: false, awaitingApproval: false };
   async function rpc(id: string, method: string, params: unknown, signal?: AbortSignal) {
@@ -46,12 +54,19 @@ export async function gatewayExecutor(config: PiTransportConfig) {
   const initialized = await rpc("initialize", "initialize", {protocolVersion: "2025-11-25"});
   if (initialized.capabilities?.experimental?.chioDeliveryAcknowledgement?.version !== "1") throw new Error("Host delivery acknowledgement transport required");
   const inventory = await rpc("inventory", "tools/list", {});
-  const names = [...config.tools.map(tool => tool.name), ...(config.approvals ? ["chio_resume"] : [])].sort();
-  if (!Array.isArray(inventory.tools) || JSON.stringify(inventory.tools.map((tool: {name: string}) => tool.name).sort()) !== JSON.stringify(names)) throw new Error("Transport inventory differs from pinned operator tools");
+  const expected = registryInventory(registry);
+  if (!Array.isArray(inventory.tools) || inventory.tools.length !== expected.length
+    || inventory.tools.some((tool: ChioToolSpec) => {
+      const pinned = expected.find(value => value.name === tool?.name);
+      return !pinned || canonicalJson(tool) !== canonicalJson(pinned);
+    }) || new Set(inventory.tools.map((tool: ChioToolSpec) => tool.name)).size !== expected.length) throw new Error("Transport inventory or schema differs from pinned operator tools");
+  const names = new Set(expected.map(tool => tool.name));
   const executor: KernelExecutor = {
     async execute(request, signal) {
       if (state.unresolved) throw new Error("Prior external outcome remains unknown; no new dispatch");
-      if (!names.includes(request.tool)) return {outcome: "not_dispatched", content: "Tool is outside operator allowlist"};
+      if (!names.has(request.tool)) return {outcome: "not_dispatched", content: "Tool is outside operator allowlist"};
+      try {request = {...request, arguments: validateKernelArguments(registry, request.tool, request.arguments)};}
+      catch {return {outcome: "not_dispatched", content: "Arguments differ from the pinned tool schema"};}
       if (signal?.aborted) return {outcome: "not_dispatched", content: "Cancelled before transport dispatch"};
       try {
         const rpcId = JSON.stringify([request.sessionId, request.toolCallId]);
@@ -76,10 +91,10 @@ export async function gatewayExecutor(config: PiTransportConfig) {
           // model relay acknowledges only after Pi includes it in native history.
         }
         state.awaitingApproval = false;
-        return {outcome: outcome.state, content: outcome.state === "completed" ? JSON.stringify(outcome) : outcome.reason,
-          evidence: outcome.receipt, toolError: outcome.result?.isError === true};
+        return {outcome: outcome.state, content: JSON.stringify(outcome),
+          evidence: outcome.receipt, toolError: outcome.result?.isError === true, retainedOutcome: outcome};
       } catch (error) { state.unresolved = true; throw error; }
     },
   };
-  return {executor, state, tools: inventory.tools as PiTransportConfig["tools"], async close() { /* Launcher owns transport lifetime. */ }};
+  return {executor, registry, state, tools: expected, async close() { /* Launcher owns transport lifetime. */ }};
 }

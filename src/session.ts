@@ -4,9 +4,11 @@ import {
   ModelRuntime,
   SessionManager,
   SettingsManager,
+  VERSION,
   type ExtensionFactory,
 } from "@earendil-works/pi-coding-agent";
-import { CHIO_TOOL_NAME, chioExtension, type KernelExecutor } from "./extension.js";
+import { chioExtension, type KernelExecutor } from "./extension.js";
+import { canonicalJson, createToolRegistry, registryInventory, resolveRegistryCall, type ChioToolSpec, type ToolMode, type ToolRegistry } from "./tool-registry.js";
 import { join } from "node:path";
 import { withUncertaintyInterlock } from "./uncertainty.js";
 
@@ -24,7 +26,15 @@ export interface ChioPiOptions {
   /** The launcher-owned gateway supplies durable outcome handling. */
   trustedGatewayTransport?: boolean;
   sessionManager?: SessionManager;
-  toolInventory?: { name: string; description?: string; inputSchema: Record<string, unknown> }[];
+  toolInventory?: readonly ChioToolSpec[];
+  toolMode?: ToolMode;
+  registry?: ToolRegistry;
+}
+
+function selectedRegistry(options: ChioPiOptions): ToolRegistry {
+  const registry = options.registry ?? createToolRegistry(options.toolInventory ?? [], options.toolMode ?? "typed");
+  if (options.toolMode && registry.mode !== options.toolMode || options.registry && options.toolInventory && createToolRegistry(options.toolInventory, registry.mode).digest !== registry.digest) throw new Error("Session inventory differs from the pinned registry");
+  return registry;
 }
 
 /** Construct only the selected inline extension. No project/global packages,
@@ -32,12 +42,15 @@ export interface ChioPiOptions {
  * code. Explicit tool allowlisting also filters later tool activation. */
 export async function createChioPiSession(options: ChioPiOptions) {
   const executor = options.trustedGatewayTransport ? options.executor : options.executor ? withUncertaintyInterlock(options.executor, join(options.agentDir, "chio")) : undefined;
-  return createRestrictedSession(options, chioExtension(executor));
+  const registry = selectedRegistry(options);
+  return createRestrictedSession({...options, registry}, chioExtension(executor, registry));
 }
 
 /** Also used to test that extension omission or load failure cannot reactivate
  * built-ins. Not exported from the package entry point. */
 export async function createRestrictedSession(options: ChioPiOptions, extension?: ExtensionFactory) {
+  if (VERSION !== "1.0.2") throw new Error("Pi host version differs from the pinned 1.0.2 contract");
+  const registry = selectedRegistry(options);
   const settingsManager = SettingsManager.inMemory({
     defaultTools: [],
     packages: [],
@@ -46,6 +59,9 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
     prompts: [],
     themes: [],
     enableSkillCommands: false,
+    enableInstallTelemetry: false,
+    enableAnalytics: false,
+    defaultProjectTrust: "never",
     retry: { enabled: false },
     transport: "sse",
   });
@@ -58,7 +74,9 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
     noPromptTemplates: true,
     noThemes: true,
     noContextFiles: true,
-    systemPrompt: "You are Pi using Chio kernel tools. Complete useful tasks through chio_execute. Treat kernel errors as failures, and uncertain external outcomes as unresolved. Never claim a resource effect without its result. There are no native local tools in this profile." + (options.toolInventory ? `\nOperator-configured kernel tool inventory:\n${JSON.stringify(options.toolInventory)}` : ""),
+    systemPrompt: "You are Pi using operator-pinned Chio kernel tools. Complete useful tasks through the declared tools and their native arguments. Treat kernel errors as failures, and uncertain external outcomes as unresolved. Never claim a resource effect without its result. There are no native local tools in this profile."
+      + `\nPinned tool registry ${registry.digest} (${registry.mode}). Declared aliases: ${registry.tools.map(tool => tool.name).join(", ") || "none"}.`
+      + (registry.mode === "legacy" ? `\nLegacy wrapper kernel inventory:\n${JSON.stringify(registryInventory(registry))}` : ""),
     appendSystemPrompt: [],
     extensionFactories: extension ? [extension] : [],
   });
@@ -73,7 +91,7 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
     modelRuntime: options.modelRuntime,
     model: options.modelBaseUrl ? { ...model, baseUrl: options.modelBaseUrl } : model,
     noTools: "all",
-    tools: [CHIO_TOOL_NAME],
+    tools: registry.tools.map(tool => tool.name),
     resourceLoader,
     settingsManager,
     sessionManager: options.sessionManager ?? SessionManager.inMemory(options.cwd),
@@ -81,9 +99,26 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
   // The profile has one durable in-flight interlock. Ask the stock host to
   // serialize model-emitted sibling calls instead of creating false conflicts.
   result.session.agent.toolExecution = "sequential";
-  if (result.session.agent.state.tools.some(tool => tool.name !== CHIO_TOOL_NAME)) {
+  // Pi validates and may coerce schema arguments before its native tool hook.
+  // Bind the original model call as well, using the public Agent hook, so a
+  // numeric path, stripped null, or other normalization never becomes an effect.
+  const beforeToolCall = result.session.agent.beforeToolCall;
+  result.session.agent.beforeToolCall = async (context, signal) => {
+    try {
+      resolveRegistryCall(registry, context.toolCall.name, context.toolCall.arguments);
+      if (canonicalJson(context.args) !== canonicalJson(context.toolCall.arguments)) throw new Error("Native Pi normalization changed pinned arguments");
+    } catch {return {block: true, reason: "Tool call differs from the pinned registry or exact argument binding"};}
+    return beforeToolCall?.(context, signal);
+  };
+  const allowed = new Map(registry.tools.map(tool => [tool.name, tool]));
+  const configured = result.session.getAllTools();
+  const unexpected = configured.some(tool => {
+    const pinned = allowed.get(tool.name);
+    return !pinned || tool.exposure !== "direct" || tool.description !== pinned.description || canonicalJson(tool.parameters) !== canonicalJson(pinned.parameters);
+  });
+  if (unexpected || result.session.getActiveToolNames().some(name => !allowed.has(name)) || result.session.getCallableToolNames().some(name => !allowed.has(name))) {
     result.session.dispose();
-    throw new Error("Unexpected native tool in protected profile");
+    throw new Error("Unexpected native declaration or callable tool in protected profile");
   }
   return result;
 }
