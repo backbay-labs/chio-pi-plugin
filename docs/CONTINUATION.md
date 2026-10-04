@@ -115,9 +115,18 @@ Handoffs contain no capability, bearer, session, provider or approval credential
 Known actual credential material is rejected even inside ordinary text; public
 session/capability IDs and digests remain permitted. Delivery proof fields remain
 exact because they are part of the independently verified original outcome.
+The same retained-material and Bearer checks apply to JSON member names and
+values. A fresh native original port seeds its credential inventory from the
+selected private configuration and every already-read retained native request,
+including private approval signature material. Import validates the envelope's
+binding, digest and bounds first, verifies listed originals, then refreshes the
+selected inventory and repeats exclusion before returning. Empty exports also
+refresh that inventory before publication because they perform no original
+lookup. These refreshes are read-only and do not execute or acknowledge effects.
 Nested standard credential fields are refused after case/separator normalization,
 including `authToken`, `providerToken`, `client_secret` and `access_key`. This
-bounded structural rule does not classify unknown secret values in unlabeled prose.
+bounded structural rule and selected nontrivial credential strings (at least
+three characters) do not classify unknown secret values in unlabeled prose.
 
 ## Native Pi Durable tools
 

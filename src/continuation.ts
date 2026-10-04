@@ -71,11 +71,14 @@ function credentialKey(key: string): boolean {
 }
 function assertPublicValue(value: unknown, secrets: Set<string>): void {
   canonicalJson(value);
+  function screenString(item: string): void {
+    if ([...secrets].some(secret => item.includes(secret))) throw new Error("Continuation contains a retained authority credential");
+    if (/\bBearer\s+[A-Za-z0-9._~+\/-]+/i.test(item)) throw new Error("Continuation contains a bearer credential");
+  }
   function visit(item: unknown): void {
-    if (typeof item === "string" && [...secrets].some(secret => item.includes(secret))) throw new Error("Continuation contains a retained authority credential");
-    if (typeof item === "string" && /\bBearer\s+[A-Za-z0-9._~+\/-]+/i.test(item)) throw new Error("Continuation contains a bearer credential");
+    if (typeof item === "string") screenString(item);
     if (Array.isArray(item)) {for (const child of item) visit(child);}
-    else if (object(item)) for (const [key, child] of Object.entries(item)) {if (credentialKey(key)) throw new Error("Continuation credential fields are forbidden"); visit(child);}
+    else if (object(item)) for (const [key, child] of Object.entries(item)) {screenString(key); if (credentialKey(key)) throw new Error("Continuation credential fields are forbidden"); visit(child);}
   }
   visit(value);
 }
@@ -90,6 +93,7 @@ export async function createNativeOriginalOperationPort(options: {configPath: st
   const mappings = options.mappings ?? await openParentMappings(initial.config.journalDir, binding, initial.registry, initial.config.sessionId);
   if (canonicalJson(mappings.binding) !== canonicalJson(binding)) throw new Error("Parent mapping binding mismatch");
   const secrets = new Set<string>(); collectSecrets(initial.config, secrets);
+  for (const record of initial.records.values()) collectSecrets(record.request, secrets);
   async function stable(): Promise<{context: OperatorContext; status: Record<string, unknown>; maps: ParentMapping[]}> {
     for (let attempt = 0; attempt < 2; attempt++) {
       const before = await readOperatorContext(options.configPath, redactor); const maps = await mappings.all();
@@ -193,6 +197,8 @@ export async function exportContinuation(path: string, options: {binding: Contin
     if (signed && (!original.verified || original.outcome === undefined)) throw new Error("Original signed outcome verification unavailable");
     entries.push({request: frozenJson(request), nativeRequestId: original.nativeRequestId, state: original.state, ...(signed ? {outcome: original.outcome} : {})});
   }
+  // Empty exports have no lookup to refresh selected retained credentials.
+  if (!entries.length) await options.originals.inventory();
   const envelope = validateEnvelope(withContentDigest({schema: "chio.pi.continuation.v1", binding: options.binding, originals: entries, context: options.context ?? {}}), options.binding, options.originals);
   await writePrivateJson(path, envelope); return envelope;
 }
@@ -204,5 +210,9 @@ export async function importContinuation(path: string, options: {binding: Contin
     if (["completed", "denied"].includes(entry.state) && (original.state !== entry.state || !original.verified || canonicalJson(entry.outcome) !== canonicalJson(original.outcome))) throw new Error("Continuation original signed outcome verification failed");
     if (!["completed", "denied"].includes(entry.state) && original.state !== entry.state) throw new Error("Continuation original state changed; inspect its native original independently");
   }
+  // Retained credentials can be learned after the initial exclusion check.
+  // Refresh even when no originals are listed, then screen before return.
+  await options.originals.inventory();
+  options.originals.assertPublic(envelope);
   return envelope;
 }

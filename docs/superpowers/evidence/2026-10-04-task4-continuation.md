@@ -305,3 +305,66 @@ staged; the primary checkout, root specs/plans, Task 3 code and future-task scop
 remain untouched. These results are ready for fresh spec re-review and subsequent
 quality review; they do not replace either independent review or qualify a real
 coding kernel.
+
+## Quality review credential corrections at 86edea3
+
+Fresh quality review of `86edea34288801de3ffacf548b46b2a6f3ec8acd`
+confirmed two credential-screen gaps: a fresh native original port omitted
+already-read private retained approval material from its secret inventory, and
+import screened only before its lookups could discover that material. JSON
+member names also bypassed the known-string and Bearer predicate used on values.
+
+The first focused run was RED at 13 tests: 12 expected assertion failures and
+one passing exact public proof/ID/member-name control. Actual synthetic native
+approval completion supplied the private retained signature. Fresh/pre-approval
+ports accepted it in selected and empty imports, and a fresh port accepted an
+empty export. Nested bearer/session credential keys and Bearer-pattern keys were
+accepted in six export/fresh-import cases. A further same-gap regression found
+an empty export from a port opened before approval completion and was separately
+RED at 0/1. No fixture supplied a fake verifier, memo, completion or approval
+signature. Approval cases observed one effect, zero ACKs and one native call;
+member-name cases observed zero effects, ACKs and native calls.
+
+The continuation-only production correction seeds known credential material
+from the selected private configuration and every retained native request
+already read during port construction. One string predicate now checks values
+and member names; normalized structural credential labels remain enforced.
+Import still validates schema, binding, digest and bounds before authoritative
+lookups. It then refreshes the selected read-only inventory and repeats exclusion
+before returning, including when the envelope lists no originals. Empty exports
+also refresh before validation/publication because they perform no lookup.
+Unknown/pending fences and native original signature verification remain intact;
+these inventory reads neither execute nor acknowledge any effect.
+
+Focused GREEN is 14/14, with zero failures, skips or cancellations. It covers
+initial fresh-port screening, discovery after a pre-approval port was opened,
+selected and empty imports, fresh/stale empty exports, nested member names and
+exact public proof controls. The passing control compares the complete verified
+approved outcome and accepts public IDs/digests both as names and values.
+RED/GREEN logs are private development artifacts:
+`/tmp/chio-task4-quality-credentials-red.log`,
+`/tmp/chio-task4-quality-empty-export-red.log` and
+`/tmp/chio-task4-quality-credentials-green.log`.
+
+Acceptance remains bounded structural labels, Bearer strings and known selected
+credential material of at least three characters. This is not a classifier for
+previously unknown credentials in unlabeled prose. Discovery from a selected
+private request establishes exclusion knowledge, not operation authority or
+completion trust. No lifecycle, shared mapping, host-commit/ACK retry path,
+dependency graph, frozen artifact, approval-decision gate or future task changed.
+
+Fresh `npm run typecheck && npm test` exits zero with 283/283 tests passing,
+zero failures, cancellations or skips. The suite preserves all 170 baseline
+tests and now contains 90 continuation plus 23 Durable tests. The actual native
+memo/commit/ACK ordering, strict argument-hook refusal, public Session lifecycle,
+independent-port proof race and already-delivered receiving-store checks remain
+GREEN. Final log: `/tmp/chio-task4-quality-final-verification.log`.
+
+Self-review checked discovery before initial screening, refresh before final
+exclusion for stale and empty envelopes, the identical key/value string predicate,
+normalized label retention, exact approved proof preservation and the original
+binding/digest/bounds validation order. `git diff --check` exits zero. Lockfile,
+frozen bridge and installed operator SHA-256 identities remain unchanged. Only
+continuation source/tests and the owned guide/evidence are committed. These
+corrections are ready for quality re-review and remain component/stock-host
+evidence rather than current real coding-kernel qualification.

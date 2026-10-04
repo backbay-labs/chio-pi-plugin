@@ -150,6 +150,86 @@ test("spec review: handoff preserves ordinary public identifiers, digests and ex
   } finally {await proxy?.close(); await f.close();}
 });
 
+async function completeApprovedOriginal(f, proxy) {
+  const session = await initialize(proxy); const logical = request(); const pending = bodyOutcome(await call(proxy, session, logical));
+  assert.equal(pending.state, "awaiting_approval");
+  const directory = join(f.config.journalDir, "approvals"); await mkdir(directory, {mode: 0o700});
+  await writeFile(join(directory, hash(pending.requestId) + ".json"), JSON.stringify({toolCallParams: approvedParams(f.config, pending.requestId, logical.arguments)}), {mode: 0o600});
+  const resume = {...request("quality-approved-resume"), tool: "chio_resume", arguments: {requestId: pending.requestId, tool: logical.tool, arguments: logical.arguments}};
+  const completed = bodyOutcome(await call(proxy, session, resume)); const retained = await f.record(pending.requestId);
+  assert.equal(completed.state, "completed"); assert.equal(verifyCompletedOutcome(completed, f.config.execution, retained.request), true);
+  return {logical, completed, signature: retained.request.approval.chioApprovalToken.signature};
+}
+
+test("quality review: a fresh original port screens already-retained approval credentials before its first lookup", async () => {
+  const f = await nativeFixture({approval: true}); let proxy;
+  try {
+    proxy = await start(f); const approved = await completeApprovedOriginal(f, proxy);
+    const fresh = await api().createNativeOriginalOperationPort({configPath: f.configPath, binding: f.binding});
+    assert.throws(() => fresh.assertPublic({note: approved.signature}), /credential/);
+    assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
+  } finally {await proxy?.close(); await f.close();}
+});
+
+for (const timing of ["fresh", "before-approval"]) for (const originals of ["selected", "empty"])
+  test(`quality review: ${timing} port import excludes retained approval material with ${originals} originals`, async () => {
+    const f = await nativeFixture({approval: true}); let proxy;
+    try {
+      proxy = await start(f);
+      let receiving = timing === "before-approval" ? await api().createNativeOriginalOperationPort({configPath: f.configPath, binding: f.binding}) : undefined;
+      const approved = await completeApprovedOriginal(f, proxy); const path = join(f.directory, "quality-approved-import.json");
+      const envelope = await api().exportContinuation(path, {binding: f.binding, requests: originals === "selected" ? [approved.logical] : [], originals: proxy.originals});
+      await writeFile(path, JSON.stringify(redigest({...envelope, context: {nested: [{note: approved.signature}]}})), {mode: 0o600});
+      receiving ??= await api().createNativeOriginalOperationPort({configPath: f.configPath, binding: f.binding});
+      await assert.rejects(api().importContinuation(path, {binding: f.binding, originals: receiving}), /credential/);
+      assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
+    } finally {await proxy?.close(); await f.close();}
+  });
+
+for (const timing of ["fresh", "before-approval"]) test(`quality review: empty export from a ${timing} port excludes selected retained approval material`, async () => {
+  const f = await nativeFixture({approval: true}); let proxy;
+  try {
+    proxy = await start(f);
+    let selected = timing === "before-approval" ? await api().createNativeOriginalOperationPort({configPath: f.configPath, binding: f.binding}) : undefined;
+    const approved = await completeApprovedOriginal(f, proxy);
+    selected ??= await api().createNativeOriginalOperationPort({configPath: f.configPath, binding: f.binding});
+    await assert.rejects(api().exportContinuation(join(f.directory, "quality-empty-export.json"), {binding: f.binding, requests: [], originals: selected, context: {note: approved.signature}}), /credential/);
+    assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
+  } finally {await proxy?.close(); await f.close();}
+});
+
+for (const source of ["bearer", "session", "bearer-pattern"]) for (const direction of ["export", "import"])
+  test(`quality review: ${direction} excludes ${source} material in nested JSON member names`, async () => {
+    const f = await nativeFixture(); let proxy;
+    try {
+      proxy = await start(f); const path = join(f.directory, "quality-member-name.json");
+      const name = source === "bearer" ? f.config.execution.bearerToken : source === "session" ? f.config.sessionCredential.sessionToken : "note Bearer unrelated-synthetic-material";
+      const context = {nested: [{[name]: "operator note"}]};
+      if (direction === "export") await assert.rejects(api().exportContinuation(path, {binding: f.binding, requests: [], originals: proxy.originals, context}), /credential/);
+      else {
+        const envelope = await api().exportContinuation(path, {binding: f.binding, requests: [], originals: proxy.originals});
+        await writeFile(path, JSON.stringify(redigest({...envelope, context})), {mode: 0o600});
+        const fresh = await api().createNativeOriginalOperationPort({configPath: f.configPath, binding: f.binding});
+        await assert.rejects(api().importContinuation(path, {binding: f.binding, originals: fresh}), /credential/);
+      }
+      assert.deepEqual(f.counts(), {effects: 0, acks: 0, nativeCalls: 0});
+    } finally {await proxy?.close(); await f.close();}
+  });
+
+test("quality review: public member names, IDs, digests and exact signed proofs survive credential discovery", async () => {
+  const f = await nativeFixture({approval: true}); let proxy;
+  try {
+    proxy = await start(f); const approved = await completeApprovedOriginal(f, proxy); const path = join(f.directory, "quality-public-control.json");
+    const context = {nested: [{[f.config.execution.capabilityId]: "public capability", [f.config.sessionId]: "public session", [f.binding.authorityDigest]: "public digest",
+      providerId: "public-provider", clientId: "public-client", accessKeyDigest: "ab".repeat(32)}]};
+    await api().exportContinuation(path, {binding: f.binding, requests: [approved.logical], originals: proxy.originals, context});
+    const fresh = await api().createNativeOriginalOperationPort({configPath: f.configPath, binding: f.binding});
+    const imported = await api().importContinuation(path, {binding: f.binding, originals: fresh});
+    assert.deepEqual(imported.context, context); assert.deepEqual(imported.originals[0].outcome, approved.completed);
+    assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
+  } finally {await proxy?.close(); await f.close();}
+});
+
 test("two parent instances recover signed completion after response loss without reconstructing its connection identity", async () => {
   const f = await nativeFixture(); let proxy;
   try {
