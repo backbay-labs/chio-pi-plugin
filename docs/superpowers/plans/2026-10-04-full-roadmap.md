@@ -145,6 +145,8 @@ await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"
 
 ## Task 4: Original-operation handoff and Pi Durable
 
+Detailed requirements are [trusted continuation contracts](../specs/2026-10-04-continuation-contracts.md).
+
 Files: `src/continuation.ts`, `src/durable.ts`, a focused trusted gateway mapping
 helper and its protected-launch wiring, index/package manifests,
 `test/continuation.test.mjs`, `test/durable.test.mjs`, continuation guide.
@@ -182,6 +184,11 @@ await assert.rejects(importContinuation(tampered, binding), /binding|digest|veri
   not reconstruct the old identity. Test gateway response loss, parent restart,
   mapping tampering and native status compatibility. Missing original identity
   or missing native original evidence refuses recovery without a new dispatch.
+  The guest sees only the fixed parent proxy, never the native gateway port or
+  token. Reject guest `chio/acknowledge`; observe the full native committed
+  host-history result in the trusted parent before ACK. Durable execute and
+  `afterTool` precede the entry commit and cannot prove delivery. Persist and
+  reconcile actual committed entry references across restart.
 - [ ] Run typecheck/full tests, record evidence, commit `feat: add Chio Durable
   tools and original-operation continuation`. Obtain both reviews and fix.
 
