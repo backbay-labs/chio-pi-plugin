@@ -109,7 +109,7 @@ Files: `src/coding-resource/config.ts`, `paths.ts`, `ledger.ts`, `repository.ts`
 Focused helper files `schemas.ts`, `stdio.ts` and `recipe-sandbox.ts` are authorized
 for the separate schema, bounded framing and confinement responsibilities.
 
-- [ ] Add native-stdio dispatch fixtures with exact `_meta` fields. Test missing
+- [x] Add native-stdio dispatch fixtures with exact `_meta` fields. Test missing
   caller, operation conflict, crash after intent, storage failure, path escapes,
   symlinks, stale source, recipe bounds, failed-test publication and replay.
 
@@ -121,8 +121,8 @@ assert.equal(await independentEffectCount(), 1);
 await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"b".repeat(64)}, meta), /conflict/);
 ```
 
-- [ ] Run participant tests before implementation; observe failure.
-- [ ] Implement a bounded JSONL stdio MCP server for the nine named tools in the
+- [x] Run participant tests before implementation; observe failure.
+- [x] Implement a bounded JSONL stdio MCP server for the nine named tools in the
   design. It validates native metadata/caller, canonicalizes arguments, acquires
   a private exclusive ledger, fsyncs intent before effects and terminal result
   before reply. Return retained results for exact replay; fence unknown intents.
@@ -136,7 +136,7 @@ await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"
   serving or advertising tools. Missing/corrupt required source refuses startup.
   Bound fresh and retained replies using both recipe JSON encoding layers and
   the full worst permitted JSON-RPC envelope; preserve original replay identity.
-- [ ] Implement CAS edits in `apply_patch` as expected full-file digest plus
+- [x] Implement CAS edits in `apply_patch` as expected full-file digest plus
   exact replacement content or bounded literal edits, not arbitrary shell patch
   commands. Resolve all literal matches against original content and reject
   overlapping ranges across entries before effects. Validate the full candidate
@@ -154,7 +154,7 @@ await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"
   invocation through bubblewrap; do not call it accepted without Linux evidence.
   Refuse x32 syscall-number variants in the x64 filter and evaluate the actual
   compiled filter independently of real x64 runtime qualification.
-- [ ] Run typecheck/full tests and stdio binary smoke; record implementation and
+- [x] Run typecheck/full tests and stdio binary smoke; record implementation and
   platform acceptance separately; commit `feat: add recoverable coding resource
   participant`. Obtain both reviews and fix findings before Task 4.
 
@@ -361,3 +361,24 @@ retention is gated before invocation, and private FIFOs are refused promptly.
 The native archive and installed operator hashes remain unchanged. See
 [the task record](../evidence/2026-10-04-task2-operator.md). This closes the amended
 console component scope; it does not qualify a replacement approval utility.
+
+
+## Task 3 review closure
+
+Implementation: `b873af9`; first specification fixes: `987875a`; namespace,
+framing and filter fixes: `ecddf826bc3c37879d5eea5dbec77db0ab961faf`. The
+accepted portable namespace and delivery-capacity requirements are explicit in
+`623ee1b`. Independent specification re-review passed at `ecddf82`, followed
+by independent quality re-review approving that exact commit. Both passed
+typecheck and all 170 macOS tests, plus all 78 pinned Linux arm64 resource tests,
+with zero failures, cancellations or skips.
+
+Both reviewers reproduced retained known namespace refusals without candidate
+materialization, large control-byte output and ID delivery with exact restart
+replay, bounded mutation refusal before effects, and corruption preserving the
+old head and original unknown intent. Independent regeneration reproduced the
+Unicode module byte for byte from four official pinned inputs; independent BPF
+evaluation refused 1,024 x32-number variants. These are component and measured
+local-confinement results. Native coding-kernel/P5, system OS-runtime and actual
+x64 runtime acceptance remain separate open prerequisites. See
+[the task record](../evidence/2026-10-04-task3-coding-resource.md).
