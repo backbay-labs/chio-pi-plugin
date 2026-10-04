@@ -85,7 +85,12 @@ assert.equal(JSON.stringify(view).includes("secret-fixture-token"), false);
   `--config`, `--request`, `--json`, explicit native recovery action/input/output.
   Unknown counters remain `null`; readable actions explain original recovery.
   Missing owner-import/attenuation/semantic/whole-host Linux capabilities refuse
-  without mutating state. Export this programmatic contract:
+  without mutating state. Quality review additionally reproduced a frozen native
+  utility defect: `approval-decide` can retain a signed approved credential for
+  an explicit denied request. Gate that action before native invocation or admin
+  traffic until a qualified native contract verifies the requested decision and
+  approval ID before retention. Keep approval submission and exact original
+  signed-resume contracts. Export this programmatic contract:
 
 ```ts
 export interface OperationSummary { requestId:string; state:string; tool?:string; nextAction:string }

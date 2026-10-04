@@ -66,6 +66,12 @@ it never deletes a fence, changes a session ID, retries an unknown effect, or
 acknowledges merely because an operator listed a result. The bundled bridge does
 not include owner-result import; that action requires a compatible separately
 qualified native utility and must report unavailable without pretending success.
+Quality review also demonstrated that the frozen `approval-decide` utility can
+save an approved credential when the requested decision was denied. The adapter
+must refuse that action before native invocation or admin traffic. A qualified
+replacement must compare both the requested decision and approval ID to the
+signed credential before retaining it. Approval submission and verification of
+an original native signed resume remain separate supported contracts.
 
 ## 3. Coding resource participant
 

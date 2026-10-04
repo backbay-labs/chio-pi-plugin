@@ -19,6 +19,19 @@ support owner-result import or capability attenuation. All inspected bridge
 variants report version 0.3.0; compare archive and code identities, not only
 semver.
 
+Task 2 quality review reproduced a defect in this exact archive's decision
+utility. It checks an approval token's exact request and signature but accepts
+either signed decision without comparing it to the operator's requested
+decision or approval ID. An admin response with a genuine signed approved token
+and a displayed denied status was saved after `--decision denied`; the bundled
+gateway then selected it during `chio_resume` and invoked the scripted resource
+executor. This is a native-utility/component reproduction, not a live-kernel
+observation. The adapter gates `approval-decide` before native invocation and
+admin traffic. Post-write validation would leave a usable credential behind.
+Activation requires a separately qualified utility that checks the requested
+decision and approval ID before retention. Approval submission and verification
+of the original signed resume are independent supported paths.
+
 Owner-result import was added in bridge commit
 `52f80517af3fce948a3cbc9c9bb485fcdac7dd04`. The frozen qualification references a
 separate operator archive with SHA256
