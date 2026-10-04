@@ -166,7 +166,7 @@ Files: `src/continuation.ts`, `src/durable.ts`, a focused trusted gateway mappin
 helper and its protected-launch wiring, index/package manifests,
 `test/continuation.test.mjs`, `test/durable.test.mjs`, continuation guide.
 
-- [ ] Add tamper/caller/arguments/signature/authority mismatch and unknown fence
+- [x] Add tamper/caller/arguments/signature/authority mismatch and unknown fence
   tests. Use real Durable registration/memo contract and two host instances.
 
 ```js
@@ -178,14 +178,14 @@ assert.equal(dispatches, 1);
 await assert.rejects(importContinuation(tampered, binding), /binding|digest|verification/);
 ```
 
-- [ ] Run tests before implementation; observe failure. Pin Durable 1.0.2 as
+- [x] Run tests before implementation; observe failure. Pin Durable 1.0.2 as
   an optional exact peer plus development dependency with locked graph.
-- [ ] Define a private bounded `chio.pi.continuation.v1` envelope with public
+- [x] Define a private bounded `chio.pi.continuation.v1` envelope with public
   authority/registry digest, original KernelRequests, exact retained outcomes,
   unresolved state and content digest. Never include authority credentials. Use
   native `verifyReceivedOutcome`/executor verification for completed results;
   hashing alone proves no trust. Refuse cross-authority adoption.
-- [ ] Implement native ToolRegistration with Durable memo written before the
+- [x] Implement native ToolRegistration with Durable memo written before the
   first executor call, immutable conversation/task/call mapping and `unsafe`
   replay. Implement explicit recovery of the original request through native
   retained outcome lookup/verified replay, never a newly generated operation.
@@ -204,7 +204,7 @@ await assert.rejects(importContinuation(tampered, binding), /binding|digest|veri
   host-history result in the trusted parent before ACK. Durable execute and
   `afterTool` precede the entry commit and cannot prove delivery. Persist and
   reconcile actual committed entry references across restart.
-- [ ] Run typecheck/full tests, record evidence, commit `feat: add Chio Durable
+- [x] Run typecheck/full tests, record evidence, commit `feat: add Chio Durable
   tools and original-operation continuation`. Obtain both reviews and fix.
 
 ## Task 5: Native semantic and child-authority integration gates
@@ -384,3 +384,22 @@ evaluation refused 1,024 x32-number variants. These are component and measured
 local-confinement results. Native coding-kernel/P5, system OS-runtime and actual
 x64 runtime acceptance remain separate open prerequisites. See
 [the task record](../evidence/2026-10-04-task3-coding-resource.md).
+
+
+## Task 4 review closure
+
+Implementation: `4fc686b`; custody fixes: `86edea3`; credential-screening fixes:
+`60546d700e8a07a44f254499c9a7b01e189d9b11`. Independent specification
+re-review passed at `60546d7`, followed by quality re-review approving that
+exact commit. Fresh typecheck, build and all 283 tests passed with zero failures,
+skips or cancellations. Both reviewers independently exercised the selected
+retained-approval and JSON-member-name regressions while preserving one original
+effect, one native call, zero ACKs and the unresolved fence. Valid handoffs retain
+the exact full signed original outcome.
+
+The accepted scope includes actual Pi Durable registration, committed-entry
+observation, immutable parent mappings, selected-store lifecycle binding and
+original-operation recovery. Credential screening covers selected known material,
+standard labels and Bearer strings; it does not classify unknown secrets in
+unlabeled prose. Native service, cross-authority, provider and P4/P5 qualification
+remain separate. See [the task record](../evidence/2026-10-04-task4-continuation.md).
