@@ -118,10 +118,17 @@ function sensitive(key: string): boolean {
  * strings. Native child stdout/stderr are never forwarded to the terminal. */
 export class OperatorRedactor {
   private readonly secrets = new Set<string>();
-  collect(value: unknown, inherited = false): void {
-    if (typeof value === "string") {if (inherited && value) this.secrets.add(value); return;}
-    if (Array.isArray(value)) {for (const child of value) this.collect(child, inherited); return;}
-    if (object(value)) for (const [key, child] of Object.entries(value)) this.collect(child, inherited || sensitive(key));
+  collect(value: unknown, credentialContainer = false, secretValue = false): void {
+    if (typeof value === "string") {if (secretValue && value) this.secrets.add(value); return;}
+    if (Array.isArray(value)) {for (const child of value) this.collect(child, credentialContainer, secretValue); return;}
+    if (object(value)) for (const [key, child] of Object.entries(value)) {
+      const field = sensitive(key);
+      // Hide credential objects wholesale when rendered, but only register actual
+      // secret fields and credential signatures for global value redaction. Public
+      // request/caller/signer/scope IDs inside them remain usable elsewhere.
+      const material = credentialContainer && /^(?:signature(?:hex|base64)?|sig|key|value|access|refresh|payload|seed)$/.test(key.toLowerCase().replace(/[^a-z0-9]/g, ""));
+      this.collect(child, credentialContainer || field, field || material);
+    }
   }
   redact(value: unknown): unknown {
     if (typeof value === "string") {

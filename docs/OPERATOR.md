@@ -121,7 +121,12 @@ prepared configuration. Unexpected or duplicate arguments fail before a native
 subprocess or mutation. Existing outputs and any output inside the authoritative
 journal are refused. Native child stdout/stderr and raw parse errors are not
 forwarded. Sensitive auth fields and known secret values are redacted from both
-JSON and readable console output.
+JSON and readable console output. Credential objects, including signed approval
+tokens, are hidden as a whole. Their public request, caller, signer, resource,
+tool, path and schema bindings remain visible wherever the report needs them for
+original recovery. Only actual secret fields and credential signature material
+are collected for redaction when echoed in other fields; public receipt proofs
+remain visible.
 
 The installed native entrypoint is resolved through public
 `@chio/bridge/package.json`, checked for realpath containment within the installed

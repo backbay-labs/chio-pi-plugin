@@ -74,6 +74,32 @@ The installed native `dist/gateway-operator.js` SHA-256 is
 These identities were recomputed with `shasum -a 256` on this tree; no native
 utility or vendor artifact was modified.
 
+## Spec review correction: public approval bindings
+
+Spec review of `f1319d3` found that recursive secret collection marked every
+string in an approval credential as secret. Its public original request ID,
+caller and signer then disappeared from otherwise successful diagnostics.
+
+RED was observed with
+`npm run build && node --test --test-name-pattern='approved completed diagnostics' test/operator.test.mjs`:
+doctor did not preserve the original request ID. The new fixture creates a
+proposal through the actual bundled gateway, supplies a genuine ephemeral
+signed approval artifact, and resumes the exact original request. Public
+`verifyCompletedOutcome` confirms the signed completion and real approval-bound
+native request hash before testing its redaction.
+
+Credential objects are still hidden wholesale. Global replacement now collects
+only actual secret fields and credential signature material, without treating
+public binding values as secrets because they are inside a credential. The
+regression covers doctor/status/inspect in JSON and readable modes, exact original
+request/caller/resource/tool/argument bindings, public schema and receipt proofs,
+whole nested approval credential hiding, and a genuine approval-signature echo
+inside the signed result. Diagnostic network/dispatch/ACK counters and journal
+snapshots remain unchanged. The focused approval/proposal regression command
+passes two tests with zero failures or skips. Fresh
+`npm run typecheck && npm test && git diff --check` passes all 81 tests, including
+22 operator tests, with zero failures or skips after this correction.
+
 ## Honest unavailable capabilities
 
 Doctor reports unknown token/budget counters as `null` and configured expiry

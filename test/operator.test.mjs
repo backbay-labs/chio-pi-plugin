@@ -8,6 +8,7 @@ import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import test from "node:test";
 import * as plugin from "../dist/index.js";
+import {verifyCompletedOutcome} from "@chio/bridge";
 import {pinHostRegistry} from "../dist/configured.js";
 import {registryForConfig} from "../dist/tool-registry.js";
 const {createGateway, operationKey} = await import(new URL("./gateway.js", import.meta.resolve("@chio/bridge")));
@@ -22,6 +23,7 @@ const requestArgs = {path: "/workspace/source.ts"};
 
 function signedOutcome(config, request, state = "completed") {
   const result = {content: [{type: "text", text: "retained original source"}]};
+  if (request.approval) result.content.push({type: "text", text: `credential echo ${request.approval.chioApprovalToken.signature}`});
   const body = {timestamp: 1783000000, capability_id: config.execution.capabilityId, tool_server: config.execution.serverId, tool_name: request.tool,
     action: {parameters: request.arguments, parameter_hash: sha256Hex(canonicalizeJson(request.arguments))},
     decision: {verdict: state === "completed" ? "allow" : "deny", ...(state === "denied" ? {reason: "original retained denial"} : {})},
@@ -38,6 +40,17 @@ function signedOutcome(config, request, state = "completed") {
       receiptId: receipt.id, resultHash: receipt.content_hash, acknowledgement: "a".repeat(43)}};
 }
 
+function approvedParams(config, requestId, args) {
+  const now = Math.floor(Date.now() / 1000);
+  const intent = {server_id: config.execution.serverId, tool_name: "read_text_file",
+    body: {kind: "bound_tool_invocation", value: {capability_id: config.execution.capabilityId, parameters_hash: "0x" + sha256Hex(canonicalizeJson(args))}},
+    context: {mcpSessionId: config.execution.sessionId, capabilityId: config.execution.capabilityId}};
+  const tokenBody = {id: "fixture-approval", approver: signer, subject: config.execution.subjectKey, governed_intent_hash: sha256Hex(canonicalizeJson(intent)),
+    request_id: requestId, issued_at: now - 1, expires_at: now + 300, decision: "approved"};
+  return {name: "read_text_file", arguments: args, _meta: {chioRequestId: requestId, chioGovernedIntent: intent,
+    chioApprovalToken: {...tokenBody, signature: signUtf8MessageEd25519(canonicalizeJson(tokenBody), seed).signature_hex}}};
+}
+
 async function fixture(state = "completed", options = {}) {
   const directory = await mkdtemp(join(tmpdir(), "chio-operator-"));
   const journalDir = join(directory, "journal");
@@ -50,12 +63,22 @@ async function fixture(state = "completed", options = {}) {
     execution: {sessionId: "kernel-session", endpoint: options.endpoint ?? `http://127.0.0.1:${server.address().port}`, bearerToken: secrets[0], subjectKey: "ab".repeat(32), capabilityId: "original-capability", serverId: "coding", trustedSigners: [signer]},
     sessionCredential: {schema: "chio.mcp.session-credential.v1", sessionId: "kernel-session", subjectKey: "ab".repeat(32), capabilityIds: ["original-capability"], serverId: "coding", endpointPath: "/mcp", allowedTools: ["read_text_file"], issuedAt: 1, expiresAt: 3600, sessionToken: secrets[1]},
     provider: {apiKey: secrets[2]}, adminToken: secrets[3],
-    ...(state === "awaiting_approval" ? {approval: {requiredTools: ["read_text_file"], purpose: "Inspect original source", ttlSeconds: 300}} : {})};
+    ...(options.approved ? {authentication: {schema: "chio.pi.operator.status.v1", caller: "ab".repeat(32), resource: "coding", tool: "read_text_file",
+      path: (options.arguments ?? requestArgs).path, key: secrets[4]}} : {}),
+    ...(state === "awaiting_approval" || options.approved ? {approval: {requiredTools: ["read_text_file"], purpose: "Inspect original source", ttlSeconds: 300}} : {})};
   const configPath = join(directory, "prepared.json");
   await writeFile(configPath, JSON.stringify(config), {mode: 0o600});
   await pinHostRegistry(config, registryForConfig(config), journalDir);
   const gateway = createGateway(config, {async execute(request) {dispatches++; return signedOutcome(config, request, state);}, async acknowledge() {acknowledgements++; return {acknowledged: true};}}, {requireHostAcknowledgement: true});
-  const original = await gateway.call("fixture-call", "read_text_file", options.arguments ?? requestArgs);
+  let original = await gateway.call("fixture-call", "read_text_file", options.arguments ?? requestArgs);
+  if (options.approved) {
+    assert.equal(original.state, "awaiting_approval");
+    const directory = join(journalDir, "approvals"); await mkdir(directory, {mode: 0o700});
+    const params = approvedParams(config, original.requestId, options.arguments ?? requestArgs);
+    await writeFile(join(directory, operationKey(original.requestId) + ".json"), JSON.stringify({toolCallParams: params}), {mode: 0o600});
+    original = await gateway.call("fixture-resume", "chio_resume", {requestId: original.requestId, tool: "read_text_file", arguments: options.arguments ?? requestArgs});
+    assert.equal(original.state, "completed", "native gateway must validate the actual signed approval before fixture completion");
+  }
   if (!options.alive) gateway.close();
   return {directory, config, configPath, journalDir, gateway, original,
     setHandler(value) {handler = value;},
@@ -184,6 +207,49 @@ test("inspect verifies original completed signature, result and request before l
     assert.deepEqual(view.request.arguments, requestArgs);
     assert.equal(view.outcome.result.content[0].text, "retained original source");
     assert.equal(view.outcome.delivery.acknowledgement, "[REDACTED]");
+    assert.deepEqual(f.counts(), counts); assert.deepEqual(await snapshot(f.journalDir), before);
+  } finally {await f.close();}
+});
+
+test("approved completed diagnostics preserve public recovery bindings while hiding the approval credential and genuine secret echoes", async () => {
+  const args = {path: "/workspace/approved-source.ts", note: `provider credential ${secrets[2]}`};
+  const f = await fixture("completed", {approved: true, arguments: args});
+  try {
+    const before = await snapshot(f.journalDir); const counts = f.counts();
+    const record = JSON.parse(await readFile(f.recordPath, "utf8"));
+    assert.equal(verifyCompletedOutcome(record.outcome, f.config.execution, record.request), true, "native completion must bind the real signed approval and requestHash");
+    const signature = record.request.approval.chioApprovalToken.signature;
+    const expectedArgs = {...args, note: "provider credential [REDACTED]"};
+    for (const command of ["doctor", "status", "inspect"]) for (const json of [true, false]) {
+      const result = await capture([command, "--config", f.configPath, ...(command === "inspect" ? ["--request", f.original.requestId] : []), ...(json ? ["--json"] : [])]);
+      assert.equal(result.code, 0, result.stderr); assertRedacted(result);
+      assert.equal(`${result.stdout}${result.stderr}`.includes(signature), false, "approval credential signature must be hidden even in signed result text");
+      assert.ok(result.stdout.includes(f.original.requestId), `${command} must preserve the exact original request ID`);
+      assert.ok(result.stdout.includes(f.config.execution.subjectKey), `${command} must preserve the public caller binding`);
+      assert.ok(result.stdout.includes(f.config.execution.serverId), `${command} must preserve the public resource binding`);
+      assert.ok(result.stdout.includes("read_text_file"), `${command} must preserve the original tool`);
+      if (json) {
+        const view = JSON.parse(result.stdout);
+        if (command === "inspect") {
+          assert.equal(view.operation.requestId, f.original.requestId); assert.equal(view.request.requestId, f.original.requestId);
+          assert.equal(view.request.tool, "read_text_file"); assert.deepEqual(view.request.arguments, expectedArgs);
+          assert.equal(view.request.approval.chioApprovalToken, "[REDACTED]");
+          assert.equal(view.outcome.receipt.metadata.attribution.subject_key, f.config.execution.subjectKey);
+          assert.equal(view.outcome.receipt.kernel_key, signer);
+          assert.equal(view.outcome.receipt.signature, record.outcome.receipt.signature, "public receipt proof is not an approval credential");
+          assert.equal(view.outcome.result.content[1].text, "credential echo [REDACTED]");
+          assert.deepEqual(view.verification, {verified: true, kind: "signed_completion"});
+        } else {
+          assert.equal(view.schema, command === "doctor" ? "chio.pi.operator.doctor.v1" : "chio.pi.operator.status.v1");
+          assert.equal(view.operations[0].requestId, f.original.requestId); assert.equal(view.operations[0].tool, "read_text_file");
+          assert.equal(view.authority.subjectKey, f.config.execution.subjectKey); assert.equal(view.authority.serverId, f.config.execution.serverId);
+          assert.equal(view.authority.capabilityId, f.config.execution.capabilityId);
+        }
+      } else if (command === "inspect") {
+        assert.ok(result.stdout.includes(args.path)); assert.ok(result.stdout.includes('"chioApprovalToken": "[REDACTED]"'));
+        assert.ok(result.stdout.includes("credential echo [REDACTED]"));
+      }
+    }
     assert.deepEqual(f.counts(), counts); assert.deepEqual(await snapshot(f.journalDir), before);
   } finally {await f.close();}
 });
