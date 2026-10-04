@@ -31,7 +31,7 @@ parallel. Read-only contract research has already established native boundaries.
 Files: package manifests/lock, `src/tool-registry.ts`, extension/session/config/
 HTTP/relay files, index, host/relay/registry tests, CI consumer version.
 
-- [ ] Write tests for the actual Pi dispatcher using typed file tools, malformed
+- [x] Write tests for the actual Pi dispatcher using typed file tools, malformed
   arguments, unknown aliases, poisoned MCP/codemode/deferred discovery, and full
   outcome delivery. Keep existing generic fixtures explicitly legacy.
 
@@ -41,9 +41,9 @@ assert.equal(registry.tools[0].name, "chio_read");
 assert.throws(() => createToolRegistry([{name:"a.b",inputSchema:{}},{name:"a_b",inputSchema:{}}]), /collision/);
 ```
 
-- [ ] Run `npm run build && node --test test/tool-registry.test.mjs` and observe
+- [x] Run `npm run build && node --test test/tool-registry.test.mjs` and observe
   failure before implementation.
-- [ ] Pin all Pi runtime packages at 1.0.2 via `npm install --save-dev --save-exact
+- [x] Pin all Pi runtime packages at 1.0.2 via `npm install --save-dev --save-exact
   --ignore-scripts --no-audit --no-fund @earendil-works/pi-ai@1.0.2
   @earendil-works/pi-coding-agent@1.0.2`. Implement the registry with deep-cloned
   frozen JSON schemas, deterministic aliases, canonical digest, strict schema
@@ -55,12 +55,12 @@ export interface ToolRegistry { mode:"typed"|"legacy"; digest:string; tools:read
 export function createToolRegistry(tools:readonly ChioToolSpec[], mode:"typed"|"legacy"="typed"):ToolRegistry;
 ```
 
-- [ ] Generate native definitions through `chioExtension(executor, registry)`.
+- [x] Generate native definitions through `chioExtension(executor, registry)`.
   Preserve KernelRequest identities and exact full KernelResult content. Pin
   registry digest in resume binding. Pass the registry to relay validation for
   declarations, choices, function history and argument binding. Disable all new
   discovery surfaces through native settings/resource-loader/dispatcher contracts.
-- [ ] Run `npm run typecheck && npm test`; add task evidence to this plan and
+- [x] Run `npm run typecheck && npm test`; add task evidence to this plan and
   commit `feat: add typed Chio tools on Pi 1.0.2`. Review and fix before Task 2.
 
 ## Task 2: Trusted status and recovery console
@@ -284,3 +284,12 @@ Base: `origin/main` at `cd3dbf90974687d30f23f989173bd8c155b016d3`.
 Fresh `npm ci --ignore-scripts --no-audit --no-fund`, typecheck, build and all
 23 component tests passed with zero failures or skips before implementation.
 The dirty primary checkout remains untouched.
+
+## Task 1 review closure
+
+Implementation: `c9270b3`; boundary fixes: `263bb9b`. Independent spec
+re-review passed, then a fresh quality/security review approved at `263bb9b`.
+Fresh typecheck and all 59 tests passed with zero skips. Fixes cover native
+journal metadata isolation, trusted denial verification without ACK, and async
+schema refusal. See [the task record](../evidence/2026-10-04-task1-typed-host.md).
+This closes component/stock-host Task 1; it does not requalify the frozen kernel.
