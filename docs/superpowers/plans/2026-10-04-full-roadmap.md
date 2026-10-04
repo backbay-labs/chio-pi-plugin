@@ -68,7 +68,7 @@ export function createToolRegistry(tools:readonly ChioToolSpec[], mode:"typed"|"
 Files: `src/operator.ts`, `src/operator-cli.ts`, protected CLI, index, operator
 tests, README/operator guide.
 
-- [ ] Add a fixture for native status with completed/pending-ACK, dispatched
+- [x] Add a fixture for native status with completed/pending-ACK, dispatched
   unknown, approval pending and undispatched operations. Test redaction of
   bearer/session/provider credentials and no model/network side effects.
 
@@ -78,8 +78,8 @@ assert.equal(view.operations.find(x => x.requestId === "unknown").state, "unknow
 assert.equal(JSON.stringify(view).includes("secret-fixture-token"), false);
 ```
 
-- [ ] Run `npm run build && node --test test/operator.test.mjs`, observe failure.
-- [ ] Resolve the bridge operator entrypoint from installed package metadata,
+- [x] Run `npm run build && node --test test/operator.test.mjs`, observe failure.
+- [x] Resolve the bridge operator entrypoint from installed package metadata,
   verify its installed containment, and delegate trusted actions using argv,
   never shell. Implement `doctor/status/inspect/recover` argument parsing with
   `--config`, `--request`, `--json`, explicit native recovery action/input/output.
@@ -98,7 +98,7 @@ export function summarizeGatewayStatus(status:unknown):{sessionId:string;operati
 export async function runOperatorCommand(args:string[]):Promise<number>;
 ```
 
-- [ ] Run typecheck/full tests, record evidence, commit `feat: add trusted Pi
+- [x] Run typecheck/full tests, record evidence, commit `feat: add trusted Pi
   operator diagnostics and recovery`. Obtain both reviews and fix findings.
 
 ## Task 3: Kernel-owned coding participant
@@ -106,6 +106,8 @@ export async function runOperatorCommand(args:string[]):Promise<number>;
 Files: `src/coding-resource/config.ts`, `paths.ts`, `ledger.ts`, `repository.ts`,
 `recipes.ts`, `participant.ts`, `src/coding-resource-cli.ts`, package bin,
 `test/coding-resource.test.mjs`, `test/coding-confinement.test.mjs`, resource guide.
+Focused helper files `schemas.ts`, `stdio.ts` and `recipe-sandbox.ts` are authorized
+for the separate schema, bounded framing and confinement responsibilities.
 
 - [ ] Add native-stdio dispatch fixtures with exact `_meta` fields. Test missing
   caller, operation conflict, crash after intent, storage failure, path escapes,
@@ -311,3 +313,15 @@ Fresh typecheck and all 59 tests passed with zero skips. Fixes cover native
 journal metadata isolation, trusted denial verification without ACK, and async
 schema refusal. See [the task record](../evidence/2026-10-04-task1-typed-host.md).
 This closes component/stock-host Task 1; it does not requalify the frozen kernel.
+
+## Task 2 review closure
+
+Implementation: `f1319d3`; redaction fix: `b5961f7`; decision/input fixes:
+`a0660c7`. Independent spec re-review passed at `a0660c7`, followed by a fresh
+quality review approving that exact commit. Both independently passed typecheck
+and all 88 tests, including 29 operator cases, with zero failures or skips.
+The original approved-operation bindings remain visible, unsafe native decision
+retention is gated before invocation, and private FIFOs are refused promptly.
+The native archive and installed operator hashes remain unchanged. See
+[the task record](../evidence/2026-10-04-task2-operator.md). This closes the amended
+console component scope; it does not qualify a replacement approval utility.
