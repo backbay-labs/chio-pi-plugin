@@ -166,6 +166,9 @@ exit 2, tool errors retained at task completion exit 3, and pending approval exi
 4. Provider/runtime failures or incomplete generation exit 1; cancellation exits
 130 or 143. A model's explanation does not clear uncertainty.
 
+Use the [trusted operator console](docs/OPERATOR.md) for `chio-pi doctor`, `status`,
+`inspect` and explicit native `recover` actions without launching a model.
+
 Inspect retained outcomes with `chio-gateway-operator status CONFIG` in a trusted
 operator installation. Preserve the original request, configuration and journal;
 never clear them or mint new authority to retry an uncertain effect. Dead-owner

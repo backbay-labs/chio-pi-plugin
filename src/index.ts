@@ -4,3 +4,5 @@ export { bridgeExecutor, type McpExecutionClient } from "./bridge-executor.js";
 export { readPreparedConfig, configuredExecutor, type PreparedPiConfig } from "./configured.js";
 export { createToolRegistry, type ChioToolSpec, type ToolRegistry, type ToolMode } from "./tool-registry.js";
 export { createHostDeliveryObserver } from "./host-delivery.js";
+export { summarizeGatewayStatus, type OperationSummary } from "./operator.js";
+export { runOperatorCommand } from "./operator-cli.js";

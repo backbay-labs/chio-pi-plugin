@@ -12,11 +12,16 @@ import { createHostDeliveryObserver } from "./host-delivery.js";
 import { canonicalJson, registryForConfig } from "./tool-registry.js";
 import { readCodexAuthority, startModelRelay, type ModelAuthority } from "./model-relay.js";
 import { buildSandboxPolicy, isWithin, requireSessionCredential } from "./sandbox.js";
+import { runOperatorCommand } from "./operator-cli.js";
 
 async function main() {
   const args = process.argv.slice(2);
+  if (["doctor", "status", "inspect", "recover"].includes(args[0])) {
+    process.exitCode = await runOperatorCommand(args);
+    return;
+  }
   if (args.length === 1 && args[0] === "--help") {
-    process.stdout.write("Usage: chio-pi --config /absolute/delegated.json --profile /absolute/profile --cwd /absolute/disposable-workspace --provider openai|openai-codex --model gpt-4.1-mini|gpt-5.5 --prompt 'task' [--codex-auth /absolute/private/codex/auth.json] [--resume /absolute/profile/sessions/session.jsonl]\nProtected candidate requires macOS, an installed package, and delegated retained-session credentials. Codex subscription mode requires --codex-auth; API mode requires operator OPENAI_API_KEY.\n");
+    process.stdout.write("Usage: chio-pi --config /absolute/delegated.json --profile /absolute/profile --cwd /absolute/disposable-workspace --provider openai|openai-codex --model gpt-4.1-mini|gpt-5.5 --prompt 'task' [--codex-auth /absolute/private/codex/auth.json] [--resume /absolute/profile/sessions/session.jsonl]\nProtected candidate requires macOS, an installed package, and delegated retained-session credentials. Codex subscription mode requires --codex-auth; API mode requires operator OPENAI_API_KEY.\nTrusted diagnostics and recovery: chio-pi doctor|status|inspect|recover --help. Operator commands launch no model and require no provider credentials.\n");
     return;
   }
   if (process.platform !== "darwin") throw new Error("Protected candidate currently requires macOS sandbox-exec");
@@ -102,4 +107,5 @@ async function main() {
   } finally { await transport.close(); await relay?.close(); }
 }
 
-main().catch(error => { process.stderr.write(`Chio Pi protected launch refused: ${error instanceof Error ? error.message : "unknown failure"}\n`); process.exitCode = 1; });
+if (process.argv[1] && await realpath(process.argv[1]).catch(() => undefined) === await realpath(fileURLToPath(import.meta.url)))
+  main().catch(error => { process.stderr.write(`Chio Pi protected launch refused: ${error instanceof Error ? error.message : "unknown failure"}\n`); process.exitCode = 1; });
