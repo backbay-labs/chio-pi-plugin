@@ -217,3 +217,91 @@ decision/ID retention, owner-outcome import, semantic recovery, native child
 authority, cross-authority P4 adoption or whole-Pi Linux confinement. Task 2's
 approval-decide parse gate remains intact. The separately reviewed Task 3 Linux
 resource results are not reclassified as continuation qualification.
+
+## Spec review corrections at 4fc686b
+
+The fresh spec review of `4fc686bba16b8368366996dd9af90cfe44b91160`
+identified four confirmed defects. Corrections remain limited to those findings:
+
+* Bounded structural credential recognition now normalizes standard labels,
+  including auth/provider tokens, client secrets and access keys. Recursive
+  known-value scanning remains intact, while public IDs/digests and exact signed
+  proof fields remain accepted. This does not attempt to classify previously
+  unknown secrets in unlabeled prose.
+* All parent mapping handles coordinate reads and mutations through one line
+  keyed by their canonical private directory. The native gateway owner lock
+  continues to provide cross-process exclusion; no persistent lock was added.
+  Separately opened original ports cannot overwrite the first committed proof.
+* Closing an adapter observer releases only its observer slot. The exact live
+  Storage/Session association and public close listener remain. Same live handles
+  can reattach with the same private directory/binding. `subscribeClose` is a
+  synchronous close-start notification, so its callback only marks/enqueues.
+  Asynchronous confirmation awaits the actual public `Session.close` promise,
+  documented to settle admitted commits and close Storage. Only resolved close
+  releases identity; failed or unresolved close retains custody. A new adapter
+  waits at most one second for confirmation before refusing. Backend association
+  across a process restart remains the trusted owner's obligation.
+* The bounded private reader revalidates the admitted directory identity,
+  ownership, mode and type as well as the final leaf before accepting the read.
+  OperatorError behavior, fatal UTF-8, bounded allocation and FIFO refusal remain.
+
+The first focused review run was RED: 20 tests, 18 expected assertion failures
+and two passing controls. Sixteen failures covered handoff export/import for
+eight nested case/separator spellings of the four credential labels. The other
+failures reproduced the actual parent chmod at FILEHANDLE initialization and
+observer shutdown transferring identity while its actual Session stayed open.
+The passing controls preserved public proof fields and the supported same-store
+observer/actual Session lifecycle. Two later pending/failed actual Session-close
+tests were separately RED at 0/2. These use actual Harness sessions and a concrete
+MemoryStorage backend whose public close method is delayed or fails.
+
+The independent-port race was separately RED at 0/1: two actual MemoryStorage/
+Harness receiving hosts and independently opened original ports both read a
+genuine missing hostCommit before publication, then replaced the first proof.
+The scheduling barrier follows real validated reads; it fabricates no records or
+native verification result. Canonical coordination makes that regression GREEN.
+Every permitted original ACK retry uses the immutable first proof. Transport ACK
+attempts can exceed one during explicit flush/restart reconciliation, while the
+independent native counters remain one effect, one tool call and one ACK
+transition. The distinct already-delivered receiving-store path still requires
+zero receiving ACK calls and retains its separate proof without replacing first
+delivery custody.
+
+Focused GREEN results observed after the corrections:
+
+* Credential export/import and public proof control: 17/17.
+* Parent custody, leaf/growth/fatal UTF-8 and all four FIFO controls: 8/8.
+* Independent-port/two-host immutable-proof race: 1/1.
+* Observer identity, same-live-handle reattachment, actual JSONL reopen and
+  pending/failed actual Session close: 4/4.
+
+Review RED/GREEN logs are private development artifacts under
+`/tmp/chio-task4-spec-*.log`; committed tests retain the synthetic construction
+and assertions. No dependency graph, frozen native artifact, base bridge execute/
+afterTool ACK path, authority/approval semantics or future task was changed.
+
+The combined focused command
+`node --test --test-name-pattern='spec review:|private reads|malformed UTF|FIFO' test/continuation.test.mjs test/durable.test.mjs test/operator.test.mjs`
+passes 30/30, covering all 23 review regressions/controls and seven existing
+reader/FIFO controls. Fresh `npm run typecheck && npm test` exits zero and passes
+269/269, with zero failures, cancellations or skips. This preserves 170 baseline
+tests and includes 76 continuation plus 23 Durable tests. The five distinct
+already-delivered receiving-store controls remain GREEN, including zero receiving
+ACK calls for confirmed delivery. The final log is
+`/tmp/chio-task4-spec-final-verification.log`; the combined focused log is
+`/tmp/chio-task4-spec-focused-green.log`.
+
+Correction self-review checked that the shared line spans genuine read/check/
+atomic-write/fsync work for every mapping handle; first-proof conflict refusal
+and native original verification remain separate from that coordination. It
+checked observer versus backend lifetime, nonblocking public close notification,
+resolved/failed/pending close behavior, same-handle reattachment and stale
+registration refusal before effects. It also checked exact public proof retention,
+normalized structural labels, final directory/leaf custody checks, unchanged
+OperatorError behavior and all FIFO controls. `git diff --check` exits zero.
+Lockfile, frozen bridge/operator and installed Durable Session SHA-256 identities
+remain exactly those recorded above. Only the eight owned correction files are
+staged; the primary checkout, root specs/plans, Task 3 code and future-task scope
+remain untouched. These results are ready for fresh spec re-review and subsequent
+quality review; they do not replace either independent review or qualify a real
+coding kernel.

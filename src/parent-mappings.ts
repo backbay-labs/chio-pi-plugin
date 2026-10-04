@@ -64,11 +64,18 @@ export function validateCommit(value: HostCommitReference): void {
     || typeof value.callId !== "string" || !value.callId || typeof value.toolName !== "string" || !value.toolName
     || Object.keys(value).sort().join(",") !== "assistantEntryId,callId,commitSeq,conversationId,entryDigest,entryId,kind,storeId,taskId,toolName") throw new Error("Invalid committed host entry reference");
 }
+// Every handle under the native owner process shares one line by canonical
+// directory. The native gateway owner lock supplies cross-process exclusion.
+const mappingLines = new Map<string, {line: Promise<void>}>();
 export class ParentMappings {
-  private line: Promise<unknown> = Promise.resolve();
   constructor(readonly directory: string, readonly binding: ContinuationBinding, readonly registry: ToolRegistry, readonly sessionId: string) {assertBinding(binding);}
   private async serial<T>(job: () => Promise<T>): Promise<T> {
-    const pending = this.line.then(job); this.line = pending.catch(() => undefined); return pending;
+    const directory = await ownedDirectory(this.directory);
+    let shared = mappingLines.get(directory);
+    if (!shared) {shared = {line: Promise.resolve()}; mappingLines.set(directory, shared);}
+    const pending = shared.line.then(job);
+    shared.line = pending.then(() => undefined, () => undefined);
+    return pending;
   }
   private validate(raw: unknown, name: string): ParentMapping {
     checkContentDigest(raw);
@@ -98,14 +105,14 @@ export class ParentMappings {
     for (const name of names.filter(name => name.endsWith(".json")).sort()) records.push(this.validate(await readPrivateJson(join(this.directory, name)), name));
     return records;
   }
-  async all(): Promise<ParentMapping[]> {await this.line; return this.readAll();}
+  async all(): Promise<ParentMapping[]> {return this.serial(() => this.readAll());}
   private async findCurrent(request: KernelRequest): Promise<ParentMapping | undefined> {
     request = immutableRequest(this.registry, request);
     const found = (await this.readAll()).find(value => logicalKey(value.request) === logicalKey(request));
     if (found && canonicalJson(found.request) !== canonicalJson(request)) throw new Error("Parent mapping immutable original request mismatch");
     return found;
   }
-  async find(request: KernelRequest): Promise<ParentMapping | undefined> {await this.line; return this.findCurrent(request);}
+  async find(request: KernelRequest): Promise<ParentMapping | undefined> {return this.serial(() => this.findCurrent(request));}
   async reserve(request: KernelRequest, session: string): Promise<{mapping: ParentMapping; created: boolean}> {
     return this.serial(async () => {
       request = immutableRequest(this.registry, request);

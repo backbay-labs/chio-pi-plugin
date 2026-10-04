@@ -38,9 +38,51 @@ export interface ChioDurableOptions {
   transport: NativeDeliveryTransport;
   context: Context;
 }
-const activeStores = new Map<string, {storage: Storage; session: Session}>();
+interface StoreOwner {
+  storage: Storage;
+  session: Session;
+  directory: string;
+  binding: ContinuationBinding;
+  observer?: object;
+  closing: boolean;
+  closeConfirmation?: Promise<boolean>;
+}
+const activeStores = new Map<string, StoreOwner>();
 const storageOwners = new WeakMap<Storage, string>();
 const sessionOwners = new WeakMap<Session, string>();
+async function bindStoreOwner(options: ChioDurableOptions, directory: string, binding: ContinuationBinding): Promise<{owner: StoreOwner; releaseObserver(): void}> {
+  const storeId = options.storeId;
+  let owner = activeStores.get(storeId);
+  if (owner?.closeConfirmation) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {await Promise.race([owner.closeConfirmation, new Promise<void>(resolve => {timer = setTimeout(resolve, 1000);})]);}
+    finally {clearTimeout(timer);}
+    owner = activeStores.get(storeId);
+  }
+  if (owner && (owner.storage !== options.storage || owner.session !== options.session || owner.directory !== directory || !same(owner.binding, binding)
+    || owner.closing || owner.observer)
+    || storageOwners.has(options.storage) && storageOwners.get(options.storage) !== storeId
+    || sessionOwners.has(options.session) && sessionOwners.get(options.session) !== storeId) throw new Error("Durable store identity is already bound to live backend and Session handles");
+  const observer = {};
+  if (!owner) {
+    const selected: StoreOwner = {storage: options.storage, session: options.session, directory, binding, observer, closing: false};
+    // subscribeClose announces the start, not completion. Its synchronous
+    // listener only marks and enqueues; the public close promise confirms that
+    // admitted work settled and Storage actually closed before identity release.
+    const unsubscribeClose = options.session.subscribeClose(() => {
+      selected.closing = true;
+      selected.closeConfirmation = Promise.resolve().then(async () => {
+        await options.session.close({...options.context, abortSignal: undefined});
+        if (activeStores.get(storeId) === selected) activeStores.delete(storeId);
+        storageOwners.delete(options.storage); sessionOwners.delete(options.session); unsubscribeClose();
+        return true;
+      }).catch(() => false); // Failed or unresolved close conservatively retains custody.
+    });
+    activeStores.set(storeId, selected); storageOwners.set(options.storage, storeId); sessionOwners.set(options.session, storeId); owner = selected;
+  } else owner.observer = observer;
+  const selected = owner;
+  return {owner: selected, releaseObserver() {if (selected.observer === observer) selected.observer = undefined;}};
+}
 function intentKey(intent: Pick<DurableIntent, "storeId" | "conversationId" | "taskId" | "callId">): string {return sha256(JSON.stringify([intent.storeId, intent.conversationId, intent.taskId, intent.callId]));}
 function requestForIntent(intent: Pick<DurableIntent, "storeId" | "conversationId" | "taskId" | "callId">, call: {tool: string; arguments: Record<string, unknown>}): KernelRequest {
   return {sessionId: `durable:${intent.storeId}:${intent.conversationId}`, toolCallId: `${intent.taskId}:${intent.callId}`, ...call};
@@ -58,10 +100,9 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
   assertBinding(options.binding);
   const binding = frozenJson(options.binding); const storeId = options.storeId;
   if (!/^[a-f0-9]{64}$/.test(storeId) || !same(binding, options.originals.binding) || options.registry.digest !== binding.registryDigest) throw new Error("Durable store identity or independently prepared authority binding mismatch");
-  if (activeStores.has(storeId) || storageOwners.has(options.storage) || sessionOwners.has(options.session)) throw new Error("Durable store identity is already bound to live backend and Session handles");
-  activeStores.set(storeId, {storage: options.storage, session: options.session}); storageOwners.set(options.storage, storeId); sessionOwners.set(options.session, storeId);
-  const release = () => {activeStores.delete(storeId); storageOwners.delete(options.storage); sessionOwners.delete(options.session);};
-  let directory: string; let intentsDirectory: string;
+  const directory = await ownedDirectory(options.provenanceDir);
+  const {owner, releaseObserver} = await bindStoreOwner(options, directory, binding);
+  let intentsDirectory: string;
   const intents = new Map<number, DurableIntent>();
   function validateIntent(raw: unknown, name: string): DurableIntent {
     checkContentDigest(raw);
@@ -88,7 +129,6 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
     }
   }
   try {
-    directory = await ownedDirectory(options.provenanceDir);
     const ownerPath = join(directory, "store-owner.binding");
     const owner = {schema: "chio.pi.durable-store-owner.v1", storeId, binding};
     try {if (!same(await readPrivateJson(ownerPath), owner)) throw new Error("Durable immutable backend owner binding mismatch");}
@@ -97,7 +137,7 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
     try {await mkdir(requested, {mode: 0o700}); await syncDirectory(directory);} catch (error) {if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;}
     intentsDirectory = await ownedDirectory(requested);
     await readIntents();
-  } catch (error) {release(); throw error;}
+  } catch (error) {releaseObserver(); throw error;}
   let closed = false; let failure: Error | undefined; let draining: Promise<void> | undefined; let scheduled = false;
   const queue = new Set<number>();
   function fail(error: unknown): void {failure ??= error instanceof Error ? error : new Error("Durable committed outcome verification failed");}
@@ -162,7 +202,7 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
   async function drain(): Promise<void> {
     if (draining) return draining;
     draining = (async () => {
-      while (queue.size && !closed && !failure) {
+      while (queue.size && !closed && !owner.closing && !failure) {
         const taskId = queue.values().next().value!; queue.delete(taskId);
         try {await observe(taskId);} catch (error) {fail(error);}
       }
@@ -170,14 +210,14 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
     return draining;
   }
   function schedule(): void {
-    if (scheduled || closed || failure) return;
+    if (scheduled || closed || owner.closing || failure) return;
     scheduled = true;
     setImmediate(() => {scheduled = false; if (!closed) void drain().catch(fail);});
   }
   // This listener does bounded enqueue only. No Session operation, await, throw
   // or blocking work runs in the synchronous publication callback.
   const unsubscribe = options.session.subscribeCommits(publication => {
-    if (closed || failure) return;
+    if (closed || owner.closing || failure) return;
     if (publication.changes.length > 4096) {fail(new Error("Durable committed publication exceeded bounded observation capacity")); return;}
     for (const change of publication.changes) {
       if (change.type !== "task" || change.value.kind !== "pi.tool" || change.value.state.status !== "terminal" || !intents.has(change.value.id)) continue;
@@ -187,7 +227,7 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
     if (queue.size) schedule();
   });
   async function flush(): Promise<void> {
-    if (closed) throw new Error("Durable host observer closed");
+    if (closed || owner.closing) throw new Error("Durable host observer or actual Session closed");
     if (failure) throw failure;
     await readIntents();
     for (const intent of intents.values()) {
@@ -201,7 +241,7 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
     outputLimits: {maxBytes: PRIVATE_LIMIT, maxLines: PRIVATE_LIMIT, retain: "head"},
     prepareArguments(raw) {resolveRegistryCall(options.registry, definition.name, raw); return frozenJson(raw) as never;},
     async execute(args, api: ToolExecutionApi, context) {
-      if (closed || failure) throw failure ?? new Error("Durable trusted host closed");
+      if (closed || owner.closing || failure) throw failure ?? new Error("Durable trusted host closed");
       const call = resolveRegistryCall(options.registry, definition.name, args);
       const task = await api.getTask(api.taskId, context);
       const selected = await options.storage.task(api.taskId, context);
@@ -230,6 +270,7 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
         outcome = await recoverOriginalOperation(prior.request, options.originals);
       } else {
         await writePrivateJson(join(intentsDirectory, intentKey(intent) + ".json"), intent); intents.set(api.taskId, frozenJson(intent));
+        if (closed || owner.closing || failure) throw failure ?? new Error("Durable trusted host closed before dispatch");
         const result = await options.executor.execute(request, context.abortSignal);
         const original = await options.originals.lookup(request);
         if (result.outcome !== original.state || result.retainedOutcome !== undefined && !same(result.retainedOutcome, original.outcome)
@@ -246,7 +287,7 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
     /** Trusted owner action before scheduling the exact receiving ToolTask.
      * This never executes, creates authority or acknowledges an operation. */
     async bindRecovery(input: {taskId: number; conversationId: number; callId: string; request: KernelRequest}): Promise<void> {
-      if (closed || failure) throw failure ?? new Error("Durable trusted host closed");
+      if (closed || owner.closing || failure) throw failure ?? new Error("Durable trusted host closed");
       const request = immutableRequest(options.registry, input.request);
       await recoverOriginalOperation(request, options.originals);
       const task = await options.storage.task(input.taskId as TaskId, options.context);
@@ -263,6 +304,6 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
       await writePrivateJson(join(intentsDirectory, intentKey(intent) + ".json"), intent); intents.set(input.taskId, frozenJson(intent));
     },
     requestFor(taskId: number): KernelRequest {const intent = intents.get(taskId); if (!intent) throw new Error("Original Durable task provenance unavailable"); return frozenJson(intent.request);},
-    async close() {if (closed) return; closed = true; unsubscribe(); if (draining) await draining; release();}};
+    async close() {if (closed) return; closed = true; unsubscribe(); if (draining) await draining; releaseObserver();}};
 }
 function retainedCall(request: KernelRequest): {tool: string; arguments: Record<string, unknown>} {return {tool: request.tool, arguments: request.arguments};}

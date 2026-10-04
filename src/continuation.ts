@@ -62,7 +62,12 @@ function collectSecrets(value: unknown, secrets: Set<string>, container = false,
   }
 }
 function credentialKey(key: string): boolean {
-  return /^(?:bearertoken|sessiontoken|apikey|accesstoken|refreshtoken|capabilitytoken|chioapprovaltoken|approvaltoken|privatekey|password|secret|authorization|credential|credentials|providercredentials|sessioncredential)$/.test(key.replace(/[^a-z0-9]/gi, "").toLowerCase());
+  const normalized = key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+  // Match bounded standard credential labels, not arbitrary substrings. Public
+  // IDs, counters and digest/public-key suffixes remain distinct labels; native
+  // signatures and delivery acknowledgement proof fields remain exact.
+  return /^(?:auth|authorization|authentication|privatekey|password|secret|credentials?|secretaccesskey)$/.test(normalized)
+    || /^(?:auth|api|bearer|session|access|refresh|capability|chioapproval|approval|provider|client)(?:tokens?|keys?|secrets?|credentials?)$/.test(normalized);
 }
 function assertPublicValue(value: unknown, secrets: Set<string>): void {
   canonicalJson(value);

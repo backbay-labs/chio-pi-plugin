@@ -17,7 +17,7 @@ async function setup(options = {}) {
   api(); const f = await nativeFixture(); const proxy = await plugin.startParentGatewayProxy({configPath: f.configPath, native: f.native, binding: f.binding});
   const client = await gatewayExecutor(transportConfig(f, proxy));
   const storageDirectory = join(f.directory, "durable-store"); await mkdir(storageDirectory, {mode: 0o700});
-  const storage = options.memory ? new MemoryStorage() : await openNodeJsonlStorage(storageDirectory, context, {fsync: true});
+  const storage = options.storage ?? (options.memory ? new MemoryStorage() : await openNodeJsonlStorage(storageDirectory, context, {fsync: true}));
   const registry = createRegistry();
   const host = await Harness.open(storage, {models: {}, registry, onReport: error => {throw error;}}, context);
   const storeId = randomBytes(32).toString("hex");
@@ -184,6 +184,125 @@ test("a distinct actual host store reusing numeric task IDs cannot alias the ori
     const firstIntent = h.adapter.requestFor(ids.taskId); const secondIntent = otherAdapter.requestFor(second.taskId);
     assert.notEqual(firstIntent.sessionId, secondIntent.sessionId);
   } finally {await otherAdapter?.close(); await secondHost?.close(context); await h.close();}
+});
+
+test("spec review: closing only the observer cannot transfer a live store identity to another actual backend", async () => {
+  const h = await setup({memory: true}); let otherHost; let mistaken;
+  try {
+    await h.adapter.close();
+    const storage = new MemoryStorage(); const registry = createRegistry(); otherHost = await Harness.open(storage, {models: {}, registry}, context);
+    await assert.rejects((async () => {mistaken = await api().createChioDurableTools({storeId: h.storeId, storage, session: otherHost, provenanceDir: h.provenanceDir,
+      binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: h.client.executor, transport: h.f.native, context});})(), /store|backend|identity/);
+    await runTool(h); assert.deepEqual(h.f.counts(), {effects: 0, acks: 0, nativeCalls: 0}, "the closed observer's stale registrations cannot execute");
+  } finally {await mistaken?.close(); await otherHost?.close(context); await h.close();}
+});
+
+test("spec review: observer reattachment uses the same actual live handles and actual Session closure permits backend reopening", async () => {
+  const h = await setup(); let attached; let reopened; let nextHost;
+  try {
+    await h.adapter.close();
+    attached = await api().createChioDurableTools({storeId: h.storeId, storage: h.storage, session: h.host, provenanceDir: h.provenanceDir,
+      binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: h.client.executor, transport: h.f.native, context});
+    h.registry.install(attached.extension); const ids = await runTool(h); await attached.flush(); const logical = attached.requestFor(ids.taskId);
+    await attached.close(); await h.host.close(context);
+    const storage = await openNodeJsonlStorage(h.storageDirectory, context, {fsync: true}); const registry = createRegistry(); nextHost = await Harness.open(storage, {models: {}, registry}, context);
+    reopened = await api().createChioDurableTools({storeId: h.storeId, storage, session: nextHost, provenanceDir: h.provenanceDir,
+      binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: {execute() {throw new Error("Reopening may recover only original ACKs");}}, transport: h.f.native, context});
+    registry.install(reopened.extension); await reopened.flush(); assert.deepEqual(reopened.requestFor(ids.taskId), logical);
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 1, nativeCalls: 1});
+  } finally {await reopened?.close(); await nextHost?.close(context); await attached?.close(); await h.close();}
+});
+
+for (const fault of ["pending", "failed"]) test(`spec review: actual Session ${fault} close retains the backend identity`, async () => {
+  let finish; let entered;
+  const gate = new Promise(done => {finish = done;}); const started = new Promise(done => {entered = done;});
+  class ClosingStorage extends MemoryStorage {
+    async close(context) {entered(); await gate; if (fault === "failed") throw new Error("synthetic selected backend close failure"); await super.close(context);}
+  }
+  const h = await setup({storage: new ClosingStorage()}); let otherHost; let mistaken;
+  try {
+    await h.adapter.close(); const closing = h.host.close(context); void closing.catch(() => undefined); await started;
+    if (fault === "failed") {finish(); await assert.rejects(closing, /close failure/);}
+    const storage = new MemoryStorage(); const registry = createRegistry(); otherHost = await Harness.open(storage, {models: {}, registry}, context);
+    await assert.rejects((async () => {mistaken = await api().createChioDurableTools({storeId: h.storeId, storage, session: otherHost, provenanceDir: h.provenanceDir,
+      binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: h.client.executor, transport: h.f.native, context});})(), /store|backend|identity/);
+    assert.deepEqual(h.f.counts(), {effects: 0, acks: 0, nativeCalls: 0}); finish(); if (fault === "pending") await closing;
+  } finally {
+    finish(); await mistaken?.close(); await otherHost?.close(context); await h.adapter.close();
+    await h.host.close(context).catch(() => undefined); await h.proxy.close(); await h.f.close();
+  }
+});
+
+test("spec review: independent actual hosts and original ports cannot replace the first committed proof", {timeout: 20000}, async () => {
+  const h = await setup({executor: inner => ({async execute(req, signal) {await inner.execute(req, signal); throw new Error("source response lost after signed completion");}})});
+  const receivers = [];
+  function deferred() {let resolve; const promise = new Promise(done => {resolve = done;}); return {promise, resolve};}
+  const firstRead = deferred(); const bothReads = deferred(); const releaseFirst = deferred(); const releaseSecond = deferred(); const published = deferred(); const allowACK = deferred();
+  let readCount = 0; let firstPort; let firstReference; const ackReferences = [];
+  try {
+    const source = await runTool(h); await assert.rejects(h.adapter.flush(), /terminal|committed|completion/);
+    const logical = h.adapter.requestFor(source.taskId); const original = await plugin.recoverOriginalOperation(logical, h.proxy.originals);
+    const mappingPath = join(h.f.config.journalDir, "pi-parent-mappings", hash(JSON.stringify([logical.sessionId, logical.toolCallId])) + ".json");
+    for (let index = 0; index < 2; index++) {
+      const port = await plugin.createNativeOriginalOperationPort({configPath: h.f.configPath, binding: h.f.binding});
+      const storage = new MemoryStorage(); const registry = createRegistry(); const host = await Harness.open(storage, {models: {}, registry}, context);
+      const storeId = randomBytes(32).toString("hex"); const provenanceDir = join(h.f.directory, "proof-owner-" + index); await mkdir(provenanceDir, {mode: 0o700});
+      let changingProof; const genuineFind = port.mappings.findCurrent.bind(port.mappings); const genuineUpdate = port.mappings.update.bind(port.mappings);
+      // Pause only after the actual mutation has read and validated genuine
+      // private state. No record or verification response is fabricated.
+      port.mappings.findCurrent = async req => {
+        const prior = await genuineFind(req);
+        if (changingProof && prior && prior.hostCommit === undefined) {
+          const rank = ++readCount;
+          if (rank === 1) {firstPort = port; firstReference = changingProof; firstRead.resolve(); await releaseFirst.promise;}
+          else if (rank === 2) {bothReads.resolve(); await releaseSecond.promise;}
+        }
+        return prior;
+      };
+      port.mappings.update = async (req, change) => {
+        changingProof = change.hostCommit;
+        try {
+          await genuineUpdate(req, change);
+          if (change.hostCommit && port === firstPort) published.resolve(JSON.parse(await readFile(mappingPath, "utf8")));
+        } finally {changingProof = undefined;}
+      };
+      const adapter = await api().createChioDurableTools({storeId, storage, session: host, provenanceDir, binding: h.f.binding, registry: h.f.registry, originals: port,
+        executor: {execute() {throw new Error("A receiving proof cannot redispatch");}}, context,
+        transport: {async acknowledgeReceivedOutcome(outcome) {
+          await allowACK.promise;
+          const mapping = await port.mappings.find(logical); const task = await storage.task(mapping.hostCommit.taskId, context);
+          const entry = (await storage.entry(task.state.outcome.result.entryId, context)).entry;
+          assert.equal(mapping.hostCommit.storeId, storeId); assert.equal(entry.id, mapping.hostCommit.entryId);
+          assert.deepEqual(JSON.parse(entry.model[0].content[0].text), outcome); ackReferences.push(mapping.hostCommit);
+          return h.f.native.acknowledgeReceivedOutcome(outcome);
+        }}});
+      registry.install(adapter.extension); const conversation = await host.root(context);
+      const receiving = await runTool({...h, host, conversation}, logical.arguments, "proof-call-" + index, false, true);
+      await adapter.bindRecovery({taskId: receiving.taskId, conversationId: conversation.id, callId: "proof-call-" + index, request: logical});
+      receivers.push({port, storage, host, adapter, receiving});
+    }
+    assert.notEqual(receivers[0].port.mappings, receivers[1].port.mappings);
+    const settledTasks = receivers.map(receiver => receiver.host.waitForTask(receiver.receiving.taskId, context));
+    await firstRead.promise;
+    // A shared mutation line keeps the second genuine read behind the first
+    // publication. The bound lets that implementation proceed without needing
+    // the very concurrent read this regression is designed to prohibit.
+    let timer; await Promise.race([bothReads.promise, new Promise(done => {timer = setTimeout(done, 1000);})]); clearTimeout(timer);
+    releaseFirst.resolve(); const first = await published.promise;
+    assert.deepEqual(first.hostCommit, firstReference); assert.equal(h.f.counts().acks, 0);
+    releaseSecond.resolve(); allowACK.resolve(); await Promise.all(settledTasks);
+    await Promise.allSettled(receivers.map(receiver => receiver.adapter.flush()));
+    const final = JSON.parse(await readFile(mappingPath, "utf8"));
+    assert.deepEqual(final.hostCommit, first.hostCommit, `first proof must remain immutable after ${readCount} genuine pre-publication reads`);
+    assert.ok(ackReferences.length >= 1);
+    for (const reference of ackReferences) assert.deepEqual(reference, first.hostCommit, "original ACK retries use only the immutable first proof");
+    assert.deepEqual(await plugin.recoverOriginalOperation(logical, h.proxy.originals), original);
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 1, nativeCalls: 1});
+  } finally {
+    releaseFirst.resolve(); releaseSecond.resolve(); allowACK.resolve();
+    for (const receiver of receivers) {await receiver.adapter.close(); await receiver.host.close(context);}
+    await h.close();
+  }
 });
 
 test("second actual Durable host scans history after host commit before ACK and retries only the original native acknowledgement", async () => {

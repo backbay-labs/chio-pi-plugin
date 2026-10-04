@@ -84,6 +84,16 @@ test("trusted private reads refuse a leaf made public after the final descriptor
   finally {hook.disable(); await f.close();}
 });
 
+test("spec review: private reads refuse a parent made public after directory admission", async () => {
+  const f = await nativeFixture(); const path = join(f.directory, "directory-custody.json"); await writeFile(path, '{"private":true}', {mode: 0o600});
+  let changed = false;
+  const hook = createHook({init(_id, type) {if (type === "FILEHANDLE" && !changed) {changed = true; chmodSync(f.directory, 0o755);}}});
+  try {
+    hook.enable(); await assert.rejects(privateJson(path), error => error.code === "state_changed" || error.code === "private_path_required");
+    assert.equal(changed, true, "fixture must change the actual parent after directory admission while the leaf remains private");
+  } finally {hook.disable(); await chmod(f.directory, 0o700); await f.close();}
+});
+
 test("parent refuses dispatch when the actual native gateway owner changes", async () => {
   const f = await nativeFixture(); let proxy; const path = join(f.config.journalDir, "gateway.lock"); const original = await readFile(path);
   try {
@@ -109,6 +119,34 @@ for (const field of ["api_key", "session-token", "authorization", "approval_toke
   try {
     proxy = await start(f); const session = await initialize(proxy); await call(proxy, session);
     await assert.rejects(api().exportContinuation(join(f.directory, "secret.json"), {binding: f.binding, requests: [request()], originals: proxy.originals, context: {[field]: "new-credential-value"}}), /credential/);
+  } finally {await proxy?.close(); await f.close();}
+});
+
+for (const field of ["authToken", "AUTH_TOKEN", "providerToken", "Provider-TOKEN", "client_secret", "ClIeNt.SeCrEt", "access_key", "ACCESS-KEY"])
+  for (const direction of ["export", "import"]) test(`spec review: handoff ${direction} refuses nested standard credential field ${field}`, async () => {
+    const f = await nativeFixture(); let proxy;
+    try {
+      proxy = await start(f); const session = await initialize(proxy); await call(proxy, session);
+      const path = join(f.directory, "review-credential.json"); const context = {outer: [{[field]: "previously-unknown-synthetic-material"}]};
+      if (direction === "export") await assert.rejects(api().exportContinuation(path, {binding: f.binding, requests: [request()], originals: proxy.originals, context}), /credential/);
+      else {
+        const original = await api().exportContinuation(path, {binding: f.binding, requests: [request()], originals: proxy.originals});
+        await writeFile(path, JSON.stringify(redigest({...original, context})), {mode: 0o600});
+        await assert.rejects(api().importContinuation(path, {binding: f.binding, originals: proxy.originals}), /credential/);
+      }
+      assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
+    } finally {await proxy?.close(); await f.close();}
+  });
+
+test("spec review: handoff preserves ordinary public identifiers, digests and exact proof fields", async () => {
+  const f = await nativeFixture(); let proxy;
+  try {
+    proxy = await start(f); const session = await initialize(proxy); const original = bodyOutcome(await call(proxy, session));
+    const context = {nested: [{providerId: "public-provider", clientId: "public-client", session_id: "public-session", capability_id: f.config.execution.capabilityId,
+      authDigest: f.binding.authorityDigest, accessKeyDigest: "ab".repeat(32), registryDigest: f.binding.registryDigest, tokenCount: 7}]};
+    const path = join(f.directory, "public-fields.json"); await api().exportContinuation(path, {binding: f.binding, requests: [request()], originals: proxy.originals, context});
+    const imported = await api().importContinuation(path, {binding: f.binding, originals: proxy.originals});
+    assert.deepEqual(imported.context, context); assert.deepEqual(imported.originals[0].outcome, original);
   } finally {await proxy?.close(); await f.close();}
 });
 
