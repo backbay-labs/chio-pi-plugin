@@ -293,6 +293,8 @@ assert.equal((await openRunBudget(state, limits)).remainingRequests, 0);
 
 ## Task 7: Development workflow and package qualification
 
+Detailed requirements are [workflow and release contracts](../specs/2026-10-04-workflow-release-contracts.md).
+
 Files: `test/roadmap-workflow.test.mjs`, `scripts/qualify-roadmap.mjs`, README,
 `docs/ROADMAP-IMPLEMENTATION.md`, coding/operator/continuation guides, CI/packer.
 
