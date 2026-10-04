@@ -93,6 +93,13 @@ different arguments.
 Persist the immutable conversation/task/call-to-KernelRequest mapping with the
 native durable memo before executor dispatch. Bind the host store identity so
 numeric task IDs from another store cannot alias an operation. Explicit recovery
+uses a trusted operator-prepared store identity bound to the selected Storage
+and Session handles, with a private immutable owner binding for restart. Durable
+exposes no persistent backend identity or path through its public Storage API;
+the backend owner must establish that binding. Reject substitution by another
+live handle. Terminal tool tasks drop their memos, so retain complete parent
+task/call provenance before dispatch for later committed-entry scans. Neither
+the identity label nor the parent record proves delivery. Original recovery
 uses original lookup and native verification, never a freshly generated ID.
 Native unsafe recovery may produce an interruption entry; that generic entry
 does not acknowledge an external operation.
