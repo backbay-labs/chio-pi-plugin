@@ -82,7 +82,10 @@ not signatures. A public signed view has exactly `body`, `authority_key`,
 
 The view body contains `schema`, `version`, `planner_version`, `trust_domain`,
 `issuer`, `recipient`, `report_ref`, `issued_at_unix_ms`, `expires_at_unix_ms`,
-and `projection`. The schema is `chio.recovery.explanation-view.v1`. Projection
+and `projection`. `version` is numeric `1`. The selected Ed25519 profile uses
+`algorithm: "ed25519"`, a bare 64-character lowercase hexadecimal `authority_key`
+and a bare 128-character lowercase hexadecimal `signature`. The schema is
+`chio.recovery.explanation-view.v1`. Projection
 contains a summary and candidates with `template_id` and `assessment`. Native
 validity is at most 30 seconds. Independently select the advisory signer, domain,
 issuer and recipient. Advisory and disclosure signers are separate.
@@ -253,6 +256,7 @@ The source contracts above were inspected under
 | Resource CAS example | `examples/shared-resource-swarm/store.py` |
 | P2 client | `sdks/typescript/packages/node-http/src/recovery.ts` |
 | P2 signed view | `crates/security/chio-security-types/src/recovery/explanation/result.rs` |
+| P2 version and key/signature framing | `crates/security/chio-security-types/src/recovery/bounds.rs`, `crates/core/chio-core-types/src/crypto.rs` |
 | P2 verification | `crates/security/chio-recovery/src/report.rs` |
 | P3 native API | `crates/platform/chio-control-plane/src/semantic.rs` |
 | P3 verification | `crates/security/chio-semantic-contracts/src/verification.rs` |
