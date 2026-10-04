@@ -133,6 +133,16 @@ On restart, scan committed references and safely repeat only verified original
 ACKs. Test crashes after native completion, after history commit before ACK,
 and after ACK before the parent mapping mark. None may redispatch an effect.
 
+A receiving host may also commit an already-delivered original. Verify its actual
+committed entry, assistant arguments and full original outcome, then refresh the
+authoritative native record. If that exact completion is already acknowledged
+and host-delivery-confirmed, accept the receiving commit without another ACK or
+replacement of the first immutable host-commit reference. Retain receiving-store
+provenance separately without an unbounded proof list. Mapping phase, handoff
+claims and guest flags are insufficient. Missing or still-unconfirmed original
+delivery evidence preserves the conservative conflict refusal. Test two actual
+stores, one effect, no additional ACK and substituted/stale delivery evidence.
+
 ## Required evidence
 
 Use two actual host instances, the native HTTP gateway protocol, native signed
