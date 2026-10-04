@@ -1,0 +1,274 @@
+# Chio Pi Full Roadmap Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox syntax for tracking.
+
+**Goal:** Implement the complete development-agent roadmap with kernel-owned coding participants, original-operation continuation, current Pi contracts, and explicit native-service activation gates.
+
+**Architecture:** Pi consumes an immutable typed registry through the retained execution bridge. A separate kernel-owned coding MCP participant performs effects and retains resource outcomes. Trusted operator and model-transport surfaces enforce delivery, limits, and native governance without granting authority locally.
+
+**Tech Stack:** TypeScript, Node 22+, Pi coding-agent/pi-ai/Pi Durable 1.0.2, bundled Chio bridge, stdio MCP, node:test, sandbox-exec, bubblewrap.
+
+The design is [the full-roadmap specification](../specs/2026-10-04-full-roadmap-design.md).
+Execute tasks in order. Each implementation task gets a fresh implementer, then
+spec review and code-quality review. Implementation workers do not run in
+parallel. Read-only contract research has already established native boundaries.
+
+## File map
+
+| Unit | Files | Responsibility |
+| --- | --- | --- |
+| Registry/current host | `src/tool-registry.ts`, extension/session/relay/config files | Native schemas and exact host exposure |
+| Operator | `src/operator.ts`, `src/operator-cli.ts`, protected CLI | Trusted diagnostics/native recovery actions |
+| Coding resource | `src/coding-resource/*.ts`, `src/coding-resource-cli.ts` | Kernel-owned effects, ledger, tests, artifacts |
+| Continuation/Durable | `src/continuation.ts`, `src/durable.ts` | Immutable original identity and host recovery |
+| Native governance | `src/governance.ts`, relay, `src/delegation.ts` | Native-port admission and explicit refusal |
+| Operational limits | `src/run-limits.ts`, protected CLI, relay | Trusted parent budgets/deadlines |
+| Workflow/release | `test/roadmap-workflow.test.mjs`, scripts/docs/CI | Reproducible evidence and package integrity |
+
+## Task 1: Pi 1.0.2 and immutable typed registry
+
+Files: package manifests/lock, `src/tool-registry.ts`, extension/session/config/
+HTTP/relay files, index, host/relay/registry tests, CI consumer version.
+
+- [ ] Write tests for the actual Pi dispatcher using typed file tools, malformed
+  arguments, unknown aliases, poisoned MCP/codemode/deferred discovery, and full
+  outcome delivery. Keep existing generic fixtures explicitly legacy.
+
+```js
+const registry = createToolRegistry([{name:"read_text_file", inputSchema:{type:"object",properties:{path:{type:"string"}},required:["path"],additionalProperties:false}}]);
+assert.equal(registry.tools[0].name, "chio_read");
+assert.throws(() => createToolRegistry([{name:"a.b",inputSchema:{}},{name:"a_b",inputSchema:{}}]), /collision/);
+```
+
+- [ ] Run `npm run build && node --test test/tool-registry.test.mjs` and observe
+  failure before implementation.
+- [ ] Pin all Pi runtime packages at 1.0.2 via `npm install --save-dev --save-exact
+  --ignore-scripts --no-audit --no-fund @earendil-works/pi-ai@1.0.2
+  @earendil-works/pi-coding-agent@1.0.2`. Implement the registry with deep-cloned
+  frozen JSON schemas, deterministic aliases, canonical digest, strict schema
+  validation, and explicit `typed`/`legacy` mode. Use this contract:
+
+```ts
+export interface ChioToolSpec { name:string; description?:string; inputSchema:Record<string,unknown> }
+export interface ToolRegistry { mode:"typed"|"legacy"; digest:string; tools:readonly {name:string; kernelTool:string; description:string; parameters:Record<string,unknown>}[] }
+export function createToolRegistry(tools:readonly ChioToolSpec[], mode:"typed"|"legacy"="typed"):ToolRegistry;
+```
+
+- [ ] Generate native definitions through `chioExtension(executor, registry)`.
+  Preserve KernelRequest identities and exact full KernelResult content. Pin
+  registry digest in resume binding. Pass the registry to relay validation for
+  declarations, choices, function history and argument binding. Disable all new
+  discovery surfaces through native settings/resource-loader/dispatcher contracts.
+- [ ] Run `npm run typecheck && npm test`; add task evidence to this plan and
+  commit `feat: add typed Chio tools on Pi 1.0.2`. Review and fix before Task 2.
+
+## Task 2: Trusted status and recovery console
+
+Files: `src/operator.ts`, `src/operator-cli.ts`, protected CLI, index, operator
+tests, README/operator guide.
+
+- [ ] Add a fixture for native status with completed/pending-ACK, dispatched
+  unknown, approval pending and undispatched operations. Test redaction of
+  bearer/session/provider credentials and no model/network side effects.
+
+```js
+const view = summarizeGatewayStatus(nativeStatus);
+assert.equal(view.operations.find(x => x.requestId === "unknown").state, "unknown_after_dispatch");
+assert.equal(JSON.stringify(view).includes("secret-fixture-token"), false);
+```
+
+- [ ] Run `npm run build && node --test test/operator.test.mjs`, observe failure.
+- [ ] Resolve the bridge operator entrypoint from installed package metadata,
+  verify its installed containment, and delegate trusted actions using argv,
+  never shell. Implement `doctor/status/inspect/recover` argument parsing with
+  `--config`, `--request`, `--json`, explicit native recovery action/input/output.
+  Unknown counters remain `null`; readable actions explain original recovery.
+  Missing owner-import/attenuation/semantic/whole-host Linux capabilities refuse
+  without mutating state. Export this programmatic contract:
+
+```ts
+export interface OperationSummary { requestId:string; state:string; tool?:string; nextAction:string }
+export function summarizeGatewayStatus(status:unknown):{sessionId:string;operations:OperationSummary[]};
+export async function runOperatorCommand(args:string[]):Promise<number>;
+```
+
+- [ ] Run typecheck/full tests, record evidence, commit `feat: add trusted Pi
+  operator diagnostics and recovery`. Obtain both reviews and fix findings.
+
+## Task 3: Kernel-owned coding participant
+
+Files: `src/coding-resource/config.ts`, `paths.ts`, `ledger.ts`, `repository.ts`,
+`recipes.ts`, `participant.ts`, `src/coding-resource-cli.ts`, package bin,
+`test/coding-resource.test.mjs`, `test/coding-confinement.test.mjs`, resource guide.
+
+- [ ] Add native-stdio dispatch fixtures with exact `_meta` fields. Test missing
+  caller, operation conflict, crash after intent, storage failure, path escapes,
+  symlinks, stale source, recipe bounds, failed-test publication and replay.
+
+```js
+const meta = {chioRequestId:"native-op",chioOperationId:"native-op",chioAttemptId:"attempt",chioTransportKeyEpoch:1,chioCallerCapabilitySha256:"a".repeat(64)};
+const first = await participant.call("apply_patch", patch, meta);
+assert.deepEqual(await participant.call("apply_patch", patch, meta), first);
+assert.equal(await independentEffectCount(), 1);
+await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"b".repeat(64)}, meta), /conflict/);
+```
+
+- [ ] Run participant tests before implementation; observe failure.
+- [ ] Implement a bounded JSONL stdio MCP server for the nine named tools in the
+  design. It validates native metadata/caller, canonicalizes arguments, acquires
+  a private exclusive ledger, fsyncs intent before effects and terminal result
+  before reply. Return retained results for exact replay; fence unknown intents.
+  Persist immutable source/test/artifact lineage. Do not interpret locally
+  supplied metadata as a substitute for a kernel-owned pipe.
+- [ ] Implement CAS edits in `apply_patch` as expected full-file digest plus
+  exact replacement content or bounded literal edits, not arbitrary shell patch
+  commands. Reject executable Git hooks/config helpers. Add context and bounded
+  aggregate reads as ordinary admitted resource tools. Test confinement on this
+  macOS host with real sandbox-exec probes for allowed work, forbidden files,
+  outbound network and child cleanup. Implement isolated-network Linux recipe
+  invocation through bubblewrap; do not call it accepted without Linux evidence.
+- [ ] Run typecheck/full tests and stdio binary smoke; record implementation and
+  platform acceptance separately; commit `feat: add recoverable coding resource
+  participant`. Obtain both reviews and fix findings before Task 4.
+
+## Task 4: Original-operation handoff and Pi Durable
+
+Files: `src/continuation.ts`, `src/durable.ts`, index/package manifests,
+`test/continuation.test.mjs`, `test/durable.test.mjs`, continuation guide.
+
+- [ ] Add tamper/caller/arguments/signature/authority mismatch and unknown fence
+  tests. Use real Durable registration/memo contract and two host instances.
+
+```js
+assert.equal(tool.replay, "unsafe");
+const first = await tool.execute(args, api, context);
+const recovered = await recoverOriginalOperation(record, executor);
+assert.deepEqual(recovered, first.details.originalOutcome);
+assert.equal(dispatches, 1);
+await assert.rejects(importContinuation(tampered, binding), /binding|digest|verification/);
+```
+
+- [ ] Run tests before implementation; observe failure. Pin Durable 1.0.2 as
+  an optional exact peer plus development dependency with locked graph.
+- [ ] Define a private bounded `chio.pi.continuation.v1` envelope with public
+  authority/registry digest, original KernelRequests, exact retained outcomes,
+  unresolved state and content digest. Never include authority credentials. Use
+  native `verifyReceivedOutcome`/executor verification for completed results;
+  hashing alone proves no trust. Refuse cross-authority adoption.
+- [ ] Implement native ToolRegistration with Durable memo written before the
+  first executor call, immutable conversation/task/call mapping and `unsafe`
+  replay. Implement explicit recovery of the original request through native
+  retained outcome lookup/verified replay, never a newly generated operation.
+  Keep delivery and native ACK separate until full history is observed.
+- [ ] Run typecheck/full tests, record evidence, commit `feat: add Chio Durable
+  tools and original-operation continuation`. Obtain both reviews and fix.
+
+## Task 5: Native semantic and child-authority integration gates
+
+Files: `src/governance.ts`, `src/delegation.ts`, relay, operator feature table,
+index, `test/governance.test.mjs`, `test/delegation.test.mjs`, compatibility guide.
+
+- [ ] Add tests that no outbound provider bytes appear without a trusted admission
+  when governance is required, and that thrown/expired/mismatched admission or
+  child authority fails closed.
+
+```js
+await assert.rejects(admitOutbound(request, nativePort), /expiry|binding|signature/);
+assert.equal(providerRequests, 0);
+await assert.rejects(submitScopedChild(parent, widening, nativePort), /scope|authority/);
+```
+
+- [ ] Run before implementation; observe failure.
+- [ ] Define host-only ports using exact recovered native contract information.
+  Verify P2 explanation signer/audience/state/expiry and keep advisory remedy
+  rendering separate from exact native resume or linked continuation. Native
+  disclosure admission binds request bytes and provider account/model/purpose;
+  the trusted relay awaits independent native verification before egress. Do
+  not expose arbitrary guest callbacks as a launchable authorization provider.
+- [ ] Child submission requires actual native child-capability issuance and
+  persisted budget/cancellation identity, not transport filtering. The installed
+  bridge's unsupported attenuation yields explicit unavailable status. Protect
+  authority scope, child accounting and unknown recovery in the adapter contract.
+  Cross-process labeled artifact adoption refuses under current P4 profile.
+- [ ] Wire documented trusted SDK integration entrypoints and startup refusal for
+  required unavailable profiles. Record native service and P5 Linux prerequisites
+  as open acceptance rows. Run all tests, commit `feat: gate semantic recovery
+  and delegation on native authority`, obtain both reviews and fix.
+
+## Task 6: Trusted parent limits and confinement capability reporting
+
+Files: `src/run-limits.ts`, model relay, protected CLI, config/operator,
+`test/run-limits.test.mjs`, operational guide.
+
+- [ ] Add provider timeout/cap/token reservation, resume-budget, hung-child kill,
+  post-dispatch interruption and native codemode refusal tests.
+
+```js
+const budget = await openRunBudget(state, {maxRequests:1,maxOutputTokens:100});
+await budget.reserve(100);
+await assert.rejects(budget.reserve(1), /limit/);
+assert.equal((await openRunBudget(state, limits)).remainingRequests, 0);
+```
+
+- [ ] Run before implementation; observe failure.
+- [ ] Persist conservative limits in parent-only state and bind them on resume.
+  Reserve requests/output tokens before network forwarding, retain uncertain
+  reservations, force bounded provider output, impose provider timeout. Enforce
+  a wall deadline in the parent with graceful signal then bounded hard kill;
+  never reset the journal or clear outcome uncertainty. Version the existing
+  two fixed provider profiles without silently adding a route or fallback.
+- [ ] Report macOS guest boundary, Linux recipe boundary and unavailable Linux
+  whole-guest boundary separately. Native arbitrary codemode/deferred execution
+  stays disabled; `read_many` is the enabled bounded aggregate alternative.
+- [ ] Run full tests, record evidence, commit `feat: enforce parent run limits
+  and confinement profiles`, obtain both reviews and fix.
+
+## Task 7: Development workflow and package qualification
+
+Files: `test/roadmap-workflow.test.mjs`, `scripts/qualify-roadmap.mjs`, README,
+`docs/ROADMAP-IMPLEMENTATION.md`, coding/operator/continuation guides, CI/packer.
+
+- [ ] Write the coding fixture around a real small bug and an independent
+  filesystem/artifact observer; first run must demonstrate the bug. Fix via
+  participant CAS, test in real local confinement, review diff, publish, lose
+  response, recover the exact artifact through original identity in a second
+  host. Include forbidden access and subsequent permitted work under unchanged
+  authority. Keep scripted executor and native-kernel evidence clearly distinct.
+
+```js
+assert.equal(beforeTest.passed, false);
+assert.equal(afterTest.passed, true);
+assert.equal(originalArtifact.sha256, recoveredArtifact.sha256);
+assert.equal(publicationEffects, 1);
+```
+
+- [ ] Route current README qualification links to FINAL-QUALIFICATION. Write
+  twelve-row implementation/evidence/prerequisite crosswalk and runnable docs
+  for every shipped entrypoint. Do not change frozen evidence or advertise gates
+  as qualified native features. Ensure release archives include resource binary,
+  optional Durable entrypoint and exact dependency provenance.
+- [ ] Run `npm run typecheck && npm test && npm run pack:release -- /tmp/chio-pi-roadmap-release`.
+  Install the resulting archive with pinned Pi in a fresh consumer and empty
+  cache, run every binary help/import smoke, retain exact consumer lock digest.
+  Record current-head acceptance limits and commit `test: qualify Chio Pi
+  development workflow and release surface`.
+
+## Task 8: Independent review, fix, final review, fix, open PR
+
+- [ ] Dispatch a whole-range security/spec/quality review against origin/main.
+  Fix all valid findings and run focused regressions for each change.
+- [ ] Dispatch a fresh final reviewer, fix remaining findings and run fresh
+  typecheck, all tests, package and clean-consumer checks on the final commit.
+- [ ] Verify clean worktree, preserved primary checkout, conventional commits,
+  no credentials, no em dashes in new prose, and full twelve-row coverage.
+- [ ] Push `feat/pi-full-roadmap-20261004`, open a PR against main with exact
+  behavior, verification and native qualification prerequisites. Verify PR head
+  SHA and report hosted checks separately from local evidence. Do not merge.
+
+## Baseline evidence
+
+Worktree: `/Users/connor/.config/superpowers/worktrees/chio-pi-plugin/full-roadmap-20261004`.
+Base: `origin/main` at `cd3dbf90974687d30f23f989173bd8c155b016d3`.
+Fresh `npm ci --ignore-scripts --no-audit --no-fund`, typecheck, build and all
+23 component tests passed with zero failures or skips before implementation.
+The dirty primary checkout remains untouched.
