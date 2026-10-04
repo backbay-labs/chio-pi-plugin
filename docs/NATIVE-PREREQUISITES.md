@@ -200,6 +200,47 @@ list that parameter as unsupported. The ordinary OpenAI Responses API supports
 an output ceiling including reasoning tokens. Aborting a stream on byte/time
 bounds cannot establish the provider's total token consumption or spend.
 
+## Current native coding-workflow acceptance
+
+Read-only artifact and launch-contract inspection on 2026-10-04 did not establish
+an immediately runnable native coding acceptance candidate. This row remains
+open independently of the new participant and local recipe-confinement results.
+
+The existing October 2 `recoverable-agent-runtime-20261002/target/debug/chio` is
+Mach-O arm64, SHA256
+`0f5d2d0e2913879a7776134b6599d99d11cc27ec153b2cef3c6cacc22b456968`.
+It cannot run in the prepared Linux VM, and its compatibility with the frozen
+bridge and the coding participant is unverified. The prepared resource image
+`sha256:6d5bbc54ae9fd29177042755c41667006b708874c7ed6d489d543e931e33fe23`
+is Linux arm64; its fabricated dispatch metadata and actual confinement probes
+do not supply native capability, approval or signed-completion evidence.
+
+The current public required-agent setup selects Linux x86_64 custody and needs
+an exact retained kernel artifact, publisher-signed nine-tool manifest,
+independent signer pin, Node/runtime launch policy, resume keyring and qualified
+custody for SQLite state, generations, artifacts and recipe jobs. Existing cage
+profiles reject writable directory grants and deny descendants and sockets;
+the static boolean, static-writer and Docker filesystem profiles cannot simply
+be reused for this Node owner. The current P5 boolean profile has no filesystem
+grants, delegated tools or model calls. It does not qualify this workflow.
+
+Native caller admission must also supply `chioCallerCapabilitySha256` on the
+kernel-owned pipe, matching the independently selected caller allowset. Its
+source contract exists; an exact executable and protected-HTTP end-to-end run
+still need qualification. A repository-review demo with migration stage
+`Disabled` supplies no equivalent OS confinement.
+
+The required native acceptance run must bind those artifacts and launch policy
+to the complete bug-fix, separately approved publication, response-loss and
+original-result recovery fixture. Its evidence must not be inferred from the
+historical four-tool qualification or a participant-only ledger. Setup pointers
+in `native-qualification-20261003` are
+`integrations/required-agents/serve-filesystem.py`,
+`integrations/required-agents/qualification/README.md` and
+`crates/security/chio-cage/README.md`; the P5 operating profile is
+`recoverable-agent-runtime-20261002/docs/architecture/recoverable-agent-runtime/implementation/p5/OPERATIONS.md`.
+No kernel, build, service or credential inspection was performed for this audit.
+
 ## Source map
 
 The source contracts above were inspected under
