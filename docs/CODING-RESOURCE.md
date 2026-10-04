@@ -55,7 +55,10 @@ paths and hashes with independently selected real values:
     "timeoutMs": 2000,
     "outputBytes": 16384,
     "graceMs": 100,
-    "runtimeFiles": [],
+    "runtimeFiles": [{
+      "path": "/absolute/canonical/selected-runtime.dylib",
+      "sha256": "64 lowercase hex characters"
+    }],
     "recipeSha256": "64 lowercase hex characters"
   }]
 }
@@ -73,8 +76,43 @@ parameters. Each recipe has fixed operator-selected argv.
 On Linux, `runtimeFiles` must list exact canonical loader/library files with
 SHA256 hashes. An optional `mountPath` supplies an exact `/lib/`, `/lib64/`,
 `/usr/lib/` or `/usr/local/lib/` loader alias. No host library directory is mounted.
-On macOS, the existing recursive `otool -L` helper resolves the selected Node
-binary and its actual dylibs. The sandbox grants metadata access to the exact
+On macOS, `runtimeFiles` must contain the complete resolved non-system dependency
+closure selected by the executable's recursive `otool -L` declarations. The
+executable has its own separate pin. Each dependency requires its canonical
+resolved path and SHA256, including actual Homebrew Cellar paths; macOS does not
+accept `mountPath` aliases. The illustrative JSON above abbreviates this list.
+Missing, extra, changed or mismatched dependencies refuse before any recipe job
+is created. Admitted proven no-effect refusals remain durable terminal outcomes
+and replay exactly, even if the dependency is later repaired. The selected system
+OS runtime trees remain a separately measured boundary; they are not claimed to
+be individually hash-pinned.
+
+This trusted macOS provisioning command prints an actual complete recipe for the
+Node executable running it. Run it from the built checkout, inspect the selected
+paths, then place the resulting recipe in the private operator configuration:
+
+```sh
+node --input-type=module <<'CODING_RECIPE'
+import {readFile, realpath} from 'node:fs/promises';
+import {runtimeLibraries} from './dist/sandbox.js';
+import {recipeDigest, sha256} from './dist/coding-resource/config.js';
+const executable = await realpath(process.execPath);
+const runtimeFiles = [];
+for (const path of (await runtimeLibraries(executable)).sort()) {
+  if (path !== executable) runtimeFiles.push({path, sha256: sha256(await readFile(path))});
+}
+const recipe = {
+  name: 'unit', executable, executableSha256: sha256(await readFile(executable)),
+  argv: ['fixture-test.mjs'], timeoutMs: 2000, outputBytes: 16384, graceMs: 100,
+  runtimeFiles
+};
+console.log(JSON.stringify({...recipe, recipeSha256: recipeDigest(recipe)}, null, 2));
+CODING_RECIPE
+```
+
+This reads only the selected executable and its declared runtime closure during
+operator provisioning. The model supplies no dependency paths or discovery
+commands. The sandbox grants metadata access to the exact
 declared dylib aliases and intermediate symlink paths needed by the loader,
 with directory-only metadata access to their selected ancestors. File data
 access remains limited to the exact resolved runtime files, selected system
@@ -104,6 +142,11 @@ kernel-owned pipe. Node can interpret `NODE_OPTIONS` before application code
 runs. Recipe isolation supplies its own fresh environment independently.
 `serve` refuses missing initialized state. It does not import or discover a
 repository, load a Pi profile, select a provider or obtain authentication.
+Before advertising tools, it validates both initial and current retained source
+manifests and every immutable generation file under the exclusive owner lock.
+Missing or corrupt generations refuse startup without repairing files, adopting
+orphan generations or changing unresolved operation intent. Read-only unsigned
+inspection/export remain available for forensic investigation of ledger records.
 
 ## Native connection and operation binding
 
@@ -149,9 +192,12 @@ only to exercise this participant's behavior.
 New exact-source calls use the current generation. Exact completed historical
 replay is checked first and remains available after later patches or provider
 attempts. An absent new file uses `expectedFileSha256: null` and a replacement.
-Literal edits require one match, including overlapping matches. Every file
-precondition is checked before building a new generation; a stale source or file
-refuses the whole patch. No shell or Git process applies changes. Read-only tools
+Literal edits require exactly one match in the original full-file content,
+including detection of overlapping occurrences. Every entry's original range
+must be pairwise disjoint; edits apply from the highest offset downward, so
+replacement lengths or introduced text cannot change another precondition.
+Every file precondition is checked before building a new generation; a stale
+source or file refuses the whole patch. No shell or Git process applies changes. Read-only tools
 are still ordinary admitted operations; `read_many` is not native arbitrary
 codemode and context is not authority.
 

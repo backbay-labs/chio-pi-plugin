@@ -1,10 +1,31 @@
 import assert from "node:assert/strict";
+import {watch} from "node:fs";
 import {readFile, readdir, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import test from "node:test";
+import {canonicalJson} from "../dist/tool-registry.js";
 import {command, data, fixture, hash, initialized, meta, stdio} from "./helpers/coding-fixture.mjs";
 
 const local = process.platform === "darwin" || process.platform === "linux" && process.env.CHIO_CODING_LINUX_PROBE === "1";
+if (process.platform === "darwin") for (const kind of ["missing", "incomplete", "wrong hash", "extra"]) test(`macOS runtime closure ${kind} pins refuse before recipe jobs and retain exact error replay`, async t => {
+  const f = await initialized(); t.after(() => f.close());
+  await f.updateConfig(config => {
+    const recipe = config.recipes[0]; assert.ok(recipe.runtimeFiles.length > 1);
+    if (kind === "missing") recipe.runtimeFiles = [];
+    if (kind === "incomplete") recipe.runtimeFiles = recipe.runtimeFiles.slice(1);
+    if (kind === "wrong hash") recipe.runtimeFiles[0].sha256 = "0".repeat(64);
+    if (kind === "extra") recipe.runtimeFiles.push({path: recipe.executable, sha256: recipe.executableSha256});
+    const {recipeSha256, ...body} = recipe; recipe.recipeSha256 = hash(canonicalJson(body));
+  });
+  const observedJobs = []; const observer = watch(f.root("jobs"), (_, path) => observedJobs.push(String(path))); t.after(() => observer.close());
+  const io = stdio(f); t.after(() => io.close()); const args = {sourceDigest: f.sourceDigest, recipe: "unit"};
+  const first = await io.call("test_recipe", args); assert.equal(first.isError, true); assert.equal(data(first).code, "recipe_pin");
+  assert.deepEqual(await io.call("test_recipe", args, meta("1", {chioAttemptId: "replay-pinned-refusal"})), first);
+  await io.close(); await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(observedJobs, [], "observe zero job-directory creation events"); assert.deepEqual(await readdir(f.root("jobs")), []); assert.deepEqual(await readdir(f.root("artifacts")), []);
+  assert.equal((await readdir(join(f.root("state"), "generations"))).length, 1);
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout); assert.equal(state.operations.length, 1); assert.equal(state.operations[0].state, "completed"); assert.equal(state.fenced, false);
+});
 test("real confined recipe passes single-process node:test and retains exact test lineage", {skip: !local}, async t => {
   const f = await initialized(); t.after(() => f.close()); const io = stdio(f, {env: {NODE_OPTIONS: "--require=/DO-NOT-LOAD", CHIO_AUTH_TOKEN: "fixture-secret-never-inherit", OPENAI_API_KEY: "fixture-provider-secret"}}); t.after(() => io.close());
   const args = {sourceDigest: f.sourceDigest, recipe: "unit"}; const first = await io.call("test_recipe", args);

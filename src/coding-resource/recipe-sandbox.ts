@@ -8,16 +8,14 @@ import {ToolRefusal} from "./repository.js";
 export interface RecipeSandbox {backend: "seatbelt" | "bubblewrap"; launcher: string; runtimeFiles: {path: string; mountPath: string}[]; policy?: (source: string, job: string) => string; seccomp?: Buffer}
 export async function prepareRecipeSandbox(recipe: Recipe): Promise<RecipeSandbox> {
   if (sha256(await regularFile(recipe.executable, {executable: true, maxBytes: 256 * 1024 * 1024})) !== recipe.executableSha256) throw new ToolRefusal("recipe_pin", "Operator-pinned recipe executable hash changed");
-  const explicit: {path: string; mountPath: string}[] = [];
-  for (const file of recipe.runtimeFiles) {
-    if (sha256(await regularFile(file.path, {runtime: true, maxBytes: 256 * 1024 * 1024})) !== file.sha256) throw new ToolRefusal("recipe_pin", "Operator-pinned runtime library hash changed");
-    const mountPath = file.mountPath ?? file.path;
-    if (!isAbsolute(mountPath) || normalize(mountPath) !== mountPath || mountPath.includes("\0") || !["/lib/", "/lib64/", "/usr/lib/", "/usr/local/lib/"].some(prefix => mountPath.startsWith(prefix))) throw new ToolRefusal("recipe_pin", "Runtime mount target must be an exact canonical library path");
-    if (explicit.some(file => file.mountPath === mountPath)) throw new ToolRefusal("recipe_pin", "Duplicate runtime library mount target"); explicit.push({path: file.path, mountPath});
-  }
   if (process.platform === "darwin") {
     await regularFile("/usr/bin/sandbox-exec", {executable: true});
     const aliases = new Set<string>(); const libraries = await runtimeLibraries(recipe.executable, aliases);
+    const dependencies = new Set(libraries.filter(path => path !== recipe.executable));
+    if (recipe.runtimeFiles.length !== dependencies.size || recipe.runtimeFiles.some(file => !dependencies.has(file.path) || file.mountPath !== undefined)) throw new ToolRefusal("recipe_pin", "macOS runtime inventory must match the complete resolved non-system dependency closure without mount aliases");
+    for (const file of recipe.runtimeFiles) {
+      if (sha256(await regularFile(file.path, {runtime: true, maxBytes: 256 * 1024 * 1024})) !== file.sha256) throw new ToolRefusal("recipe_pin", "Operator-pinned runtime dependency hash changed");
+    }
     // Dyld stats intermediate symlink names, for example the Cellar's
     // libname.major.dylib before reaching libname.major.minor.dylib. Retain
     // only this selected dependency chain, not a readable runtime directory.
@@ -25,11 +23,17 @@ export async function prepareRecipeSandbox(recipe: Recipe): Promise<RecipeSandbo
       let prefix = "/";
       for (const component of alias.split("/").filter(Boolean)) {const path = join(prefix, component); aliases.add(path); prefix = await realpath(path);}
     }
-    for (const path of libraries) await regularFile(path, {runtime: true, maxBytes: 256 * 1024 * 1024});
     return {backend: "seatbelt", launcher: "/usr/bin/sandbox-exec", runtimeFiles: libraries.map(path => ({path, mountPath: path})), policy: (source, job) => seatbeltPolicy(recipe.executable, libraries, [...aliases], source, job)};
   }
   if (process.platform === "linux") {
     await regularFile("/usr/bin/bwrap", {executable: true});
+    const explicit: {path: string; mountPath: string}[] = [];
+    for (const file of recipe.runtimeFiles) {
+      if (sha256(await regularFile(file.path, {runtime: true, maxBytes: 256 * 1024 * 1024})) !== file.sha256) throw new ToolRefusal("recipe_pin", "Operator-pinned runtime library hash changed");
+      const mountPath = file.mountPath ?? file.path;
+      if (!isAbsolute(mountPath) || normalize(mountPath) !== mountPath || mountPath.includes("\0") || !["/lib/", "/lib64/", "/usr/lib/", "/usr/local/lib/"].some(prefix => mountPath.startsWith(prefix))) throw new ToolRefusal("recipe_pin", "Runtime mount target must be an exact canonical library path");
+      if (explicit.some(file => file.mountPath === mountPath)) throw new ToolRefusal("recipe_pin", "Duplicate runtime library mount target"); explicit.push({path: file.path, mountPath});
+    }
     if (!explicit.length) throw new ToolRefusal("recipe_pin", "Linux requires an exact operator-pinned runtime file and loader inventory");
     return {backend: "bubblewrap", launcher: "/usr/bin/bwrap", runtimeFiles: explicit, seccomp: linuxRecipeFilter()};
   }

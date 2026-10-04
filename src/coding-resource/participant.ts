@@ -183,7 +183,16 @@ export async function openCodingResource(configPath: string, seam: TrustedResour
   // Verify initialized state before creating a lock. Never auto-import on serve.
   const check = await ResourceLedger.open(selected, {readonly: true}); check.close();
   const release = await acquireOwnerLock(selected.config.stateRoot);
-  try {return new CodingResource(selected, await ResourceLedger.open(selected), release, seam);} catch (error) {await release(); throw error;}
+  let ledger: ResourceLedger | undefined;
+  try {
+    ledger = await ResourceLedger.open(selected);
+    const initial = ledger.meta("initialDigest"); const current = ledger.sourceDigest;
+    if (!initial || !/^[a-f0-9]{64}$/.test(initial) || !/^[a-f0-9]{64}$/.test(current)) throw new Error("Required initial/current source manifest identity is unavailable");
+    await privateDirectory(join(selected.config.stateRoot, "generations"));
+    const repository = new Repository(selected.config, ledger);
+    await repository.load(initial); if (current !== initial) await repository.load(current);
+    return new CodingResource(selected, ledger, release, seam);
+  } catch (error) {try {ledger?.close();} finally {await release();} throw error;}
 }
 export async function inspectCodingResource(configPath: string, operationId?: string): Promise<Record<string, unknown>> {
   const selected = await loadCodingConfig(configPath); const ledger = await ResourceLedger.open(selected, {readonly: true});

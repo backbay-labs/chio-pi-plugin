@@ -53,6 +53,51 @@ metadata while a durable fence exists and closing on malformed outer call
 parameters. The six selected regression/control cases also passed, including
 exact historical replay and valid fresh metadata refusal.
 
+## Independent spec review fixes
+
+The independent review of `b873af9` found three missing invariants despite its
+passing checks: macOS allowed the discovered non-system runtime closure without
+requiring its operator hash inventory; serving checked ledger identity but not
+the required initial/current source contents; and literal edit entries matched
+progressively modified text rather than pairwise disjoint original ranges.
+
+Observed RED before these production fixes:
+
+```sh
+npm run build
+node --test --test-name-pattern='macOS runtime closure|real confined recipe passes|startup validates|literal patch' \
+  test/coding-resource.test.mjs test/coding-confinement.test.mjs
+```
+
+Build exited 0. Eleven selected tests reported 8 failed and 3 passed. Missing
+runtime pins still produced a successful job; a complete natural Homebrew pin
+inventory was rejected by Linux-only mount-path rules. Missing initial/current
+files and corrupt current content still advertised tools. The exact `abcdef`
+overlap (`bcd -> bcD`, `bc -> xx`) and an introduced-text edit were accepted;
+valid disjoint original edits with replacement-induced matches were refused.
+The incomplete/wrong-hash/extra pin refusal cases already passed because earlier
+pin/path validation rejected those particular inputs.
+
+After the scoped fixes, the same eleven tests all passed. macOS now compares
+the complete selected non-system dependency path set with the operator inventory,
+then verifies every hash before recipe jobs. Natural canonical Homebrew paths are
+accepted without Linux mount aliases. Filesystem observers saw zero job creation
+events for missing/incomplete/wrong/extra pins; their admitted known-error results
+were durably completed and replayed exactly, with unchanged generation and
+artifact directories. The positive Node recipe passed with the complete pins.
+System OS runtime trees remain separately measured, not individually hash-pinned.
+
+Startup checks initial/current immutable generations while holding its own lock
+before any MCP initialize/list reply. Damaged snapshots refused startup; unsigned
+inspection and export remained available, including an existing incomplete intent.
+Only the newly acquired owner lock was released, and no candidate was promoted.
+Literal edits now resolve every unique range against original content, reject
+pairwise overlaps and apply descending offsets. Both orderings of disjoint
+length-changing/replacement-induced-match edits produced the expected bytes.
+
+Raw selected RED/GREEN logs are retained locally at
+`/tmp/chio-task3-spec-fixes-red.txt` and `/tmp/chio-task3-spec-fixes-green.txt`.
+
 ## Verified behavior
 
 The fixtures observe actual generation/publication directory counts, imported
@@ -142,21 +187,24 @@ The real binary smoke initialized a fresh private fixture, negotiated MCP
 `2025-06-18`, listed nine tools and returned 11 exact source bytes through
 `read_range`. The source digest was
 `c5caa8eeffc8ec8f5fb60d27513d919b66c7edc744e651648170fb5743291f4f`.
+The updated guide's actual macOS provisioning command generated all 21 selected
+non-executable dependency hash pins. The smoke used that generated recipe and
+passed a real confined `test_recipe` call through the binary as well.
 The SQLite experimental notice on stderr is a Node runtime property, not stdout
 protocol output.
 
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | Exit 0. |
-| `npm test` on macOS 26.4 arm64 / Node 25.5.0 | Exit 0; 124 tests passed, 0 failed/cancelled/skipped. This includes all seven real macOS confinement/publication probes. |
-| Pinned disposable Linux arm64 / Node 22.23.1 / bwrap 0.8.0 command above | Exit 0; 36 focused resource/confinement tests passed, 0 failed/cancelled/skipped, including all seven real Linux probes. |
-| Actual CLI `--help` and fresh JSONL MCP subprocess smoke | Exit 0; explicit init, initialize, exact nine-tool inventory and exact read bytes passed. |
+| `npm test` on macOS 26.4 arm64 / Node 25.5.0 | Exit 0; 134 tests passed, 0 failed/cancelled/skipped. This includes all seven real macOS confinement/publication probes and four observed zero-job runtime-pin refusal cases. |
+| Pinned disposable Linux arm64 / Node 22.23.1 / bwrap 0.8.0 command above | Exit 0; 42 focused resource/confinement tests passed, 0 failed/cancelled/skipped, including all seven real Linux probes. macOS pin cases are registered only on macOS. |
+| Actual CLI `--help` and fresh JSONL MCP subprocess smoke | Exit 0; explicit init, initialize, exact nine-tool inventory, exact read bytes and the complete generated macOS recipe passed. |
 | `git diff --check` | Exit 0. |
 
-Full-suite duration was 24.113 seconds; Linux focused-suite duration was 32.254
+Full-suite duration was 30.052 seconds; Linux focused-suite duration was 37.919
 seconds. Final raw command logs were retained locally at
-`/tmp/chio-task3-final-verified-fullsuite.txt` and
-`/tmp/chio-task3-final-verified-linux.txt`. These temporary paths are diagnostic
+`/tmp/chio-task3-spec-fixes-fullsuite.txt` and
+`/tmp/chio-task3-spec-fixes-linux.txt`. These temporary paths are diagnostic
 logs, not native signed acceptance evidence.
 
 ## Qualification boundary

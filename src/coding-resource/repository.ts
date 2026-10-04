@@ -73,13 +73,16 @@ export class Repository {
       if (!original && change.edits) throw new ToolRefusal("invalid_patch", "An absent file requires explicit replacement");
       let replacement = change.replacement;
       if (change.edits) {
-        replacement = decodeText(original!);
-        for (const edit of change.edits) {
-          const first = replacement.indexOf(edit.oldText);
-          if (first < 0 || replacement.indexOf(edit.oldText, first + 1) >= 0) throw new ToolRefusal("ambiguous_edit", "Literal edit requires exactly one matching old text");
-          replacement = replacement.slice(0, first) + edit.newText + replacement.slice(first + edit.oldText.length);
+        const text = decodeText(original!);
+        const ranges = change.edits.map(edit => {
+          const start = text.indexOf(edit.oldText);
+          if (start < 0 || text.indexOf(edit.oldText, start + 1) >= 0) throw new ToolRefusal("ambiguous_edit", "Literal edit requires exactly one matching old text in the original file");
           changedBytes += Buffer.byteLength(edit.oldText) + Buffer.byteLength(edit.newText);
-        }
+          return {start, end: start + edit.oldText.length, replacement: edit.newText};
+        }).sort((a, b) => a.start - b.start);
+        for (let index = 1; index < ranges.length; index++) if (ranges[index].start < ranges[index - 1].end) throw new ToolRefusal("overlapping_edit", "Literal edit ranges overlap in the original file");
+        replacement = text;
+        for (const range of ranges.reverse()) replacement = replacement.slice(0, range.start) + range.replacement + replacement.slice(range.end);
       } else changedBytes += Buffer.byteLength(replacement!);
       if (changedBytes > this.config.bounds.maxPatchBytes) throw new ToolRefusal("patch_bound", "Patch exceeds selected byte bound");
       files.set(path, Buffer.from(replacement!, "utf8"));

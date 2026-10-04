@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
-import {chmod, link, readFile, readdir, symlink, writeFile} from "node:fs/promises";
+import {chmod, link, readFile, readdir, symlink, unlink, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import test from "node:test";
 import {canonicalJson} from "../dist/tool-registry.js";
@@ -16,6 +16,29 @@ test("coding resource requires explicit private import before serving", async t 
   assert.equal(result.code, 0, result.stderr);
   assert.match(JSON.parse(result.stdout).sourceDigest, /^[a-f0-9]{64}$/);
   assert.equal((await command(["init", "--config", f.configPath])).code, 1);
+});
+for (const kind of ["initial missing", "current missing", "current corrupt"]) test(`startup validates ${kind} generation before advertising native tools`, async t => {
+  const f = await initialized(); t.after(() => f.close()); let io = stdio(f); t.after(() => io.close());
+  const current = data(await io.call("apply_patch", patch(f.sourceDigest, hash("alpha\nbeta\n")))).sourceDigest; await io.close();
+  if (kind === "current corrupt") {
+    io = stdio(f, {fault: "afterIntent"});
+    await assert.rejects(io.call("apply_patch", patch(current, hash("changed\nbeta\n")), meta("2")), /transport closed/); await io.exited;
+    assert.equal((await command(["recover-lock", "--config", f.configPath])).code, 0);
+  }
+  const selected = kind.startsWith("initial") ? f.sourceDigest : current; const generation = join(f.root("state"), "generations", selected); const source = join(generation, "source.txt");
+  await chmod(generation, 0o700);
+  if (kind.endsWith("missing")) await unlink(source);
+  else {await chmod(source, 0o600); await writeFile(source, "corrupt\nbeta\n"); await chmod(source, 0o400);}
+  await chmod(generation, 0o500);
+  io = stdio(f);
+  await assert.rejects(Promise.all([io.request("initialize", {protocolVersion: "2025-06-18"}), io.request("tools/list")]), /transport closed/); await io.exited; assert.equal(io.messages.length, 0);
+  assert.equal((await readdir(f.root("state"))).includes("owner.lock"), false, "only the startup attempt's owned lock may be released");
+  const inspection = await command(["inspect", "--config", f.configPath]); assert.equal(inspection.code, 0); const state = JSON.parse(inspection.stdout);
+  assert.equal(state.unsigned, true); assert.equal(state.sourceDigest, current); assert.equal(state.operations[0].state, "completed");
+  if (kind === "current corrupt") {
+    assert.equal(state.fenced, true); const original = JSON.parse((await command(["export", "--config", f.configPath, "--operation", "2".repeat(64)])).stdout); assert.equal(original.operation.state, "intent"); assert.equal(original.result, null);
+  }
+  assert.equal((await readdir(join(f.root("state"), "generations"))).length, 2, "do not promote or repair another generation");
 });
 test("native JSONL initialize lists exactly nine closed tools and no extra capabilities", async t => {
   const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
@@ -147,6 +170,24 @@ test("overlapping literal matches refuse an ambiguous CAS edit before generation
   const f = await initialized({files: {"source.txt": "aaa"}}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
   const result = await io.call("apply_patch", {sourceDigest: f.sourceDigest, changes: [{path: "source.txt", expectedFileSha256: hash("aaa"), edits: [{oldText: "aa", newText: "x"}]}]});
   assert.equal(result.isError, true); assert.equal(data(result).code, "ambiguous_edit"); assert.equal((await readdir(join(f.root("state"), "generations"))).length, 1);
+});
+for (const [name, source, edits, code] of [
+  ["cross-entry overlap", "abcdef", [{oldText: "bcd", newText: "bcD"}, {oldText: "bc", newText: "xx"}], "overlapping_edit"],
+  ["introduced text", "abc def", [{oldText: "abc", newText: "xyz"}, {oldText: "xyz", newText: "X"}], "ambiguous_edit"],
+]) test(`literal patch rejects ${name} against original full-file content`, async t => {
+  const f = await initialized({files: {"source.txt": source}}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const refused = await io.call("apply_patch", {sourceDigest: f.sourceDigest, changes: [{path: "source.txt", expectedFileSha256: hash(source), edits}]});
+  assert.equal(refused.isError, true); assert.equal(data(refused).code, code); assert.equal((await readdir(join(f.root("state"), "generations"))).length, 1);
+  assert.equal(data(await io.call("repo_status", {}, meta("2"))).sourceDigest, f.sourceDigest);
+});
+test("literal patch applies disjoint original ranges despite changed lengths and introduced matches", async t => {
+  const source = "abcdef"; const edits = [{oldText: "bc", newText: "defBC"}, {oldText: "def", newText: "D"}];
+  for (const selected of [edits, [...edits].reverse()]) {
+    const f = await initialized({files: {"source.txt": source}}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+    const applied = await io.call("apply_patch", {sourceDigest: f.sourceDigest, changes: [{path: "source.txt", expectedFileSha256: hash(source), edits: selected}]}); assert.equal(applied.isError, undefined);
+    assert.equal(data(await io.call("read_range", {sourceDigest: data(applied).sourceDigest, path: "source.txt", startLine: 1, endLine: 1}, meta("2"))).text, "adefBCD");
+    assert.equal((await readdir(join(f.root("state"), "generations"))).length, 2); assert.equal(await readFile(join(f.root("repository"), "source.txt"), "utf8"), source); await io.close();
+  }
 });
 test("SQLite rejects nonregular private sidecars before potentially blocking recovery open", async t => {
   const f = await initialized(); t.after(() => f.close()); const path = join(f.root("state"), "ledger.sqlite-journal");
