@@ -89,10 +89,16 @@ The native `_meta` contract contains `chioRequestId`, `chioOperationId`,
 `chioAttemptId`, `chioTransportKeyEpoch`, and `chioCallerCapabilitySha256`.
 The operation ID is the kernel's resource dispatch ID, not Pi's logical call ID.
 Missing/malformed identities fail before effects. The ledger binds owner, caller,
-operation, tool, and canonical arguments. Persist intent before effects, persist
+operation, tool, and canonical arguments. Source generations are immutable;
+materialize and fsync a candidate, then commit the current-generation pointer and
+terminal outcome in one SQLite transaction. Persist intent before effects, persist
 the original result before replying, and replay exact completed results. A crash
 after durable intent with no terminal record is unknown and remains fenced.
 Conflicting reuse fails. Ledger storage failures never permit a fresh effect.
+An unresolved post-intent operation closes the stdio transport without a terminal
+MCP response; an ordinary completed tool error would be ACK-able and would lose
+the native unknown-outcome distinction. Pre-effect validation refusals can be
+retained as known terminal tool errors.
 Provide read-only outcome inspection/export for native reconciliation, without
 inventing kernel signatures.
 
@@ -125,7 +131,9 @@ contract and a second host, with independent effect counts.
 ## 5. Semantic recovery, disclosure, and delegation
 
 P2 explanation is read-only, scoped, signed advisory information. Verify its
-audience, signer, source state, and expiry independently before rendering. P3
+audience, signer, trust domain, issuer and expiry independently before rendering.
+Its public view has no workflow ID or private graph digest; current workflow and
+source checks belong to the native protected-report path. P3
 remedy offers are not grants. A pending proposal resumes the exact original;
 frozen denials require an authorized linked continuation; unknown effects
 require original-operation reconciliation. Stale/forged offers refuse execution.
@@ -164,10 +172,13 @@ profiles are explicit and versioned, preserve fixed routes, and do not silently
 switch models after a refusal.
 
 Resource-test Linux confinement is implemented separately from whole-Pi Linux
-confinement. The whole-Pi launcher needs equivalent limited gateway/model access
-without general outbound networking. Unsupported backends report an exact
-prerequisite and refuse launch; bubblewrap with shared host networking is not an
-acceptable shortcut. Record backend implementation and acceptance separately.
+confinement. Add a whole-Pi bubblewrap backend with unshared network, PID, user,
+IPC and mount namespaces, read-only installed runtime, private writable profile,
+and only two host Unix sockets. The parent forwards those sockets to the fixed
+gateway/model services; guest loopback forwarders use the mounted sockets.
+Never expose the operator config, journal, filesystem resource, Docker socket,
+or general host network. Unsupported kernels or missing bubblewrap refuse
+launch. Record implementation and actual backend probes separately from P5.
 
 ## Acceptance and review
 

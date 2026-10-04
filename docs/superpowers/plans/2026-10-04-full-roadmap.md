@@ -23,6 +23,7 @@ parallel. Read-only contract research has already established native boundaries.
 | Continuation/Durable | `src/continuation.ts`, `src/durable.ts` | Immutable original identity and host recovery |
 | Native governance | `src/governance.ts`, relay, `src/delegation.ts` | Native-port admission and explicit refusal |
 | Operational limits | `src/run-limits.ts`, protected CLI, relay | Trusted parent budgets/deadlines |
+| Linux guest | `src/linux-sandbox.ts`, `src/unix-relay.ts`, CLI | Network-isolated guest with two fixed Unix relay endpoints |
 | Workflow/release | `test/roadmap-workflow.test.mjs`, scripts/docs/CI | Reproducible evidence and package integrity |
 
 ## Task 1: Pi 1.0.2 and immutable typed registry
@@ -118,6 +119,8 @@ await assert.rejects(participant.call("apply_patch", {...patch, expectedDigest:"
   design. It validates native metadata/caller, canonicalizes arguments, acquires
   a private exclusive ledger, fsyncs intent before effects and terminal result
   before reply. Return retained results for exact replay; fence unknown intents.
+  Use SQLite `synchronous=FULL`, durable immutable source generations, and an
+  atomic transaction for current-generation pointer plus terminal outcome.
   Persist immutable source/test/artifact lineage. Do not interpret locally
   supplied metadata as a substitute for a kernel-owned pipe.
 - [ ] Implement CAS edits in `apply_patch` as expected full-file digest plus
@@ -180,7 +183,7 @@ await assert.rejects(submitScopedChild(parent, widening, nativePort), /scope|aut
 
 - [ ] Run before implementation; observe failure.
 - [ ] Define host-only ports using exact recovered native contract information.
-  Verify P2 explanation signer/audience/state/expiry and keep advisory remedy
+  Verify P2 explanation signer/audience/domain/issuer/expiry and keep advisory remedy
   rendering separate from exact native resume or linked continuation. Native
   disclosure admission binds request bytes and provider account/model/purpose;
   the trusted relay awaits independent native verification before egress. Do
@@ -197,8 +200,9 @@ await assert.rejects(submitScopedChild(parent, widening, nativePort), /scope|aut
 
 ## Task 6: Trusted parent limits and confinement capability reporting
 
-Files: `src/run-limits.ts`, model relay, protected CLI, config/operator,
-`test/run-limits.test.mjs`, operational guide.
+Files: `src/run-limits.ts`, `src/linux-sandbox.ts`, `src/unix-relay.ts`, model
+relay, protected CLI, guest CLI, config/operator, `test/run-limits.test.mjs`,
+`test/linux-sandbox.test.mjs`, operational guide.
 
 - [ ] Add provider timeout/cap/token reservation, resume-budget, hung-child kill,
   post-dispatch interruption and native codemode refusal tests.
@@ -217,8 +221,16 @@ assert.equal((await openRunBudget(state, limits)).remainingRequests, 0);
   a wall deadline in the parent with graceful signal then bounded hard kill;
   never reset the journal or clear outcome uncertainty. Version the existing
   two fixed provider profiles without silently adding a route or fallback.
-- [ ] Report macOS guest boundary, Linux recipe boundary and unavailable Linux
-  whole-guest boundary separately. Native arbitrary codemode/deferred execution
+- [ ] Implement a bubblewrap guest profile with `--unshare-all`,
+  `--die-with-parent`, `--new-session`, a read-only installed Node/runtime,
+  writable isolated profile, private `/tmp`, and only two mounted parent-owned
+  Unix sockets. A parent `createUnixRelay(socketPath, fixedLoopbackPort)` forwards
+  to one fixed service; guest `createLoopbackRelay(socketPath)` supplies the SDK's
+  loopback HTTP route. Paths, credentials, gateway and model profiles stay pinned.
+  Refuse unavailable user namespaces/bubblewrap, shared-host networking, extra
+  host sockets and journal/config/source mounts. Run real namespace probes where
+  available and record platform or outer-container restrictions explicitly.
+  Native arbitrary codemode/deferred execution
   stays disabled; `read_many` is the enabled bounded aggregate alternative.
 - [ ] Run full tests, record evidence, commit `feat: enforce parent run limits
   and confinement profiles`, obtain both reviews and fix.
