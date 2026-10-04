@@ -187,6 +187,8 @@ await assert.rejects(importContinuation(tampered, binding), /binding|digest|veri
 
 ## Task 5: Native semantic and child-authority integration gates
 
+The detailed port requirements are [trusted native embedding contracts](../specs/2026-10-04-native-port-contracts.md).
+
 Files: `src/governance.ts`, `src/delegation.ts`, relay, operator feature table,
 index, `test/governance.test.mjs`, `test/delegation.test.mjs`, compatibility guide.
 
