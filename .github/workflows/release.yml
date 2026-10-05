@@ -129,12 +129,19 @@ jobs:
           node scripts/qualify-release.mjs --release "${RUNNER_TEMP}/chio-release" \
             --work "${RUNNER_TEMP}/chio-consumers" --evidence "${RUNNER_TEMP}/chio-consumer-evidence"
       - name: Dry-run publication
+        env:
+          PACKAGE_VERSION: ${{ steps.identity.outputs.version }}
         run: |
           set -euo pipefail
           cd "${RUNNER_TEMP}/chio-release"
           sha256sum --check ./*.sha256
           artifacts=(./*.tgz)
           test "${#artifacts[@]}" -eq 1
+          # The packed manifest must carry the bound registry name and version.
+          ARCHIVE_MANIFEST="$(tar -xzOf "${artifacts[0]}" package/package.json)" node --input-type=module <<'NODE'
+          const pkg = JSON.parse(process.env.ARCHIVE_MANIFEST);
+          if (pkg.name !== process.env.PACKAGE_NAME || pkg.version !== process.env.PACKAGE_VERSION) throw new Error(`archive identity ${pkg.name}@${pkg.version} is not ${process.env.PACKAGE_NAME}@${process.env.PACKAGE_VERSION}`);
+          NODE
           npm publish "$(realpath "${artifacts[0]}")" --dry-run --ignore-scripts --access public
       - name: Record source and artifact identities
         id: subjects
@@ -237,6 +244,21 @@ jobs:
           NODE
       - name: Pin npm
         run: npm install --global npm@11.8.0 --ignore-scripts --no-audit --no-fund
+      - name: Require npm trusted publishing support
+        run: |
+          set -euo pipefail
+          # npm trusted publishing (OIDC) requires npm 11.5.1 and Node 22.14.0 or later.
+          # No NODE_AUTH_TOKEN is configured; npm exchanges this job's OIDC identity.
+          NPM_VERSION="$(npm --version)" node --input-type=module <<'NODE'
+          const atLeast = (version, minimum) => {
+            const [a, b] = [version, minimum].map(value => value.split(/[.-]/).slice(0, 3).map(part => Number.parseInt(part, 10)));
+            for (let index = 0; index < 3; index++) if (a[index] !== b[index]) return a[index] > b[index];
+            return true;
+          };
+          if (!atLeast(process.env.NPM_VERSION, '11.5.1')) throw new Error(`npm ${process.env.NPM_VERSION} cannot use trusted publishing`);
+          if (!atLeast(process.versions.node, '22.14.0')) throw new Error(`Node ${process.versions.node} cannot use trusted publishing`);
+          console.log(`npm ${process.env.NPM_VERSION} with Node ${process.versions.node} supports trusted publishing`);
+          NODE
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: qualified-package
@@ -248,13 +270,21 @@ jobs:
       - uses: slsa-framework/slsa-verifier/actions/installer@ea584f4502babc6f60d9bc799dbbb13c1caa9ee6 # v2.7.1
       - name: Verify provenance, source, and artifact digests
         working-directory: release
+        env:
+          PACKAGE_VERSION: ${{ needs.build.outputs.version }}
         run: |
           set -euo pipefail
           sha256sum --check SHA256SUMS
           node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs';
           const id = JSON.parse(readFileSync('release-identity.json'));
-          if (id.source !== process.env.GITHUB_SHA || id.repository !== process.env.GITHUB_REPOSITORY || id.ref !== process.env.GITHUB_REF || id.package !== process.env.PACKAGE_NAME) throw new Error('artifact identity mismatch');
+          if (id.source !== process.env.GITHUB_SHA || id.repository !== process.env.GITHUB_REPOSITORY || id.ref !== process.env.GITHUB_REF || id.package !== process.env.PACKAGE_NAME || id.version !== process.env.PACKAGE_VERSION) throw new Error('artifact identity mismatch');
+          NODE
+          artifacts=(./*.tgz)
+          test "${#artifacts[@]}" -eq 1
+          ARCHIVE_MANIFEST="$(tar -xzOf "${artifacts[0]}" package/package.json)" node --input-type=module <<'NODE'
+          const pkg = JSON.parse(process.env.ARCHIVE_MANIFEST);
+          if (pkg.name !== process.env.PACKAGE_NAME || pkg.version !== process.env.PACKAGE_VERSION) throw new Error(`archive identity ${pkg.name}@${pkg.version} is not ${process.env.PACKAGE_NAME}@${process.env.PACKAGE_VERSION}`);
           NODE
           slsa-verifier verify-artifact ./*.tgz  release-identity.json \
             --provenance-path package.intoto.jsonl \
