@@ -111,3 +111,33 @@ test("redacted UUID paths normalize only the selected archive and other absolute
   graph.dependencies["@chio-protocol/pi-plugin"].resolved = "file:/unknown/other.tgz";
   assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-protocol-pi-plugin-0.2.0.tgz").problems.includes("selected archive lacks exactly one absolute graph resolution"));
 });
+
+test("replayed graphs compare after normalizing each project's own archive copy", () => {
+  const graph = parent => JSON.stringify({name: "chio-pi", dependencies: {"@chio-protocol/pi-plugin": {version: "0.2.0", resolved: `file:/work/${parent}/a.tgz`}}});
+  assert.equal(qualify.sameGraph(graph("consumer-base"), graph("replay-base"), "a.tgz"), true);
+  assert.equal(qualify.sameGraph(graph("consumer-base"), graph("replay-base").replace("0.2.0", "0.2.1"), "a.tgz"), false);
+  assert.equal(qualify.sameGraph(graph("consumer-base"), "not json", "a.tgz"), false);
+});
+
+test("cold consumers run the documented single install command with npm defaults", () => {
+  const peers = {"@earendil-works/pi-coding-agent": "1.0.2", "@earendil-works/pi-durable": "1.0.2"};
+  const tooling = ["typescript@7.0.2", "@types/node@26.5.0"];
+  const base = qualify.consumerInstallCommands("base", "chio-protocol-pi-plugin-0.2.0.tgz", peers, tooling);
+  assert.deepEqual(base.documented, ["install", "../chio-protocol-pi-plugin-0.2.0.tgz", "@earendil-works/pi-coding-agent@1.0.2"]);
+  assert.equal(base.registryEquivalent, "npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2");
+  const durable = qualify.consumerInstallCommands("durable", "chio-protocol-pi-plugin-0.2.0.tgz", peers, tooling);
+  assert.deepEqual(durable.documented, ["install", "../chio-protocol-pi-plugin-0.2.0.tgz", "@earendil-works/pi-coding-agent@1.0.2", "@earendil-works/pi-durable@1.0.2"]);
+  assert.equal(durable.registryEquivalent, "npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2 @earendil-works/pi-durable@1.0.2");
+  for (const args of [base.documented, durable.documented]) assert.ok(args.every(arg => !arg.startsWith("-")), `no flags: ${args.join(" ")}`);
+  assert.deepEqual(base.tooling, ["install", "--save-dev", "--save-exact", ...tooling]);
+});
+
+test("help runs only executables that direct dependencies declare", async t => {
+  const dir = await scratch(t); const modules = join(dir, "node_modules");
+  for (const [name, bin] of [["@scope/direct", {one: "./one.js", two: "./two.js"}], ["single", "./cli.js"], ["dev", {dev: "./dev.js"}], ["hoisted", {hoisted: "./h.js"}]]) {
+    await mkdir(join(modules, ...name.split("/")), {recursive: true});
+    await writeFile(join(modules, ...name.split("/"), "package.json"), JSON.stringify({name, bin}));
+  }
+  await writeFile(join(dir, "package.json"), JSON.stringify({dependencies: {"@scope/direct": "1.0.0", single: "1.0.0"}, devDependencies: {dev: "1.0.0"}}));
+  assert.deepEqual(qualify.directDependencyBins(dir), ["dev", "one", "single", "two"]);
+});
