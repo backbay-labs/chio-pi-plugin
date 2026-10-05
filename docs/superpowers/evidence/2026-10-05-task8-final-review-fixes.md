@@ -253,3 +253,160 @@ module loading took many minutes per process, so suites ran in-process:
 `test/host-contract.test.mjs` (the A1-M6 argument check) and
 `test/governance-cli.test.mjs` were not run on Linux; both changes they cover
 are platform-neutral and pass on the host.
+
+## Area B: coding resource participant, ledger, repository and recipes
+
+Findings fixed: B-I1, B-I2, B-I3, B-I4, B-I5, B-M1, B-M2, B-M3, B-M4, B-M7,
+plus the Task 7b deferred Seatbelt regression broadening and the four macOS
+runtime-closure tests. B-M5 (recipe disk and memory bounds) and B-M6 (scoped
+search refusing on a binary or overlong first line) remain follow-ups.
+
+### B-I1: leftover job files fenced the resource
+
+Before: after the recipe process group was proven gone, any failure to remove
+the job tree became a post-intent `FatalResourceError`, so the test operation
+never completed and every later call closed the transport. Reproduced with real
+`sandbox-exec`, the production policy and Homebrew Node 25.5.0: a test leaving
+`TMPDIR/fixture` at mode 0500 with a file inside (EACCES), and a test removing
+its own TMPDIR (ENOENT). A non-Node executable under the same policy could also
+set `uchg` on job output with `chflags`.
+
+Now `removeJob` runs only after proven group absence, as before. It treats an
+absent job root as removed, restores owner `rwx` on directories found by `lstat`
+(never following links) and retries, and renames a tree that still cannot be
+removed to `quarantine-<job>-<uuid>` inside the private job root, then fsyncs
+it and completes. A failed quarantine rename still fences. The Seatbelt policy
+adds `(deny file-write-flags file-write-acl)`, so job output cannot gain owner
+flags or ACLs that the owner could not clear; Node file operations including
+`copyFile` (which copies flags and ACLs when allowed) still work. Unproved group
+absence is unchanged and still fences.
+
+### B-I2: a crash inside a commit made the ledger unreadable
+
+Before: a hot `ledger.sqlite-journal` made the read-only pre-check of `serve`
+fail with SQLite extended code 776 (`SQLITE_READONLY_ROLLBACK`), so serve never
+reached the locked read-write open that rolls it back; `inspect` and `export`
+failed with "attempt to write a readonly database".
+
+Now a read-only open maps 776 to an explicit error naming the journal and
+saying never to delete it. `serve` treats it as rollback needed and continues
+to the exclusive owner lock and read-write open, where SQLite rolls back and the
+ledger identity and generations are verified as before. `inspect` and `export`
+stay read-only and refuse with that message. `CODING-RESOURCE.md` documents
+never deleting `ledger.sqlite-journal` and the recovery order (recover a
+proven-dead owner lock, then serve).
+
+### B-I4: the ledger became unopenable at 256 MiB
+
+The ledger and its sidecars are now validated by `privateFileIdentity`: no-link
+path walk, `lstat`, nonblocking `O_NOFOLLOW` open and `fstat` (type, owner, mode,
+link count, device and inode), with no read and no size cap. No growth cap was
+added; disk bounds remain the B-M5 follow-up.
+
+### B-I3: results over the 1 MiB canonical limit closed the transport
+
+Tool results, diffs, repository context, read and read_many children and search
+matches are now sized with plain JSON byte length (equal to the canonical length)
+before canonical encoding, so they return their documented `result_bound`,
+`diff_bound`, `context_bound`, `read_many_bound` or truncation outcome. A
+candidate whose manifest would exceed the limit is `source_bound` (a patch adding
+long paths to a near-limit manifest previously closed the transport too). The
+operation binding is guarded the same way.
+
+### B-I5: literal edits stripped a UTF-8 BOM
+
+Source text is decoded with `ignoreBOM: true`; reads, diffs and edits keep a
+leading U+FEFF.
+
+### Minor findings
+
+- B-M1: the JSONL reader now accepts lines up to a fixed ceiling of 1 MiB of
+  arguments plus the largest request envelope (`MAX_REQUEST_FRAME_BYTES`), which
+  covers every argument object Chio's 1 MiB canonical binding admits. Arguments
+  whose canonical size plus that envelope exceed `maxInputBytes` receive an
+  unledgered `input_bound` tool error, like `invalid_arguments`; exact retained
+  replay is checked first. Longer or malformed lines still close the transport.
+  The worst-case reader memory is unchanged, since `maxInputBytes` could already
+  be 1 MiB.
+- B-M2: an unpaired surrogate in a replacement or edit, including an `oldText`
+  that splits a pair, is a retained `invalid_patch`.
+- B-M3: a missing, replaced or permission-changed pinned executable, runtime
+  file or dependency chain is a retained `recipe_pin`; a missing or unsafe
+  `sandbox-exec` or `bwrap` is `unsupported_sandbox`.
+- B-M4: Linux recipes run with bubblewrap `--disable-userns` (supported by the
+  pinned 0.8.0), and the recipe seccomp filter also denies `unshare` (arm64 97,
+  x64 272) and `io_uring_setup`/`enter`/`register` (425 to 427 on both).
+- B-M7: `serverInfo.version` is read from the installed `package.json`.
+- Task 7b: the Seatbelt regression parses the policy and requires a filter list
+  in every `allow` (including multi-operation rules) and a nonempty
+  `require-any`/`require-all`/`require-not`; it checks the checker against
+  filterless and empty forms and, on macOS, the actual policy for the running
+  Node. The four macOS closure tests now skip with a reason when the running Node
+  lacks the non-system dylibs they need (`extra` needs none and still runs).
+- `RUN-LIMITS-LINUX.md` no longer calls the recipe filter "unchanged"; it links
+  the recipe confinement section.
+
+### Existing tests changed
+
+The framing test now writes `MAX_REQUEST_FRAME_BYTES + 1` bytes, since a line
+just over `maxInputBytes` is now read and answered. The Seatbelt regex test was
+replaced by the structural check above. The closure tests no longer assert a
+closure inside the test body. The fixture helper accepts an executable and argv
+and caches macOS runtime pins per executable.
+
+### RED and GREEN
+
+RED, unchanged `src` at `ddfac37` with the new tests, Homebrew Node v25.5.0:
+`node --test --test-name-pattern "B-I|B-M|Seatbelt|macOS runtime closure|macOS
+recipe policy|bounded framing|x32" test/coding-resource.test.mjs
+test/coding-confinement.test.mjs` ran 26 tests: 20 failed, 5 passed (the four
+closure fixtures on this Homebrew Node and the original x32 test), 1 skipped
+(Linux only). Each new regression failed for its finding: closed transports for
+B-I1, B-I3, B-M1 and B-M3; "attempt to write a readonly database" instead of a
+named journal (B-I2); inspect exit 1 on the 300 MiB ledger (B-I4); the BOM lost
+(B-I5); surrogate patches applied (B-M2); syscall 425 allowed (B-M4); version
+"0.1.0" (B-M7); no flags rule and `chflags uchg` succeeding under the policy.
+
+GREEN, Homebrew Node v25.5.0 (npm 11.8.0), macOS arm64:
+
+- Same selection: 25 passed, 1 skipped.
+- `node --test test/coding-resource.test.mjs test/coding-confinement.test.mjs`:
+  103 tests, 102 passed, 1 skipped (the Linux-only unshare probe).
+- System-only Node v26.7.0 (no non-system dylibs),
+  `node --test test/coding-confinement.test.mjs`: 15 passed, 4 skipped (three
+  closure fixtures with their reason, plus the Linux probe), 0 failed.
+- `npm run typecheck`: clean. `npm test`: 442 tests, 441 passed, 1 skipped,
+  0 failed, no flake.
+
+### Linux
+
+Pinned image
+`sha256:6d5bbc54ae9fd29177042755c41667006b708874c7ed6d489d543e931e33fe23`
+(Node 22.23.1, bubblewrap 0.8.0, arm64), disposable
+`docker run --rm --privileged --network none` with the worktree mounted
+read-only at `/input`. The privileged outer container is needed for nested
+namespaces on this VM; it does not qualify ordinary Docker defaults or P5. The
+shared Docker VM was heavily loaded by other work (load average up to about 200,
+3.8 GiB nearly full), so suites ran one file at a time.
+
+- Bubblewrap layer alone, no seccomp: `bwrap --unshare-all --unshare-user
+  --disable-userns ... /usr/bin/unshare --user /nonexistent-probe` printed
+  "unshare failed: No space left on device"; the same command without
+  `--disable-userns` created the namespace and failed only to execute the absent
+  command (exit 127).
+- `node test/helpers/coding-linux-runner.mjs test/coding-confinement.test.mjs`:
+  15 tests, 12 passed, 2 skipped (macOS only), 1 failed. Both B-I1 triggers, the
+  publication `diff_bound` and the real B-M4 probe (a `/usr/bin/unshare` recipe
+  under the full sandbox reports "unshare failed: Operation not permitted")
+  passed. The failure is the known `real recipe output bounds` flake (`timeout`
+  instead of `output`, 300 ms recipe timeout).
+- `node test/helpers/coding-linux-runner.mjs test/coding-resource.test.mjs`:
+  85 tests, 84 passed, 1 failed: the unchanged FIFO sidecar test's `inspect`
+  exceeded its 1 s kill timeout under that load. A rerun of it passed.
+- Control for the output-bounds test: the same test against a `ddfac37` build
+  (no `--disable-userns`, original filter) failed identically twice in the same
+  VM. A direct timing probe of the production bubblewrap argv measured the same
+  first-output latency with and without `--disable-userns` (median 30 ms, 8 runs
+  each). A participant probe showed the sandboxed Node sometimes not starting
+  within 300 ms right after the pre-launch executable hash, so this is the
+  existing load-sensitive flake, not a change from this area.
