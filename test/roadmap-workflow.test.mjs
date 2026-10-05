@@ -7,8 +7,9 @@ import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import test from "node:test";
 import {canonicalJson} from "../dist/tool-registry.js";
-import {BUGGY_SOURCE, FIXED_SOURCE, LAYERS, SOURCE_PATH, confinementAvailable, runRoadmapWorkflow} from "./helpers/roadmap-workflow.mjs";
-import {componentChecks, uncertainChecks} from "../scripts/qualify-roadmap.mjs";
+import {ArtifactObserver, BUGGY_SOURCE, FILES, FIXED_SOURCE, LAYERS, SOURCE_PATH, confinementAvailable, runRoadmapWorkflow} from "./helpers/roadmap-workflow.mjs";
+import {data, initialized, meta, stdio} from "./helpers/coding-fixture.mjs";
+import {componentChecks, qualifyRoadmap, uncertainChecks} from "../scripts/qualify-roadmap.mjs";
 
 // Evidence layer: signed bridge fixture. A scripted kernel signs with an
 // ephemeral fixture key and forwards to the real coding participant over its
@@ -90,9 +91,12 @@ test("signed bridge fixture: confined bug fix, reviewed publication, response lo
     assert.equal(evidence.kernel.acksDuringRecovery, 1, "only the original completion is acknowledged");
     assert.equal(originalArtifact.sha256, recoveredArtifact.sha256);
     assert.equal(publicationEffects, 1);
+    assert.deepEqual(evidence.publications.ledgerPublished.map(item => item.artifactSha256), [originalArtifact.sha256], "the unsigned ledger records one publication operation");
+    assert.deepEqual(evidence.publications.ledgerUnresolved, []);
+    assert.equal(evidence.publications.ledgerRefused, 1, "the refused failing-lineage publication is not an effect");
     assert.deepEqual(evidence.kernel.resourcePublishCalls, {refusedBeforeEffects: 1, published: 1});
 
-    // Independent filesystem observer, outside the participant and kernel fixture.
+    // Independent observer, outside the scripted kernel and the hosts.
     assert.deepEqual(await observer.listing(), [originalArtifact.sha256]);
     const now = await observer.artifact(originalArtifact.sha256);
     assert.equal(now.sha256, originalArtifact.sha256);
@@ -149,6 +153,49 @@ test("signed bridge fixture: resource commit before native completion evidence s
   } finally {await run.close();}
 });
 
+test("independent observer counts a second publication operation even when content addressing hides it", {skip: confined.skip, timeout: 60000}, async t => {
+  // Guard check: recovery that published again with identical bytes leaves the
+  // artifact root unchanged. The observer must still report two effects.
+  const resource = await initialized(); t.after(() => resource.close());
+  const observer = new ArtifactObserver(resource); t.after(() => observer.close());
+  const io = stdio(resource); t.after(() => io.close());
+  const tested = data(await io.call("test_recipe", {sourceDigest: resource.sourceDigest, recipe: "unit"}, meta("1")));
+  assert.equal(tested.success, true, tested.stderr);
+  const args = {sourceDigest: resource.sourceDigest, testOperationId: "1".repeat(64), testResultSha256: tested.resultSha256, recipeSha256: tested.recipeSha256, destination: "review"};
+  const first = data(await io.call("publish_artifact", args, meta("2")));
+  let counted = await observer.publications();
+  assert.deepEqual([counted.published.length, counted.artifacts, counted.effects], [1, [first.artifactSha256], 1]);
+  await io.call("publish_artifact", args, meta("2", {chioAttemptId: "exact-replay"}));
+  counted = await observer.publications();
+  assert.equal(counted.effects, 1, "exact replay of the same operation is not a new publication");
+  const second = data(await io.call("publish_artifact", args, meta("3")));
+  assert.equal(second.artifactSha256, first.artifactSha256, "identical content maps to the same content-addressed artifact");
+  counted = await observer.publications();
+  assert.deepEqual(await observer.listing(), [first.artifactSha256], "the artifact root alone cannot see the second publication");
+  assert.deepEqual(observer.publicationNames(), [first.artifactSha256], "an artifact-only count would still report one");
+  assert.deepEqual(counted.published.map(item => item.operationId), ["2".repeat(64), "3".repeat(64)]);
+  assert.equal(counted.effects, 2, "the observer reports the duplicate publication");
+});
+
+test("qualification command preserves a stopped workflow as failed checks citing its status", {skip: confined.skip, timeout: 300000}, async () => {
+  // Pre-fixed source: the first confined run passes, so the bug is not
+  // demonstrated and both scenarios must stop before any patch or publication.
+  const result = await qualifyRoadmap({profile: "component", workflowOptions: {files: {...FILES, [SOURCE_PATH]: FIXED_SOURCE}}});
+  assert.equal(result.status, "failed");
+  assert.equal(result.errors, undefined, JSON.stringify(result.errors));
+  assert.equal(result.workflow.status, "bug-not-demonstrated");
+  assert.equal(result.uncertainPublication.status, "bug-not-demonstrated");
+  assert.equal(result.workflow.beforeTest.passed, true);
+  assert.equal(result.workflow.patch, undefined); assert.equal(result.workflow.publicationEffects, 0);
+  assert.equal(result.layers.signedBridgeFixture.status, "failed");
+  assert.equal(result.layers.localConfinement.status, "passed", "the stopped run still executed in real confinement");
+  const failed = result.checks.filter(check => !check.passed);
+  assert.ok(failed.length > 0);
+  assert.ok(failed.every(check => check.detail.workflowStatus === "bug-not-demonstrated"), JSON.stringify(failed));
+  assert.equal(failed.some(check => /Cannot read properties/.test(check.detail.error ?? "")), false, "partial evidence fails checks instead of crashing them");
+  assert.deepEqual(result.checks.find(check => check.scenario === "recovered" && check.name.startsWith("workflow completed")).detail, {workflowStatus: "bug-not-demonstrated", observed: "bug-not-demonstrated"});
+});
+
 function runScript(args) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [script, ...args], {stdio: ["ignore", "pipe", "pipe"], env: {PATH: dirname(process.execPath), LANG: "C"}});
@@ -190,6 +237,14 @@ test("qualification command labels layers and refuses an unavailable native prof
   assert.equal(runner.code, 3, "declared prerequisites alone are not native acceptance");
   assert.deepEqual(JSON.parse(runner.stdout).refusal.missing, ["nativeAcceptanceRunner"]);
 
+  if (confined.skip || process.platform === "linux") {
+    // The spawned command receives no Linux probe pins, so real confinement is
+    // unavailable to it here. It must refuse rather than run recipes unconfined.
+    const unconfined = await runScript(["--profile", "component"]);
+    assert.equal(unconfined.code, 3, unconfined.stderr);
+    assert.match(unconfined.stderr, /Refused component profile: .*unconfined/);
+    assert.deepEqual(JSON.parse(unconfined.stdout).refusal.missing, ["localConfinement"]);
+  }
   assert.equal((await runScript(["--profile", "replacement"])).code, 2);
   assert.equal((await runScript(["--unknown-flag"])).code, 2);
   const before = await readFile(out, "utf8");

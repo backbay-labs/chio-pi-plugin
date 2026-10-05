@@ -102,60 +102,87 @@ export async function nativeRefusal(profilePath) {
   return {reason: "Every declared native prerequisite is present and hash-pinned, but this candidate ships no qualified native acceptance runner. Native coding-workflow acceptance remains open; no fixture result is substituted.", missing: ["nativeAcceptanceRunner"], verified, prerequisites};
 }
 
+/** Each check is evaluated independently. A stopped or partial workflow yields
+ * failed checks citing its retained status instead of throwing. */
+function checker(e) {
+  const checks = [];
+  async function check(name, evaluate) {
+    try {
+      const value = await evaluate();
+      const passed = value === true || value?.passed === true;
+      checks.push({name, passed, ...(passed ? {} : {detail: {workflowStatus: e?.status ?? null, ...(value?.detail === undefined ? {} : {observed: value.detail})}})});
+    } catch (error) {checks.push({name, passed: false, detail: {workflowStatus: e?.status ?? null, error: error instanceof Error ? error.message : String(error)}});}
+  }
+  return {checks, check};
+}
+
 /** Independent checks over an open recovered run. Reads the native journal,
- * the operator configuration, the artifact store and the import originals. */
+ * the operator configuration, the artifact store, the unsigned resource ledger
+ * and the import originals. */
 export async function componentChecks(run, backend) {
   const {verifyCompletedOutcome} = await import("@chio/bridge");
   const {canonicalJson} = await import("../dist/tool-registry.js");
   const {evidence: e, observer, resource, native: f} = run;
-  const checks = []; const check = (name, passed, detail) => checks.push({name, passed: passed === true, ...(detail === undefined ? {} : {detail})});
+  const {checks, check} = checker(e);
+  await check("workflow completed every stage through second-host recovery", () => ({passed: e.status === "recovered", detail: e.status}));
   const operator = JSON.parse(await readFile(resource.configPath, "utf8"));
   const {recipeSha256, ...recipeBody} = operator.recipes[0];
   const imported = await readFile(join(operator.repositoryRoot, "src/expiry.mjs"), "utf8");
   const fixed = imported.replace("now > deadline", "now >= deadline");
-  const journal = async id => await f.record(id).catch(() => null);
+  const journal = async id => typeof id === "string" ? await f.record(id).catch(() => null) : null;
   const signed = [];
-  for (const step of e.steps) {
+  for (const step of e.steps ?? []) {
     const record = await journal(step.nativeRequestId);
     signed.push({step, record, ok: record?.state === "completed" && record.request?.tool === step.kernelTool && verifyCompletedOutcome(record.outcome, f.config.execution, record.request)
       && record.acknowledged === true && record.hostDeliveryConfirmed === true});
   }
-  check("every admitted step has a verified signed completion delivered and acknowledged at the native gateway", signed.length === 9 && signed.every(item => item.ok), signed.filter(item => !item.ok).map(item => item.step.name));
+  await check("every admitted step has a verified signed completion delivered and acknowledged at the native gateway",
+    () => ({passed: signed.length === 9 && signed.every(item => item.ok), detail: {steps: signed.length, unverified: signed.filter(item => !item.ok).map(item => item.step.name)}}));
   const testData = name => {const item = signed.find(value => value.step.name === name); return item?.record ? JSON.parse(item.record.outcome.result.content[0].text) : null;};
   const before = testData("before-test"); const after = testData("after-test");
   const bound = result => {if (!result) return false; const {resultSha256, ...body} = result; return sha256(canonicalJson(body)) === resultSha256;};
-  check("operator recipe digest recomputes from the operator configuration", sha256(canonicalJson(recipeBody)) === recipeSha256);
-  check("first confined run of the pinned recipe fails, only at the equality boundary", before?.success === false && before.sandbox === backend && bound(before)
+  await check("operator recipe digest recomputes from the operator configuration", () => sha256(canonicalJson(recipeBody)) === recipeSha256);
+  await check("first confined run of the pinned recipe fails, only at the equality boundary", () => before?.success === false && before.sandbox === backend && bound(before)
     && /✖ isExpired is true at the exact deadline|not ok \d+ - isExpired is true at the exact deadline/.test(before.stdout) && /(?:#|ℹ) fail 1$/m.test(before.stdout) && /(?:#|ℹ) pass 2$/m.test(before.stdout));
-  check("after the patch the same pinned recipe passes in confinement", after?.success === true && after.sandbox === backend && bound(after)
-    && before.recipeSha256 === recipeSha256 && after.recipeSha256 === recipeSha256 && after.sourceDigest === e.patch.sourceDigest);
-  check("patch was a full-file compare-and-swap against the imported original", e.patch.arguments.changes[0].expectedFileSha256 === sha256(imported) && e.patch.previousSourceDigest === e.source.initialDigest);
-  const forbidden = e.steps.filter(step => step.name.startsWith("forbidden-"));
-  const legitimateAfter = e.steps.slice(e.steps.findIndex(step => step.name.startsWith("forbidden-")) + forbidden.length).filter(step => !step.toolError);
-  check("forbidden access was a retained completed tool error, not a native denial, with no fence or artifact", forbidden.length === 2
+  await check("after the patch the same pinned recipe passes in confinement", () => after?.success === true && after.sandbox === backend && bound(after)
+    && before.recipeSha256 === recipeSha256 && after.recipeSha256 === recipeSha256 && after.sourceDigest === e.patch?.sourceDigest);
+  await check("patch was a full-file compare-and-swap against the imported original", () => e.patch?.arguments.changes[0].expectedFileSha256 === sha256(imported) && e.patch.previousSourceDigest === e.source?.initialDigest);
+  const steps = e.steps ?? []; const forbidden = steps.filter(step => step.name.startsWith("forbidden-"));
+  await check("forbidden access was a retained completed tool error, not a native denial, with no fence or artifact", () => forbidden.length === 2
     && forbidden.every(step => signed.find(item => item.step === step)?.record?.outcome.result.isError === true && step.verdict === "allow")
-    && e.forbidden.every(item => item.nativeDenial === false && item.fencedAfterDelivery === false && item.artifactsAfter === 0));
-  check("legitimate work followed under one unchanged retained authority", legitimateAfter.length >= 3
-    && e.steps.every(step => canonicalJson(step.authority) === canonicalJson(e.authority)) && e.authority.callerCapabilitySha256 === operator.allowedCallerCapabilitySha256[0]);
+    && e.forbidden?.length === 2 && e.forbidden.every(item => item.nativeDenial === false && item.fencedAfterDelivery === false && item.artifactsAfter === 0));
+  await check("legitimate work followed under one unchanged retained authority", () => {
+    const legitimateAfter = steps.slice(steps.findIndex(step => step.name.startsWith("forbidden-")) + forbidden.length).filter(step => !step.toolError);
+    return forbidden.length === 2 && legitimateAfter.length >= 3 && steps.every(step => canonicalJson(step.authority) === canonicalJson(e.authority))
+      && e.authority?.callerCapabilitySha256 === operator.allowedCallerCapabilitySha256[0];
+  });
+  const publications = await observer.publications();
   const names = await observer.listing();
   const artifact = names.length === 1 ? await observer.artifact(names[0]) : null;
-  check("exactly one actual publication effect exists in the artifact store", names.length === 1 && observer.publicationNames().length === 1 && e.publicationEffects === 1, names);
-  check("artifact is content addressed and equals the recovered artifact", artifact?.contentAddressed === true && artifact.sha256 === e.recoveredArtifact?.sha256 && artifact.sha256 === e.originalArtifact?.sha256);
-  check("artifact was never replaced during recovery", artifact?.ino === e.originalArtifact?.ino && artifact?.mtimeMs === e.originalArtifact?.mtimeMs && artifact?.fileMode === 0o400 && artifact?.directoryMode === 0o500);
+  await check("exactly one actual publication effect exists in the resource ledger and artifact store", () => ({
+    passed: publications.published.length === 1 && publications.unresolved.length === 0 && publications.artifacts.length === 1 && names.length === 1
+      && publications.published[0].artifactSha256 === names[0] && publications.effects === 1 && e.publicationEffects === 1,
+    detail: {ledgerPublished: publications.published.length, ledgerUnresolved: publications.unresolved.length, artifacts: publications.artifacts, listing: names}}));
+  await check("artifact is content addressed and equals the recovered artifact", () => artifact?.contentAddressed === true && artifact.sha256 === e.recoveredArtifact?.sha256 && artifact.sha256 === e.originalArtifact?.sha256);
+  await check("artifact was never replaced during recovery", () => artifact?.ino === e.originalArtifact?.ino && artifact?.mtimeMs === e.originalArtifact?.mtimeMs && artifact?.fileMode === 0o400 && artifact?.directoryMode === 0o500);
   const bundle = artifact?.bundle;
-  const bundledSource = bundle?.files.find(file => file.path === "src/expiry.mjs");
-  check("bundle binds the exact successfully tested source, test result, recipe and destination", bundle?.destination === "review" && bundle.sourceDigest === e.patch.sourceDigest
-    && bundle.testOperationId === e.afterTest.operationId && bundle.testResultSha256 === after?.resultSha256 && bundle.test.success === true && bound(bundle.test)
+  await check("bundle binds the exact successfully tested source, test result, recipe and destination", () => bundle?.destination === "review" && bundle.sourceDigest === e.patch?.sourceDigest
+    && bundle.testOperationId === e.afterTest?.operationId && bundle.testResultSha256 === after?.resultSha256 && bundle.test.success === true && bound(bundle.test)
     && bundle.recipeSha256 === recipeSha256 && bundle.unsigned === true && bundle.authority === false);
-  check("reviewed diff in the bundle is exactly the equality fix", canonicalJson(bundle?.diff.changes) === canonicalJson([{path: "src/expiry.mjs", before: imported, after: fixed}]) && bundle?.diff.diffSha256 === e.diff.diffSha256 && fixed !== imported);
-  check("published source is the fixed source and import originals are unchanged", bundledSource && Buffer.from(bundledSource.content, "base64").toString("utf8") === fixed
-    && await observer.importedSource() === imported && await observer.generationSource(e.source.initialDigest) === imported && await observer.generationSource(e.patch.sourceDigest) === fixed);
-  const original = await journal(e.firstHost.nativeRequestId);
-  check("publication response was lost after the native gateway retained a verified completion", e.firstHost.publicationResponse === "lost" && e.firstHost.guestUnresolved === true
+  await check("reviewed diff in the bundle is exactly the equality fix", () => fixed !== imported && bundle !== undefined && bundle.diff.diffSha256 === e.diff?.diffSha256
+    && canonicalJson(bundle.diff.changes) === canonicalJson([{path: "src/expiry.mjs", before: imported, after: fixed}]));
+  await check("published source is the fixed source and import originals are unchanged", async () => {
+    const bundledSource = bundle?.files.find(file => file.path === "src/expiry.mjs");
+    return bundledSource !== undefined && Buffer.from(bundledSource.content, "base64").toString("utf8") === fixed && await observer.importedSource() === imported
+      && await observer.generationSource(e.source?.initialDigest) === imported && await observer.generationSource(e.patch?.sourceDigest) === fixed;
+  });
+  const original = await journal(e.firstHost?.nativeRequestId);
+  await check("publication response was lost after the native gateway retained a verified completion", () => e.firstHost?.publicationResponse === "lost" && e.firstHost.guestUnresolved === true
     && original?.state === "completed" && verifyCompletedOutcome(original.outcome, f.config.execution, original.request));
-  check("second actual host recovered the original outcome without any dispatch", e.secondHost.executorCalls === 0 && e.kernel.nativeCallsDuringRecovery === 0
-    && e.kernel.resourceDispatchesDuringRecovery === 0 && e.secondHost.recoveredOutcomeDigest === (original ? sha256(canonicalJson(original.outcome)) : undefined));
-  check("only the original completion was acknowledged and its fence cleared", e.kernel.acksDuringRecovery === 1 && original?.acknowledged === true && original.hostDeliveryConfirmed === true && e.secondHost.fencedAfterRecovery === false);
+  await check("second actual host recovered the original outcome without any dispatch", () => original !== null && e.secondHost?.executorCalls === 0 && e.kernel?.nativeCallsDuringRecovery === 0
+    && e.kernel.resourceDispatchesDuringRecovery === 0 && e.secondHost.recoveredOutcomeDigest === sha256(canonicalJson(original.outcome)));
+  await check("only the original completion was acknowledged and its fence cleared", () => e.kernel?.acksDuringRecovery === 1 && original?.acknowledged === true
+    && original.hostDeliveryConfirmed === true && e.secondHost?.fencedAfterRecovery === false);
   return checks;
 }
 
@@ -163,20 +190,27 @@ export async function componentChecks(run, backend) {
 export async function uncertainChecks(run) {
   const {canonicalJson} = await import("../dist/tool-registry.js");
   const {evidence: e, observer, native: f} = run;
-  const checks = []; const check = (name, passed, detail) => checks.push({name, passed: passed === true, ...(detail === undefined ? {} : {detail})});
-  const record = await f.record(e.firstHost.nativeRequestId).catch(() => null);
-  check("native original remains unknown without a signed completion", record?.state === "unknown" && record.outcome?.evidence === "unverified" && record.outcome.receipt === undefined);
+  const {checks, check} = checker(e);
+  await check("workflow preserved the uncertain publication rather than completing", () => ({passed: e.status === "uncertain-preserved", detail: e.status}));
+  const record = typeof e.firstHost?.nativeRequestId === "string" ? await f.record(e.firstHost.nativeRequestId).catch(() => null) : null;
+  await check("native original remains unknown without a signed completion", () => record?.state === "unknown" && record.outcome?.evidence === "unverified" && record.outcome.receipt === undefined);
+  const publications = await observer.publications();
   const names = await observer.listing(); const artifact = names.length === 1 ? await observer.artifact(names[0]) : null;
-  check("the resource committed exactly one publication before native evidence", names.length === 1 && artifact?.contentAddressed === true && artifact.bundle.sourceDigest === e.patch.sourceDigest && e.publicationEffects === 1);
-  check("second host recovery was refused and no replacement publication was dispatched", e.recoveredArtifact === null && /unknown/.test(e.secondHost.recoveryRefusal ?? "")
-    && e.secondHost.replacementAttempt?.dispatched === false && e.kernel.resourceDispatchesDuringRecovery === 0 && e.kernel.nativeCallsDuringRecovery === 0 && e.kernel.acksDuringRecovery === 0);
-  check("native fence is retained and the unsigned resource ledger cannot clear it", e.secondHost.fencedAfterRecovery === true && e.resourceLedger?.unsigned === true
+  await check("the resource committed exactly one publication before native evidence", () => ({
+    passed: publications.published.length === 1 && publications.unresolved.length === 0 && publications.artifacts.length === 1 && artifact?.contentAddressed === true
+      && publications.published[0].artifactSha256 === artifact.sha256 && artifact.bundle.sourceDigest === e.patch?.sourceDigest && publications.effects === 1 && e.publicationEffects === 1,
+    detail: {ledgerPublished: publications.published.length, ledgerUnresolved: publications.unresolved.length, artifacts: publications.artifacts}}));
+  await check("second host recovery was refused and no replacement publication was dispatched", () => e.recoveredArtifact === null && /unknown/.test(e.secondHost?.recoveryRefusal ?? "")
+    && e.secondHost.replacementAttempt?.dispatched === false && e.kernel?.resourceDispatchesDuringRecovery === 0 && e.kernel.nativeCallsDuringRecovery === 0 && e.kernel.acksDuringRecovery === 0);
+  await check("native fence is retained and the unsigned resource ledger cannot clear it", () => e.secondHost?.fencedAfterRecovery === true && e.resourceLedger?.unsigned === true
     && e.resourceLedger.kernelFenceClearance === false && e.resourceLedger.publishCompleted === true);
-  check("workflow reports preserved uncertainty rather than completion", e.status === "uncertain-preserved" && canonicalJson(e.kernel.resourcePublishCalls) === canonicalJson({refusedBeforeEffects: 1, published: 1}));
+  await check("scripted kernel saw one refused and one committed publication", () => e.kernel !== undefined && canonicalJson(e.kernel.resourcePublishCalls) === canonicalJson({refusedBeforeEffects: 1, published: 1}));
   return checks;
 }
 
-export async function qualifyRoadmap({profile = "component", nativeProfile, trace} = {}) {
+/** workflowOptions is an internal seam for tests (for example selected source
+ * files). The CLI never sets it. */
+export async function qualifyRoadmap({profile = "component", nativeProfile, trace, workflowOptions = {}} = {}) {
   const base = {schema: RESULT_SCHEMA, profile, generatedAt: new Date().toISOString(), environment: environment(),
     layers: {signedBridgeFixture: {status: "not-run", scope: SCOPES.signedBridgeFixture}, localConfinement: {status: "not-run", backend: null, scope: SCOPES.localConfinement},
       nativeKernel: {status: "open", scope: SCOPES.nativeKernel, prerequisites: NATIVE_PREREQUISITES.map(([name, , description]) => ({name, description}))}},
@@ -187,19 +221,20 @@ export async function qualifyRoadmap({profile = "component", nativeProfile, trac
   if (confinement.skip) return {...base, status: "refused", refusal: {reason: confinement.skip, missing: ["localConfinement"]}};
   const result = {...base, layers: {...base.layers, localConfinement: {...base.layers.localConfinement, backend: confinement.backend}}};
   const strip = ({schema: _schema, ...evidence}) => evidence;
-  try {
-    const recovered = await helper.runRoadmapWorkflow({loss: "after-native-retention", trace: trace && (line => trace(`[recovered] ${line}`))});
-    try {result.workflow = strip(recovered.evidence); result.checks.push(...(await componentChecks(recovered, confinement.backend)).map(item => ({scenario: "recovered", ...item})));}
-    finally {await recovered.close();}
-    const uncertain = await helper.runRoadmapWorkflow({loss: "before-native-retention", trace: trace && (line => trace(`[uncertain] ${line}`))});
-    try {result.uncertainPublication = strip(uncertain.evidence); result.checks.push(...(await uncertainChecks(uncertain)).map(item => ({scenario: "uncertain", ...item})));}
-    finally {await uncertain.close();}
-  } catch (error) {
-    // Preserve the failure and every partial result; never retry or replace.
-    result.error = error instanceof Error ? error.message : String(error);
+  const scenarios = [["recovered", "after-native-retention", "workflow", run => componentChecks(run, confinement.backend)], ["uncertain", "before-native-retention", "uncertainPublication", uncertainChecks]];
+  for (const [scenario, loss, field, checks] of scenarios) {
+    try {
+      const run = await helper.runRoadmapWorkflow({...workflowOptions, loss, trace: trace && (line => trace(`[${scenario}] ${line}`))});
+      try {result[field] = strip(run.evidence); result.checks.push(...(await checks(run)).map(item => ({scenario, ...item})));}
+      finally {await run.close();}
+    } catch (error) {
+      // Preserve the failure and every partial result; never retry or replace.
+      (result.errors ??= []).push({scenario, error: error instanceof Error ? error.message : String(error)});
+    }
   }
-  const passed = result.error === undefined && result.checks.length > 0 && result.checks.every(item => item.passed);
-  const confined = [result.workflow?.beforeTest, result.workflow?.afterTest].every(test => test?.sandbox === confinement.backend);
+  const passed = result.errors === undefined && result.checks.length > 0 && result.checks.every(item => item.passed);
+  const tests = [result.workflow?.beforeTest, result.workflow?.afterTest].filter(Boolean);
+  const confined = tests.length > 0 && tests.every(test => test.sandbox === confinement.backend);
   result.layers.signedBridgeFixture.status = passed ? "passed" : "failed";
   result.layers.localConfinement.status = confined ? "passed" : "failed";
   return {...result, status: passed && confined ? "passed" : "failed"};
@@ -223,7 +258,11 @@ async function main() {
   if (out) await writeFile(out, text, {flag: "wx", mode: 0o600});
   process.stdout.write(text);
   if (result.status === "refused") {process.stderr.write(`Refused ${values.profile} profile: ${result.refusal.reason}\n`); return EXIT.refused;}
-  if (result.status !== "passed") {process.stderr.write(`Qualification failed; evidence preserved${result.error ? `: ${result.error}` : ""}.\n`); return EXIT.failed;}
+  if (result.status !== "passed") {
+    const stopped = [result.workflow?.status, result.uncertainPublication?.status].filter(Boolean).join(", ");
+    process.stderr.write(`Qualification failed; evidence preserved${stopped ? ` (workflow status: ${stopped})` : ""}${result.errors ? `: ${result.errors.map(item => item.error).join("; ")}` : ""}.\n`);
+    return EXIT.failed;
+  }
   process.stderr.write("Component qualification passed. Signed bridge fixture evidence only; native kernel acceptance remains open.\n");
   return EXIT.passed;
 }

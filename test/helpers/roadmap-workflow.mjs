@@ -51,10 +51,12 @@ export function confinementAvailable() {
   return {skip: "real local recipe confinement is unavailable here (Linux needs the pinned-image runner); refusing to run unconfined", backend: null};
 }
 
-/** Independent observer: reads the private roots directly, outside the
- * participant, the scripted kernel and the hosts. */
+/** Independent observer: reads the private roots directly and the unsigned
+ * resource ledger through its read-only operator commands, outside the
+ * scripted kernel and the hosts. */
 export class ArtifactObserver {
   constructor(resource) {
+    this.configPath = resource.configPath;
     this.artifactRoot = resource.root("artifacts"); this.repositoryRoot = resource.root("repository"); this.stateRoot = resource.root("state");
     this.events = []; this.seen = new Set();
     this.watcher = watch(this.artifactRoot, (type, name) => this.events.push({type, name: name === null ? null : String(name)}));
@@ -75,6 +77,34 @@ export class ArtifactObserver {
     const names = new Set(this.seen);
     for (const event of this.events) if (/^[a-f0-9]{64}$/.test(event.name ?? "")) names.add(event.name);
     return [...names].sort();
+  }
+  /** Publication operations in the unsigned resource ledger. Storage is
+   * content addressed, so an identical second publication leaves the artifact
+   * root unchanged; the ledger still records it as another completed operation.
+   * Exact replay of one operation is not a new operation. */
+  async ledgerPublications() {
+    const inspection = await command(["inspect", "--config", this.configPath]);
+    if (inspection.code !== 0) throw new Error("Unsigned resource ledger inspection failed");
+    const operations = JSON.parse(inspection.stdout).operations.filter(operation => operation.tool === "publish_artifact");
+    const published = []; const refused = []; const unresolved = [];
+    for (const operation of operations) {
+      if (operation.state !== "completed") {unresolved.push(operation.operationId); continue;}
+      const exported = await command(["export", "--config", this.configPath, "--operation", operation.operationId]);
+      if (exported.code !== 0) throw new Error("Unsigned resource ledger export failed");
+      const result = JSON.parse(exported.stdout).result;
+      if (result?.isError === true) refused.push(operation.operationId);
+      else published.push({operationId: operation.operationId, artifactSha256: JSON.parse(result.content[0].text).artifactSha256});
+    }
+    return {published, refused, unresolved};
+  }
+  /** Actual publication effects: the larger of completed ledger publications
+   * (including unresolved publication intents) and distinct content-addressed
+   * artifacts ever observed. Watch events are recorded per artifact name. */
+  async publications() {
+    const ledger = await this.ledgerPublications(); await this.listing(); const artifacts = this.publicationNames();
+    const events = {};
+    for (const event of this.events) if (/^[a-f0-9]{64}$/.test(event.name ?? "")) events[event.name] = (events[event.name] ?? 0) + 1;
+    return {...ledger, artifacts, events, effects: Math.max(ledger.published.length + ledger.unresolved.length, artifacts.length)};
   }
   async importedSource() {return await readFile(join(this.repositoryRoot, SOURCE_PATH), "utf8");}
   async generationSource(digest) {return await readFile(join(this.stateRoot, "generations", digest, SOURCE_PATH), "utf8");}
@@ -114,12 +144,12 @@ async function withLostResponse(url, kernelTool, action) {
  * "after-native-retention" loses only the host response after the native
  * gateway retained the signed completion; "before-native-retention" loses the
  * scripted kernel's completion after the resource committed the publication. */
-export async function runRoadmapWorkflow({loss = "after-native-retention", trace = () => {}} = {}) {
+export async function runRoadmapWorkflow({loss = "after-native-retention", trace = () => {}, files = FILES} = {}) {
   if (!["after-native-retention", "before-native-retention"].includes(loss)) throw new Error("Unknown publication response-loss point");
   const cleanup = []; const closeErrors = [];
   const close = async () => {for (const action of cleanup.splice(0).reverse()) {try {await action();} catch (error) {closeErrors.push(error.message);}} return closeErrors;};
   try {
-    const resource = await initialized({files: FILES, timeoutMs: 10000}); cleanup.push(() => resource.close());
+    const resource = await initialized({files, timeoutMs: 10000}); cleanup.push(() => resource.close());
     const observer = new ArtifactObserver(resource); cleanup.push(async () => observer.close());
     const io = stdio(resource); cleanup.push(() => io.close());
     await io.request("initialize", {protocolVersion: "2025-06-18", capabilities: {}, clientInfo: {name: "scripted-kernel-fixture", version: "1"}});
@@ -226,7 +256,14 @@ export async function runRoadmapWorkflow({loss = "after-native-retention", trace
       nativeKernel: {status: "open", reason: LAYERS.native},
       recipe: {name: resource.config.recipes[0].name, recipeSha256: resource.config.recipes[0].recipeSha256, executableSha256: resource.config.recipes[0].executableSha256, executable: resource.config.recipes[0].executable},
       steps, forbidden: [], beforeTest: null, afterTest: null, originalArtifact: null, recoveredArtifact: null, publicationEffects: 0};
-    const result = (status) => {evidence.status = status; evidence.publicationEffects = observer.publicationNames().length; return {evidence, observer, resource, native: f, kernel, close};};
+    const result = async status => {
+      evidence.status = status;
+      const publications = await observer.publications();
+      evidence.publications = {ledgerPublished: publications.published, ledgerRefused: publications.refused.length, ledgerUnresolved: publications.unresolved,
+        artifacts: publications.artifacts, artifactEvents: publications.events};
+      evidence.publicationEffects = publications.effects;
+      return {evidence, observer, resource, native: f, kernel, close};
+    };
 
     const proxyA = await plugin.startParentGatewayProxy({configPath: f.configPath, native: f.native, binding: f.binding}); cleanup.push(() => proxyA.close());
     const hostA = await openHost("first-host", proxyA); cleanup.push(() => hostA.close());
@@ -236,14 +273,14 @@ export async function runRoadmapWorkflow({loss = "after-native-retention", trace
     const initialDigest = status.data.sourceDigest;
     evidence.source = {initialDigest, path: SOURCE_PATH, buggySha256: sha256(BUGGY_SOURCE), fixedSha256: sha256(FIXED_SOURCE)};
     const located = await step(hostA, "locate", "search", {sourceDigest: initialDigest, literal: "export function isExpired"});
-    if (located.data.matches.length !== 1) return result("source-not-located");
+    if (located.data.matches.length !== 1) return await result("source-not-located");
     evidence.located = located.data.matches[0];
     const read = await step(hostA, "read", "read_range", {sourceDigest: initialDigest, path: evidence.located.path, startLine: 1, endLine: 4});
     evidence.read = {path: read.data.path, fileSha256: read.data.fileSha256, text: read.data.text};
 
     // First real confined run of the pinned recipe must demonstrate the bug.
     evidence.beforeTest = testView(await step(hostA, "before-test", "test_recipe", {sourceDigest: initialDigest, recipe: evidence.recipe.name}));
-    if (evidence.beforeTest.passed || !evidence.beforeTest.failedAtEquality) return result("bug-not-demonstrated");
+    if (evidence.beforeTest.passed || !evidence.beforeTest.failedAtEquality) return await result("bug-not-demonstrated");
 
     // Forbidden resource access under the same retained authority.
     for (const [name, kernelTool, args] of [
@@ -262,13 +299,13 @@ export async function runRoadmapWorkflow({loss = "after-native-retention", trace
     const patch = await step(hostA, "patch", "apply_patch", patchArguments);
     evidence.patch = {arguments: patchArguments, previousSourceDigest: patch.data.previousSourceDigest, sourceDigest: patch.data.sourceDigest, changedPaths: patch.data.changedPaths};
     evidence.afterTest = testView(await step(hostA, "after-test", "test_recipe", {sourceDigest: evidence.patch.sourceDigest, recipe: evidence.recipe.name}));
-    if (!evidence.afterTest.passed) return result("fix-failed");
+    if (!evidence.afterTest.passed) return await result("fix-failed");
 
     // Review the diff before publication; refuse anything but the intended fix.
     const diff = await step(hostA, "review-diff", "repo_diff", {sourceDigest: evidence.patch.sourceDigest});
     const intended = [{path: evidence.read.path, before: evidence.read.text, after: evidence.read.text.replace(INTENDED_EDIT.oldText, INTENDED_EDIT.newText)}];
     evidence.diff = {diffSha256: diff.data.diffSha256, changes: diff.data.changes, reviewed: canonicalJson(diff.data.changes) === canonicalJson(intended)};
-    if (!evidence.diff.reviewed) return result("diff-rejected");
+    if (!evidence.diff.reviewed) return await result("diff-rejected");
 
     // Publish the exact successfully tested artifact; the response is lost.
     const publication = {sourceDigest: evidence.patch.sourceDigest, testOperationId: evidence.afterTest.operationId, testResultSha256: evidence.afterTest.resultSha256,
@@ -345,6 +382,6 @@ export async function runRoadmapWorkflow({loss = "after-native-retention", trace
     const inspection = ledger.code === 0 ? JSON.parse(ledger.stdout) : null;
     evidence.resourceLedger = inspection && {unsigned: inspection.unsigned === true, kernelFenceClearance: inspection.kernelFenceClearance,
       publishCompleted: inspection.operations.some(operation => operation.tool === "publish_artifact" && operation.state === "completed" && operation.sourceDigest === evidence.patch.sourceDigest)};
-    return result(recovered ? "recovered" : firstLookup.state === "completed" ? "recovery-failed" : "uncertain-preserved");
+    return await result(recovered ? "recovered" : firstLookup.state === "completed" ? "recovery-failed" : "uncertain-preserved");
   } catch (error) {await close(); throw error;}
 }
