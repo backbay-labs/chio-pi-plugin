@@ -11,7 +11,7 @@ const HELP = `Usage:
   chio-pi recover --config CONFIG --action approval-submit --request ORIGINAL_REQUEST_ID --operator PRIVATE_OPERATOR_FILE --output NEW_PRIVATE_FILE [--json]
 Diagnostics launch no model and contact no service. Recovery delegates only the named native operator action. Listing and export never ACK. Unknown outcomes retain their original fence.
 approval-decide is unavailable in this frozen artifact. A separately qualified native operator must check the requested decision and approval ID against the signed credential before retention.
-Owner-result import, capability attenuation, semantic recovery and whole-host Linux execution are unavailable. See docs/OPERATOR.md and docs/NATIVE-PREREQUISITES.md.
+Owner-result import, capability attenuation, semantic recovery and native P5 qualification are unavailable. Whole-Pi Linux implementation and parent limits are described in docs/RUN-LIMITS-LINUX.md; these diagnostics do not launch or qualify them. See docs/OPERATOR.md and docs/NATIVE-PREREQUISITES.md.
 `;
 const recoveryOptions: Record<string, readonly string[]> = {
   "recover-lock": [], "delivery-export": ["--request", "--output"], "delivery-acknowledge": ["--input"],
@@ -72,7 +72,8 @@ function doctor(context: OperatorContext, status: Record<string, unknown>, bridg
       missing("semantic-recovery", "No qualified native semantic host facade is configured; schema existence does not establish a service."),
       missing("coding-resource", "Kernel-owned coding participant is a later roadmap task and is not implemented by these operator commands."),
       missing("durable-host-recovery", "Cross-host original-operation continuation is a later roadmap task and is not implemented here."),
-      missing("whole-host-linux", "The protected launcher currently uses macOS sandbox-exec; no qualified whole-Pi Linux launcher exists."),
+      {id:"parent-model-limits",status:"available",available:true,scope:"trusted_parent",reason:"Protected launcher persists conservative request reservations and absolute deadline. API output tokens are reserved; Codex hard output-token accounting is unavailable. Diagnostics do not select a run or infer remaining model budget."},
+      {id:"whole-host-linux",status:"local-confinement-tested",available:false,scope:"measured-linux-arm64",reason:"Bubblewrap whole-Pi launcher is implemented with selected runtime pins, two fixed Unix routes and separate no-fork seccomp. Measured Linux arm64 acceptance requires a privileged network-none outer container. Current installation, ordinary Docker, actual x64 and native P5 qualification remain separate prerequisites; see RUN-LIMITS-LINUX.md."},
     ], qualification: "Component diagnostics and installed native utility support only. No live kernel, provider, resource or confinement qualification is performed."};
 }
 async function recover(parsed: Parsed, context: OperatorContext, status: Record<string, unknown>, native: Awaited<ReturnType<typeof resolveNativeOperator>>): Promise<Record<string, unknown>> {

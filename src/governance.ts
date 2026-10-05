@@ -131,9 +131,11 @@ export async function nativeFeatureAvailability(embedding?: NativeEmbedding) {
     }));
   } catch {return unavailable;}
 }
-export async function releaseGovernedModel(embedding: NativeEmbedding | undefined, json: string, selection: {provider: "openai" | "openai-codex"; model: string; route: string; accountId: string | null}, signal?: AbortSignal): Promise<Response> {
+export async function releaseGovernedModel(embedding: NativeEmbedding | undefined, json: string, selection: {provider: "openai" | "openai-codex"; model: string; route: string; accountId: string | null; profileIdentity?: string; limitsIdentity?: string}, signal?: AbortSignal): Promise<Response> {
   const state = await currentNative(embedding); const port = state.options.ports.model;
   if (!port) throw new Error("Native model release unavailable");
+  if (selection.profileIdentity !== undefined && selection.profileIdentity !== state.options.providerProfile
+    || selection.limitsIdentity !== undefined && selection.limitsIdentity !== state.options.limitsIdentity) throw new Error("Native model limits or provider profile binding mismatch");
   if (state.fenced) throw new Error("Original model release unresolved; native reconciliation required");
   if (signal?.aborted) throw new Error("Cancelled before native model release");
   const accountId = selection.provider === "openai" ? await port.resolveApiAccount?.() ?? null : selection.accountId;
@@ -142,7 +144,7 @@ export async function releaseGovernedModel(embedding: NativeEmbedding | undefine
   if (signal?.aborted) throw new Error("Cancelled before native model release");
   if (port.accountSpecific && !accountId) throw new Error("Native provider account mapping unavailable");
   const requestId = randomUUID();
-  const request: FrozenModelRequest = Object.freeze({...selection, accountId, requestId, json, utf8Size: Buffer.byteLength(json, "utf8"), digest: createHash("sha256").update(json, "utf8").digest("hex"),
+  const request: FrozenModelRequest = Object.freeze({provider: selection.provider, model: selection.model, route: selection.route, accountId, requestId, json, utf8Size: Buffer.byteLength(json, "utf8"), digest: createHash("sha256").update(json, "utf8").digest("hex"),
     profile: state.options.providerProfile, purpose: state.options.purpose, credentialGeneration: state.options.credentialGeneration, limitsIdentity: state.options.limitsIdentity,
     binding: state.options.expectedBinding, process: nativeHandle(embedding!, state.process) as NativeCustody, context: nativeHandle(embedding!, state.context) as NativeCustody, history: Object.freeze(state.history.map(ref => nativeHandle(embedding!, ref) as NativeCustody))});
   state.fenced = requestId; // Even a missing native response proves no non-dispatch.

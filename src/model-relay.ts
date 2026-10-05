@@ -1,3 +1,4 @@
+import {DEFAULT_RUN_LIMITS, providerProfile, type RunBudget} from "./run-limits.js";
 import { finishGovernedModelDelivery, releaseGovernedModel, type NativeEmbedding } from "./governance.js";
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
@@ -118,11 +119,15 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
 
 /** Operator-owned model transport. It exposes only the selected provider's
  * synchronous function-calling response route, never arbitrary proxying. */
-export async function startModelRelay(authority: ModelAuthority, model: string, onToolResults?: (outcomes: unknown[]) => Promise<void>, registry?: ToolRegistry, governance?: {required: boolean; embedding?: NativeEmbedding}) {
+export async function startModelRelay(authority: ModelAuthority, model: string, onToolResults?: (outcomes: unknown[]) => Promise<void>, registry?: ToolRegistry, governance?: {required: boolean; embedding?: NativeEmbedding}, budget?: RunBudget) {
+  const profile = providerProfile(authority.provider, model);
+  const limits = budget?.limits ?? DEFAULT_RUN_LIMITS;
+  if (budget && budget.profile.identity !== profile.identity) throw new Error("Model relay budget profile mismatch");
   authority = Object.freeze({...authority});
   governance = governance ? Object.freeze({...governance}) : undefined;
   if (!registry) throw new Error("An explicit pinned tool registry is required");
   registryInventory(registry);
+  if (budget && (budget.binding.registryDigest !== registry.digest || budget.binding.governanceProfile !== (governance?.required ? "required" : "execution-only"))) throw new Error("Model relay budget registry or governance binding mismatch");
   const nonce = randomBytes(32).toString("hex");
   // Native Pi extracts an account claim before making its request. This is
   // an opaque local credential, never an upstream login or signed JWT.
@@ -133,6 +138,8 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
   const server = createServer(async (request, response) => {
     const controller = new AbortController();
     response.on("close", () => controller.abort());
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     try {
       if (request.method !== "POST" || request.url !== route || request.headers.authorization !== `Bearer ${token}` || request.headers.origin || request.headers.host !== `127.0.0.1:${port}`) {
         response.writeHead(403); response.end("Model route refused"); return;
@@ -163,22 +170,47 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
         headers["OpenAI-Beta"] = "responses=experimental";
         headers.originator = "pi";
       } else headers.authorization = `Bearer ${authority.apiKey}`;
+      if (budget) await budget.reserveRequest(body);
+      else if (profile.hardOutputTokens) {
+        const requested = body.max_output_tokens ?? limits.maxOutputTokens;
+        if (!Number.isSafeInteger(requested) || Number(requested) < 16) throw new Error("Unsupported token ceiling");
+        body.max_output_tokens = Math.min(Number(requested), limits.maxOutputTokens);
+      } else delete body.max_output_tokens;
+      const remaining = budget ? budget.deadline - Date.now() : limits.providerTimeoutMs;
+      if (remaining <= 0 || controller.signal.aborted) throw new Error("Model deadline reached");
+      timeout = setTimeout(() => controller.abort(), Math.min(limits.providerTimeoutMs, remaining));
       const finalJson = JSON.stringify(body);
-      const upstream = governance?.required ? await releaseGovernedModel(governance.embedding, finalJson, {provider: authority.provider, model, route: authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", accountId: authority.provider === "openai-codex" ? authority.accountId : null}, controller.signal) : await fetch(authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", {
+      const upstreamOperation = governance?.required ? releaseGovernedModel(governance.embedding, finalJson, {provider: authority.provider, model, route: authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", accountId: authority.provider === "openai-codex" ? authority.accountId : null, ...(budget ? {profileIdentity: profile.identity, limitsIdentity: budget.identity} : {})}, controller.signal) : fetch(authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", {
         method: "POST", redirect: "error", signal: controller.signal,
         headers, body: finalJson,
       });
-      response.writeHead(upstream.status, { "content-type": upstream.headers.get("content-type") ?? "application/json" });
-      if (upstream.body) for await (const data of upstream.body) response.write(data);
+      const upstream = await abortable(upstreamOperation.then(result => {
+        if (controller.signal.aborted) {void result.body?.cancel().catch(() => {}); throw new Error("Late model response interrupted");}
+        return result;
+      }), controller.signal);
+      const writeHeaders = () => {if (!response.headersSent) response.writeHead(upstream.status, {"content-type": upstream.headers.get("content-type") ?? "application/json"});};
+      if (upstream.body) {
+        reader = upstream.body.getReader(); let received = 0;
+        while (true) {
+          const item = await abortable(reader.read(), controller.signal);
+          if (item.done) break;
+          received += item.value.byteLength;
+          if (received > limits.maxResponseBytes) throw new Error("Provider response size exceeded");
+          writeHeaders();
+          if (!response.write(item.value)) await abortable(new Promise<void>(resolve => response.once("drain", resolve)), controller.signal);
+        }
+      }
       if (governance?.required) {
         if (controller.signal.aborted) throw new Error("Original model delivery uncertain");
         finishGovernedModelDelivery(upstream);
       }
-      response.end();
+      writeHeaders();response.end();
     } catch {
-      if (!response.headersSent) response.writeHead(502);
-      response.end("Model relay refused or failed");
-    }
+      controller.abort();
+      void reader?.cancel().catch(() => {});
+      if (!response.headersSent) {response.writeHead(502); response.end("Model relay refused or failed");}
+      else response.destroy();
+    } finally { if (timeout) clearTimeout(timeout); reader?.releaseLock(); }
   });
   await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", resolve); });
   const address = server.address();
@@ -189,4 +221,15 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
   return { port, token, governanceReference, async close() {
     if (governanceReference) governedRelays.get(governanceReference)!.closed = true;
     server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); } };
+}
+
+/** Abort even if a provider implementation ignores the signal. Native
+ * release uncertainty stays in its original native fence. */
+function abortable<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => reject(new Error("Model request interrupted"));
+    if (signal.aborted) {abort(); void operation.catch(() => {}); return;}
+    signal.addEventListener("abort", abort, {once:true});
+    operation.then(resolve,reject).finally(() => signal.removeEventListener("abort",abort));
+  });
 }

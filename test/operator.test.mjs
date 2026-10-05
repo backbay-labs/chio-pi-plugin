@@ -554,3 +554,11 @@ test("operator refuses public, symlinked, oversized and mismatched authority fil
     assert.deepEqual(await snapshot(f.journalDir), before);
   } finally {await f.close();}
 });
+
+test('doctor reports parent limits and measured Linux implementation separately from native P5 availability',async()=>{
+ const f=await fixture();try{const before=await snapshot(f.journalDir);const counts=f.counts();const output=await capture(['doctor','--config',f.configPath,'--json']);assert.equal(output.code,0,output.stderr);const doctor=JSON.parse(output.stdout);
+ const limits=doctor.capabilities.find(value=>value.id==='parent-model-limits');assert.equal(limits?.scope,'trusted_parent');assert.equal(limits.available,true);
+ const linux=doctor.capabilities.find(value=>value.id==='whole-host-linux');assert.equal(linux.status,'local-confinement-tested');assert.equal(linux.available,false);assert.match(linux.reason,/P5/);
+ assert.deepEqual(f.counts(),counts);assert.deepEqual(await snapshot(f.journalDir),before);
+ }finally{await f.close();}
+});

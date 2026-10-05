@@ -54,3 +54,10 @@ test("operator diagnostics validate both governance bindings and historical exec
   await writeFile(path,JSON.stringify({...binding,governanceProfile:"automatic"}));await assert.rejects(diagnose(),error=>/host_binding_mismatch/.test(error.stderr));assert.equal(f.counts().nativeCalls,0);
  }finally{await f.close();}
 });
+
+test('operator limits and Linux runtime pins are optional closed operator selections',()=>{
+ const selected=cli.parseProtectedLaunchArguments([...args,'--limits','/private/limits.json','--linux-runtime','/private/runtime.json']);
+ assert.equal(selected.values.get('--limits'),'/private/limits.json');
+ assert.equal(selected.values.get('--linux-runtime'),'/private/runtime.json');
+ assert.throws(()=>cli.parseProtectedLaunchArguments([...args,'--limits','x','--limits','y']),/argument/);
+});

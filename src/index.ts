@@ -16,3 +16,7 @@ export { createNativeEmbedding, nativeFeatureAvailability, releaseGovernedModel,
 export { submitNativeChild, reconcileNativeChild, cancelNativeChild, waitNativeChild } from "./delegation.js";
 export { preflightNativeSession, mediatedSessionOperation, type SessionGovernance } from "./pi-governance.js";
 export { startModelRelay, readCodexAuthority, type ModelAuthority, type GovernedRelayReference } from "./model-relay.js";
+export {openRunBudget, DEFAULT_RUN_LIMITS, PROVIDER_PROFILES, providerProfile, validateRunLimits, type RunLimits, type RunBudget, type RunBinding, type FixedProvider} from "./run-limits.js";
+export {prepareLinuxGuest, wholeGuestFilter, auditMountClosure, type LinuxRuntime, type LinuxGuestOptions} from "./linux-sandbox.js";
+export {createUnixRelay, createLoopbackRelay, type RelayBounds} from "./unix-relay.js";
+export {superviseGuest} from "./guest-termination.js";
