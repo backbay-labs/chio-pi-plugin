@@ -18,6 +18,14 @@ function api() {
   return plugin;
 }
 async function start(f) {return api().startParentGatewayProxy({configPath: f.configPath, native: f.native, binding: f.binding});}
+/** A parent refusal before reservation is a definite native-style non-dispatch,
+ * not an unknown transport failure, and it reserves nothing. */
+function assertNotDispatched(reply, reason) {
+  assert.equal(reply.status, 200); assert.equal(reply.body.error, undefined, JSON.stringify(reply.body));
+  const outcome = bodyOutcome(reply);
+  assert.equal(reply.body.result.isError, true); assert.equal(outcome.state, "not_dispatched"); assert.match(outcome.reason, reason);
+  assert.equal(reply.body.result._meta.chioPiOriginalIdentity.nativeRequestId, outcome.requestId);
+}
 
 test("handoff export bounds original requests before any native lookup", async () => {
   const binding = {authorityDigest: "ab".repeat(32), registryDigest: "cd".repeat(32)}; let lookups = 0;
@@ -244,7 +252,7 @@ test("two parent instances recover signed completion after response loss without
     assert.deepEqual(await api().recoverOriginalOperation(logical, proxy.originals), first);
     const duplicate = await call(proxy, changed, logical);
     assert.deepEqual(bodyOutcome(duplicate), first);
-    assert.equal((await call(proxy, changed, request("fresh"))).body.error !== undefined, true);
+    assertNotDispatched(await call(proxy, changed, request("fresh")), /fenced/);
     assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
   } finally {await proxy?.close(); await f.close();}
 });
@@ -343,7 +351,7 @@ for (const state of ["pending", "unknown", "denied", "awaiting_approval"]) test(
       await writeFile(join(f.config.journalDir, hash(outcome.requestId) + ".json"), JSON.stringify(record), {mode: 0o600});
     }
     const before = f.counts(); await assert.rejects(api().recoverOriginalOperation(request(), proxy.originals), /original|completion|unknown|pending|approval|denied/);
-    assert.ok((await call(proxy, session, request("replacement"))).body.error); assert.deepEqual(f.counts(), before);
+    assertNotDispatched(await call(proxy, session, request("replacement")), /fenced/); assert.deepEqual(f.counts(), before);
   } finally {await proxy?.close(); await f.close();}
 });
 
@@ -440,7 +448,7 @@ test("reservation missing its native original and unmapped native uncertainty bo
     await unlink(join(f.config.journalDir, hash(original.requestId) + ".json"));
     assert.equal((await proxy.originals.lookup(request())).state, "unknown");
     await assert.rejects(api().recoverOriginalOperation(request(), proxy.originals), /unknown|original|completion/);
-    assert.ok((await call(proxy, session, request("fresh"))).body.error);
+    assertNotDispatched(await call(proxy, session, request("fresh")), /fenced/);
     const id = "unmapped-operation";
     await writeFile(join(f.config.journalDir, hash(id) + ".json"), JSON.stringify({requestId: id, digest: "00".repeat(32), state: "unknown", outcome: {state: "unknown", evidence: "unverified", requestId: id}}), {mode: 0o600});
     assert.ok((await proxy.originals.inventory()).operations.some(op => op.nativeRequestId === id && op.mapped === false));
@@ -496,4 +504,54 @@ for (const kind of ["symlink", "fifo", "directory", "public", "oversize", "inval
     await assert.rejects(api().importContinuation(path, {binding: f.binding, originals: proxy.originals}), /private|regular|bounded|UTF|JSON|size/);
     assert.deepEqual(f.counts(), {effects: 0, acks: 0, nativeCalls: 0});
   } finally {await proxy?.close(); await f.close();}
+});
+
+test("A2-M2: a fenced pre-forward refusal is a definite not_dispatched result and leaves the guest adapter usable", async () => {
+  const f = await nativeFixture(); let proxy;
+  try {
+    proxy = await start(f);
+    const client = await gatewayExecutor({schema: "chio.pi.transport.v1", sessionId: f.config.sessionId, transport: {url: proxy.url, token: proxy.token}, binding: f.config.execution,
+      parentBinding: f.binding, tools: f.config.tools, registryDigest: f.registry.digest, approvals: false});
+    const first = await client.executor.execute(request("first")); assert.equal(first.outcome, "completed");
+    const refused = await client.executor.execute(request("fenced"));
+    assert.equal(refused.outcome, "not_dispatched"); assert.match(refused.content, /fenced/);
+    assert.equal(client.state.unresolved, false, "a definite parent refusal is not an unknown external outcome");
+    assert.equal(await proxy.originals.mappings.find(request("fenced")), undefined, "nothing was reserved for the refused call");
+    assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
+    // Trusted history delivery clears the fence; the same guest adapter proceeds.
+    assert.equal((await proxy.originals.acknowledgeHistory(first.retainedOutcome, f.native)).acknowledged, true);
+    assert.equal((await client.executor.execute(request("after-delivery"))).outcome, "completed");
+    assert.deepEqual(f.counts(), {effects: 2, acks: 1, nativeCalls: 2});
+  } finally {await proxy?.close(); await f.close();}
+});
+
+test("A2-M3: a queued tools/call whose guest connection closed is never reserved or forwarded", async () => {
+  const f = await nativeFixture(); let proxy; let release = () => {};
+  try {
+    proxy = await start(f); const session = await initialize(proxy);
+    // Every parent mapping handle in this process shares one line per directory.
+    // Holding it keeps the next tools/call queued before its reservation.
+    const holder = await api().createNativeOriginalOperationPort({configPath: f.configPath, binding: f.binding});
+    const gate = new Promise(done => {release = done;}); const held = holder.mappings.serial(() => gate);
+    const abandoned = request("abandoned"); const controller = new AbortController();
+    const pending = fetch(proxy.url, {method: "POST", redirect: "error", signal: controller.signal, headers: {"Content-Type": "application/json", Authorization: `Bearer ${proxy.token}`, "Mcp-Session-Id": session},
+      body: JSON.stringify({jsonrpc: "2.0", id: JSON.stringify([abandoned.sessionId, abandoned.toolCallId]), method: "tools/call", params: {name: abandoned.tool, arguments: abandoned.arguments}})}).catch(error => error);
+    await new Promise(done => setTimeout(done, 300)); controller.abort(); await pending;
+    await new Promise(done => setTimeout(done, 100)); release(); await held;
+    // The next call queues behind the abandoned one on the parent's tool line.
+    const after = await call(proxy, session, request("after"));
+    assert.equal(bodyOutcome(after).state, "completed", "the closed connection left no unacknowledged original fencing later work");
+    assert.equal(await proxy.originals.mappings.find(abandoned), undefined);
+    assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
+  } finally {release(); await proxy?.close(); await f.close();}
+});
+
+test("A2-M4: the parent refuses a native execution timeout its fixed upstream and guest deadlines cannot accommodate", async () => {
+  const f = await nativeFixture({timeoutMs: 60000}); let proxy;
+  try {
+    await assert.rejects((async () => {proxy = await start(f);})(), /timeoutMs must be at most 30000/);
+    assert.deepEqual(f.counts(), {effects: 0, acks: 0, nativeCalls: 0});
+  } finally {await proxy?.close(); await f.close();}
+  const bounded = await nativeFixture({timeoutMs: 30000});
+  try {await (await start(bounded)).close();} finally {await bounded.close();}
 });

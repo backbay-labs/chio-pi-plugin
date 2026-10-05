@@ -21,7 +21,7 @@ const hash = value => createHash("sha256").update(value).digest("hex");
 const failedChecks = checks => JSON.stringify(checks.filter(check => !check.passed));
 
 test("signed bridge fixture: confined bug fix, reviewed publication, response loss and second-host original recovery", {skip: confined.skip, timeout: 300000}, async () => {
-  const run = await runRoadmapWorkflow({loss: "after-native-retention"});
+  const run = await runRoadmapWorkflow({loss: "after-native-retention"}); let closeErrors;
   try {
     const {evidence, observer} = run;
     const {beforeTest, afterTest, originalArtifact, recoveredArtifact, publicationEffects} = evidence;
@@ -79,7 +79,16 @@ test("signed bridge fixture: confined bug fix, reviewed publication, response lo
     assert.equal(evidence.firstHost.guestUnresolved, true);
     assert.equal(evidence.firstHost.nativeOriginalState, "completed");
     assert.equal(evidence.firstHost.resourceDispatches, 1);
-    assert.match(evidence.firstHost.flushError, /terminal|committed|completion/);
+    // The failed task is recorded once as an undelivered original; the store
+    // stays usable and the unacknowledged native original keeps its fence.
+    assert.equal(evidence.firstHost.taskStatus, "failed");
+    assert.equal(evidence.firstHost.flushError, null);
+    assert.equal(evidence.firstHost.reconciliation, "undelivered");
+    assert.equal(evidence.firstHost.nativeOriginalAcknowledged, false);
+    assert.equal(evidence.firstHost.fencedAfterFlush, true);
+    // Every admitted step was delivered by the automatic committed-history
+    // observer, not by the bounded flush() fallback.
+    assert.deepEqual(evidence.steps.map(step => [step.name, step.deliveredBy]), evidence.steps.map(step => [step.name, "commit-observer"]));
 
     // A second actual host instance recovers the exact original artifact.
     assert.equal(evidence.secondHost.restartedNativeGateway, true);
@@ -119,11 +128,12 @@ test("signed bridge fixture: confined bug fix, reviewed publication, response lo
     const checks = await componentChecks(run, confined.backend);
     assert.ok(checks.length >= 15);
     assert.ok(checks.every(check => check.passed), failedChecks(checks));
-  } finally {await run.close();}
+  } finally {closeErrors = await run.close();}
+  assert.deepEqual(closeErrors, [], "every host, proxy, gateway and resource closed cleanly");
 });
 
 test("signed bridge fixture: resource commit before native completion evidence stays an unknown original and is never replaced", {skip: confined.skip, timeout: 300000}, async () => {
-  const run = await runRoadmapWorkflow({loss: "before-native-retention"});
+  const run = await runRoadmapWorkflow({loss: "before-native-retention"}); let closeErrors;
   try {
     const {evidence, observer} = run;
     assert.equal(evidence.beforeTest.passed, false);
@@ -131,6 +141,9 @@ test("signed bridge fixture: resource commit before native completion evidence s
     assert.equal(evidence.firstHost.publicationResponse, "unknown-native-outcome");
     assert.equal(evidence.firstHost.nativeOriginalState, "unknown");
     assert.equal(evidence.firstHost.guestUnresolved, true);
+    assert.equal(evidence.firstHost.flushError, null);
+    assert.equal(evidence.firstHost.reconciliation, "undelivered");
+    assert.equal(evidence.firstHost.fencedAfterFlush, true);
     assert.equal(evidence.status, "uncertain-preserved");
     assert.equal(evidence.publicationEffects, 1, "the resource committed one publication before native evidence was retained");
     assert.equal(evidence.originalArtifact.contentAddressed, true);
@@ -138,6 +151,7 @@ test("signed bridge fixture: resource commit before native completion evidence s
     assert.match(evidence.secondHost.recoveryRefusal, /unknown/);
     assert.equal(evidence.secondHost.replacementAttempt.dispatched, false, "a replacement publication would make the demo finish; it stays refused");
     assert.match(evidence.secondHost.replacementAttempt.parentRefusal, /fenced/);
+    assert.equal(evidence.secondHost.replacementAttempt.outcome, "not_dispatched", "the parent refusal is a definite non-dispatch");
     assert.equal(evidence.secondHost.fencedAfterRecovery, true, "uncertainty keeps its native fence");
     assert.equal(evidence.kernel.resourceDispatchesDuringRecovery, 0);
     assert.equal(evidence.kernel.nativeCallsDuringRecovery, 0);
@@ -150,7 +164,8 @@ test("signed bridge fixture: resource commit before native completion evidence s
     const checks = await uncertainChecks(run);
     assert.ok(checks.length >= 5);
     assert.ok(checks.every(check => check.passed), failedChecks(checks));
-  } finally {await run.close();}
+  } finally {closeErrors = await run.close();}
+  assert.deepEqual(closeErrors, [], "every host, proxy, gateway and resource closed cleanly");
 });
 
 test("independent observer counts a second publication operation even when content addressing hides it", {skip: confined.skip, timeout: 60000}, async t => {

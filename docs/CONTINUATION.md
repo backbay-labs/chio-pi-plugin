@@ -28,6 +28,18 @@ Origin, redirects, arbitrary targets, admin/model routes and every guest
 `chio/acknowledge` are refused. Initialization is attempted once. An ambiguous or
 failed result never silently initializes another session.
 
+A fresh call is admitted only while the joined native inventory is unfenced; an
+explicit `chio_resume` is admitted only for its own retained pending proposal
+while every other original is delivered or not dispatched. A refusal before any
+reservation, including one for a closed proxy, is a definite non-dispatch. The
+proxy answers it as the native gateway answers its own pre-dispatch refusals: a
+tool result with a `not_dispatched` outcome for the would-be native identity
+plus the identity metadata below. The guest adapter returns it as
+`not_dispatched` and does not treat later work as unknown. Nothing is reserved
+for it. A queued call whose guest connection closed before its reservation is
+neither reserved nor forwarded, so it cannot leave an unacknowledged original
+that nobody receives.
+
 Before a tool request opens its native transport, its private reservation and
 containing directory are fsynced. Records live under
 `journalDir/pi-parent-mappings`; root `.json` files remain native operations.
@@ -184,11 +196,46 @@ Truncation, details-only values, substituted outcomes, generic interruptions,
 context claims and memos do not prove delivery.
 
 Before native `acknowledgeReceivedOutcome`, the observer durably stores the exact
-entry reference, commit sequence and entry digest. `adapter.flush()` scans
-retained intents and waits for committed-result observation; the extension also
-flushes after the generation's tool phase. Restart scans reconcile crashes after
-history commit before ACK or after ACK before the mapping mark. Recovery repeats
-only the independently verified original ACK and never replays an effect.
+entry reference, commit sequence and entry digest. When the native original is
+already acknowledged and host-delivery-confirmed for that exact completion, the
+observer records only the missing parent mark and does not repeat the native call.
+Restart scans reconcile crashes after history commit before ACK or after ACK
+before the mapping mark. Recovery repeats only the independently verified
+original ACK and never replays an effect.
+
+Each terminal task is classified once, and the result is persisted in its
+private intent:
+
+| Marker | Meaning |
+| --- | --- |
+| `acknowledged` | Exact committed entry verified; native delivery acknowledged and confirmed |
+| `denied` | Exact verified signed denial committed; no ACK applies |
+| `approval-pending` | Exact retained proposal committed; no ACK applies |
+| `superseded` | Committed proposal whose original a mapped explicit `chio_resume` later resumed |
+| `not-dispatched` | Definite non-dispatch: no parent reservation, or a native `not_dispatched` record |
+| `undelivered` | Failed, interrupted or aborted task, or committed content that is not the exact original outcome |
+
+A marker never clears, replaces or establishes a native fence, and nothing is
+acknowledged for `undelivered`. The native original keeps its own fence until it
+is delivered through explicit receiving-task recovery, in this store or another.
+Reconciled intents are never observed again, so a flush costs only the
+unreconciled intents rather than the whole retained history. A verification or
+ACK failure stays with its own intent: it is observed again by a later flush or
+dispatch and never disables other intents, later calls or a reopened adapter.
+`adapter.flush()` admits newly retained intents, observes every unreconciled
+one and rejects with the first such failure of that pass. The extension also
+flushes after the generation's tool phase; Pi Durable reports a rejection there
+without failing the generation.
+
+Before each fresh dispatch, the adapter observes already-committed results of
+its retained intents, so the next call of a sequential round is not fenced by
+its predecessor's pending ACK. Fresh dispatches from one adapter pass admission
+one at a time. If the native inventory still fences fresh effects, the call
+returns a `not_dispatched` error result without retaining an intent or calling
+the executor. An executor refusal with no parent reservation is recorded as
+`not-dispatched`. Calls from concurrent conversations in one store may therefore
+receive `not_dispatched` while another original awaits its committed delivery;
+they can be retried after it is acknowledged.
 
 For explicit continuation into another actual host, create its pending native
 ToolTask and committed assistant call with the exact original tool arguments.
@@ -220,8 +267,13 @@ conflicting outcomes retain the conservative refusal; no proof list is appended.
 Private JSON and transport frames/responses are at most 1 MiB. Handoffs admit at
 most 256 originals and 32 KiB of context. Parent and Durable provenance inventories
 admit at most 4096 records. The proxy admits 32 pending requests, bounds inbound
-framing to 10 seconds and native requests to 40 seconds. Durable committed
-observation admits 64 queued tasks and bounded publications; full outcomes are
+framing to 10 seconds and native requests to 40 seconds; the guest adapter uses
+the same 40 second bound. The proxy refuses to start when the prepared native
+execution `timeoutMs` exceeds 30000, leaving 10 seconds for parent lookups,
+reservation and framing; a longer native call would outlive both deadlines and
+become an unknown original that fences the session. Durable committed
+observation enqueues at most 64 tasks per publication callback; beyond that the
+next observation pass rescans retained unreconciled intents. Full outcomes are
 limited to 256 KiB to fit native entry framing. Exceeding a bound retains native
 uncertainty rather than inferring safe retry.
 

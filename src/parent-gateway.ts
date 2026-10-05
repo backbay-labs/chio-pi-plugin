@@ -1,9 +1,9 @@
 import {randomBytes, timingSafeEqual} from "node:crypto";
 import {createServer, type IncomingMessage, type ServerResponse} from "node:http";
-import {createNativeOriginalOperationPort, type NativeDeliveryTransport, type NativeOriginalOperationPort} from "./continuation.js";
+import {admitsDispatch, createNativeOriginalOperationPort, type NativeDeliveryTransport, type NativeOriginalOperationPort} from "./continuation.js";
 import {preparedAuthorityDigest} from "./configured.js";
 import {object, OperatorRedactor, readOperatorContext} from "./operator.js";
-import {assertNativeGatewayOwner, immutableRequest, leaseParentMappings, openParentMappings, type ContinuationBinding} from "./parent-mappings.js";
+import {assertNativeGatewayOwner, gatewayIdentity, immutableRequest, leaseParentMappings, openParentMappings, type ContinuationBinding} from "./parent-mappings.js";
 import {canonicalJson, frozenJson} from "./tool-registry.js";
 import {PRIVATE_LIMIT, sha256} from "./private-state.js";
 import type {KernelRequest} from "./extension.js";
@@ -28,6 +28,11 @@ async function boundedResponse(response: Response): Promise<Buffer> {
   } finally {reader.releaseLock();}
 }
 function strictJson(bytes: Buffer): unknown {return JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(bytes)) as unknown;}
+/** The parent and the guest adapter each bound one protected call to 40 s. The
+ * native execution timeout must leave 10 s for parent lookups, reservation and
+ * framing; a longer native call would outlive both and become an unknown original. */
+const UPSTREAM_DEADLINE_MS = 40000;
+const MAX_NATIVE_EXECUTION_MS = 30000;
 
 export async function startParentGatewayProxy(options: {configPath: string; binding: ContinuationBinding; native: ParentNativeGateway}) {
   const binding = frozenJson(options.binding);
@@ -36,6 +41,8 @@ export async function startParentGatewayProxy(options: {configPath: string; bind
     || target.username || target.password || target.search || target.hash || !/^[A-Za-z0-9_-]{43}$/.test(native.token)) throw new Error("Trusted proxy requires the exact native loopback gateway target");
   const context = await readOperatorContext(options.configPath, new OperatorRedactor());
   if (canonicalJson(binding) !== canonicalJson({authorityDigest: preparedAuthorityDigest(context.config, context.registry), registryDigest: context.registry.digest})) throw new Error("Trusted proxy authority binding mismatch");
+  const nativeTimeout = context.config.execution.timeoutMs ?? MAX_NATIVE_EXECUTION_MS;
+  if (!Number.isSafeInteger(nativeTimeout) || nativeTimeout <= 0 || nativeTimeout > MAX_NATIVE_EXECUTION_MS) throw new Error(`Prepared native execution timeoutMs must be at most ${MAX_NATIVE_EXECUTION_MS} so one protected call completes within the parent and guest ${UPSTREAM_DEADLINE_MS} ms deadlines`);
   const mappings = await openParentMappings(context.config.journalDir, binding, context.registry, context.config.sessionId);
   const release = await leaseParentMappings(mappings);
   let originals: NativeOriginalOperationPort;
@@ -59,7 +66,7 @@ export async function startParentGatewayProxy(options: {configPath: string; bind
     if (closed) throw new Error("Parent proxy closed; no native forward");
     const controller = new AbortController(); controllers.add(controller);
     try {
-      const upstream = await fetch(target.href, {method: "POST", redirect: "error", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(40000)]),
+      const upstream = await fetch(target.href, {method: "POST", redirect: "error", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(UPSTREAM_DEADLINE_MS)]),
         headers: {Host: target.host, Authorization: `Bearer ${native.token}`, "Content-Type": "application/json", ...(session && method !== "initialize" ? {"Mcp-Session-Id": session} : {})}, body: new Uint8Array(bytes).buffer});
       const body = await boundedResponse(upstream);
       if (![200, 202].includes(upstream.status)) throw new Error("Native fixed target refused request");
@@ -118,19 +125,30 @@ export async function startParentGatewayProxy(options: {configPath: string; bind
     try {logical = immutableRequest(context.registry, {sessionId: tuple[0], toolCallId: tuple[1], tool: message.params.name, arguments: message.params.arguments as Record<string, unknown>});}
     catch {fail("arguments or logical caller differ from the immutable registry"); return;}
     const dispatch = async () => {
-      if (closed) {fail("parent closed; no forward"); return;}
-      const prior = await mappings.find(logical);
       const metadata = (nativeRequestId: string) => ({chioPiOriginalIdentity: {schema: "chio.pi.original-identity.v1", binding, rpcId: message.id, requestDigest: sha256(canonicalJson(logical)), nativeRequestId}});
+      // Before any reservation the parent has forwarded nothing for this logical
+      // request. Answer as the native gateway does for its own pre-dispatch
+      // refusals: a definite not_dispatched outcome for the would-be identity.
+      const refused = (reason: string) => {
+        const nativeRequestId = gatewayIdentity(context.config.sessionId, session, logical).nativeRequestId;
+        json(response, 200, {jsonrpc: "2.0", id: message.id, result: {isError: true, content: [{type: "text", text: JSON.stringify({state: "not_dispatched", evidence: "unverified", requestId: nativeRequestId, reason})}], _meta: metadata(nativeRequestId)}});
+      };
+      if (closed) {refused("parent closed; no forward"); return;}
+      const prior = await mappings.find(logical);
       if (prior) {
         const original = await originals.lookup(logical);
         const outcome = original.outcome ?? {state: "unknown", evidence: "unverified", requestId: original.nativeRequestId, reason: "reserved original has no authoritative completion; no automatic retry"};
         json(response, 200, {jsonrpc: "2.0", id: message.id, result: {isError: original.state !== "completed", content: [{type: "text", text: JSON.stringify(outcome)}], _meta: metadata(original.nativeRequestId)}}); return;
       }
       const inventory = await originals.inventory();
-      const explicitResume = logical.tool === "chio_resume";
-      if (inventory.fenced && !(explicitResume && inventory.operations.some(op => op.nativeRequestId === logical.arguments.requestId && op.state === "awaiting_approval")
-        && inventory.operations.every(op => op.nativeRequestId === logical.arguments.requestId || op.state === "not_dispatched" || op.state === "completed" && op.acknowledged && op.hostDeliveryConfirmed))) {fail("native original or parent reservation remains fenced; no fresh effect"); return;}
-      if (explicitResume && !inventory.operations.some(op => op.nativeRequestId === logical.arguments.requestId && op.state === "awaiting_approval")) {fail("explicit resume requires the retained original pending approval"); return;}
+      if (!admitsDispatch(inventory, logical)) {
+        refused(logical.tool === "chio_resume" && !inventory.operations.some(op => op.nativeRequestId === logical.arguments.requestId && op.state === "awaiting_approval")
+          ? "explicit resume requires the retained original pending approval" : "native original or parent reservation remains fenced; no fresh effect"); return;
+      }
+      // A queued call whose guest connection already closed would complete with
+      // nobody to receive it, leaving an unacknowledged original that fences the
+      // session. Nothing is reserved or forwarded for it.
+      if (closed || response.destroyed) return;
       const reservation = await mappings.reserve(logical, session);
       if (!reservation.created) {fail("logical identity already retained; never forward again"); return;}
       // This reservation and directory are fsynced before the native request is

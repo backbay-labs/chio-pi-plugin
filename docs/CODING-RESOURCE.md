@@ -323,6 +323,15 @@ Unsupported platforms/architectures and missing runtime
 pins fail closed. This is an OS boundary; an executable allowlist alone would
 not confine repository code.
 
+On the protected launch path, one tool call is bounded by the prepared native
+execution `timeoutMs` (bridge default 30000). The parent proxy refuses a larger
+value because its fixed 40 second upstream deadline, and the guest adapter's
+equal deadline, could not complete the call. A recipe whose `timeoutMs`, plus
+admission and kernel overhead, exceeds the native execution timeout outlives the
+native gateway's kernel request. That original is then unknown and fences the
+session until it is reconciled. Configure recipe timeouts well below 30 seconds
+for that path; the schema maximum of 600000 applies to the resource itself.
+
 For macOS, a single-process Node script importing `node:test` works. Node's
 default `--test` subprocess mode is not an implicitly qualified recipe. Operator
 recipes must be measured with their actual dependencies and runtime.

@@ -4,30 +4,32 @@ import {chmod, mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import test from "node:test";
 import {AssistantEntry, Harness, MemoryStorage, ToolTask, createRegistry, hook} from "@earendil-works/pi-durable";
+import {createModels, fauxAssistantMessage, fauxProvider, fauxToolCall} from "@earendil-works/pi-ai";
 import {openNodeJsonlStorage} from "@earendil-works/pi-durable/storage/jsonl/node";
 import * as plugin from "../dist/index.js";
 import {gatewayExecutor} from "../dist/http-executor.js";
 import {canonicalJson} from "../dist/tool-registry.js";
-import {hash, initialize, nativeFixture, request} from "./helpers/continuation-fixture.mjs";
+import {approvedParams, hash, initialize, nativeFixture, request} from "./helpers/continuation-fixture.mjs";
 const durable = await import("../dist/durable.js").catch(() => ({}));
 const context = {};
 function api() {assert.equal(typeof durable.createChioDurableTools, "function", "Task 4 requires actual Pi Durable ToolRegistrations"); return durable;}
 function transportConfig(f, proxy) {return {schema: "chio.pi.transport.v1", sessionId: f.config.sessionId, transport: {url: proxy.url, token: proxy.token}, binding: f.config.execution, tools: f.config.tools, approvals: Boolean(f.config.approval), toolMode: "typed", registryDigest: f.registry.digest};}
 async function setup(options = {}) {
-  api(); const f = await nativeFixture(); const proxy = await plugin.startParentGatewayProxy({configPath: f.configPath, native: f.native, binding: f.binding});
+  api(); const f = await nativeFixture(options.fixture ?? {}); const proxy = await plugin.startParentGatewayProxy({configPath: f.configPath, native: f.native, binding: f.binding});
   const client = await gatewayExecutor(transportConfig(f, proxy));
   const storageDirectory = join(f.directory, "durable-store"); await mkdir(storageDirectory, {mode: 0o700});
   const storage = options.storage ?? (options.memory ? new MemoryStorage() : await openNodeJsonlStorage(storageDirectory, context, {fsync: true}));
   const registry = createRegistry();
-  const host = await Harness.open(storage, {models: {}, registry, onReport: error => {throw error;}}, context);
+  const host = await Harness.open(storage, {models: options.models ?? {}, registry, onReport: options.onReport ?? (error => {throw error;})}, context);
   const storeId = randomBytes(32).toString("hex");
   const provenanceDir = join(f.directory, "durable-parent"); await mkdir(provenanceDir, {mode: 0o700});
   const selectedExecutor = options.executor ? options.executor(client.executor, f, storage) : client.executor;
   const selectedTransport = options.transport ? options.transport(f.native, f, storage) : f.native;
-  const adapter = await api().createChioDurableTools({storeId, storage, session: host, provenanceDir, binding: f.binding, registry: f.registry, originals: proxy.originals, executor: selectedExecutor, transport: selectedTransport, context});
+  const originals = options.originals ? options.originals(proxy.originals) : proxy.originals;
+  const adapter = await api().createChioDurableTools({storeId, storage, session: host, provenanceDir, binding: f.binding, registry: f.registry, originals, executor: selectedExecutor, transport: selectedTransport, context});
   registry.install({...adapter.extension, hooks: [...(adapter.extension.hooks ?? []), ...(options.hooks ?? [])]});
   const conversation = await host.root(context);
-  return {f, proxy, client, storage, storageDirectory, provenanceDir, storeId, registry, host, adapter, conversation,
+  return {f, proxy, client, storage, storageDirectory, provenanceDir, storeId, registry, host, adapter, conversation, originals, executor: selectedExecutor, transport: selectedTransport,
     async close() {await adapter.close(); await host.close(context); await proxy.close(); await f.close();}};
 }
 const assistant = (callId, args) => ({role: "assistant", api: "openai-responses", provider: "openai", model: "fixture", content: [{type: "toolCall", id: callId, name: "chio_write", arguments: args}], stopReason: "toolUse", timestamp: 1, usage: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0}}});
@@ -73,7 +75,9 @@ test("a second actual host commits an explicitly imported original without creat
   const h = await setup({executor: inner => ({async execute(req, signal) {await inner.execute(req, signal); throw new Error("response lost after original signed completion");}})});
   let secondHost; let adapter;
   try {
-    const first = await runTool(h); await assert.rejects(h.adapter.flush(), /terminal|committed|completion/);
+    const first = await runTool(h); await h.adapter.flush();
+    assert.equal((await intentOf(h.provenanceDir, first.taskId)).reconciled.state, "undelivered", "a failed task records its non-delivery once; its native original stays fenced");
+    assert.equal(h.f.counts().acks, 0); assert.equal((await h.proxy.originals.inventory()).fenced, true);
     const logical = h.adapter.requestFor(first.taskId); const original = await plugin.recoverOriginalOperation(logical, h.proxy.originals);
     const handoffPath = join(h.f.directory, "handoff.json"); await plugin.exportContinuation(handoffPath, {binding: h.f.binding, requests: [logical], originals: h.proxy.originals});
     const imported = await plugin.importContinuation(handoffPath, {binding: h.f.binding, originals: h.proxy.originals});
@@ -133,7 +137,12 @@ for (const fault of ["confirmed", "unconfirmed", "staleFlags", "forgedClaims", "
       assert.deepEqual(JSON.parse(entry.model[0].content[0].text), original);
       const intent = JSON.parse(await readFile(join(provenanceDir, "intents", (await readdir(join(provenanceDir, "intents")))[0]), "utf8"));
       assert.equal(intent.hostCommit.entryId, entry.id); assert.notEqual(intent.hostCommit.storeId, firstProof.storeId);
-    } else await assert.rejects(adapter.flush(), /committed|original|delivery|conflict|entry|outcome/);
+    } else if (fault === "conflictingOutcome") {
+      // A substituted outcome is an immutable committed non-delivery: recorded
+      // once, never ACKed, and never a reason to fail the receiving store.
+      await adapter.flush(); await adapter.flush();
+      assert.equal((await intentOf(provenanceDir, receiving.taskId)).reconciled.state, "undelivered");
+    } else await assert.rejects(adapter.flush(), /Conflicting committed entry proof/);
     if (fault === "staleFlags") assert.equal(staleChanged, true, "fixture must revoke flags after the first actual committed-result lookup");
     assert.deepEqual((await h.proxy.originals.mappings.find(logical)).hostCommit, firstProof);
     assert.equal(receivingAcks, 0);
@@ -163,7 +172,8 @@ for (const fault of ["detailsOnly", "truncated", "fakeOutcome", "interruption"])
     return {content: [{type: "text", text: "Tool interrupted and may have partially run"}], isError: true};
   }})]});
   try {
-    await runTool(h); await assert.rejects(h.adapter.flush(), /committed|original|outcome|content|interruption/);
+    const ids = await runTool(h); await h.adapter.flush(); await h.adapter.flush();
+    assert.equal((await intentOf(h.provenanceDir, ids.taskId)).reconciled.state, "undelivered");
     assert.deepEqual(h.f.counts(), {effects: 1, acks: 0, nativeCalls: 1}); assert.equal((await h.proxy.originals.inventory()).fenced, true);
   } finally {await h.close();}
 });
@@ -240,7 +250,8 @@ test("spec review: independent actual hosts and original ports cannot replace th
   const firstRead = deferred(); const bothReads = deferred(); const releaseFirst = deferred(); const releaseSecond = deferred(); const published = deferred(); const allowACK = deferred();
   let readCount = 0; let firstPort; let firstReference; const ackReferences = [];
   try {
-    const source = await runTool(h); await assert.rejects(h.adapter.flush(), /terminal|committed|completion/);
+    const source = await runTool(h); await h.adapter.flush();
+    assert.equal((await intentOf(h.provenanceDir, source.taskId)).reconciled.state, "undelivered");
     const logical = h.adapter.requestFor(source.taskId); const original = await plugin.recoverOriginalOperation(logical, h.proxy.originals);
     const mappingPath = join(h.f.config.journalDir, "pi-parent-mappings", hash(JSON.stringify([logical.sessionId, logical.toolCallId])) + ".json");
     for (let index = 0; index < 2; index++) {
@@ -306,8 +317,11 @@ test("spec review: independent actual hosts and original ports cannot replace th
 });
 
 test("second actual Durable host scans history after host commit before ACK and retries only the original native acknowledgement", async () => {
+  // The first host's ACK stays unresolved on every attempt. A failure stays
+  // with its own intent and each flush retries it, so the first host never
+  // delivers and only the restarted host's history scan can.
   let attempts = 0;
-  const h = await setup({transport: inner => ({async acknowledgeReceivedOutcome(outcome) {attempts++; if (attempts === 1) return {acknowledged: false}; return inner.acknowledgeReceivedOutcome(outcome);}})});
+  const h = await setup({transport: () => ({async acknowledgeReceivedOutcome() {attempts++; return {acknowledged: false};}})});
   let secondHost; let secondAdapter;
   try {
     const ids = await runTool(h); await assert.rejects(h.adapter.flush(), /acknowledgement|ACK|delivery/);
@@ -358,7 +372,8 @@ test("actual native unsafe ToolTask recovery produces an interruption without ac
     await h.adapter.close(); await h.host.close(context);
     const storage = await openNodeJsonlStorage(h.storageDirectory, context, {fsync: true}); const registry = createRegistry(); host = await Harness.open(storage, {models: {}, registry}, context);
     adapter = await api().createChioDurableTools({storeId: h.storeId, storage, session: host, provenanceDir: h.provenanceDir, binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: {execute() {executorCalls++; throw new Error("Unsafe recovery must not execute");}}, transport: h.f.native, context});
-    registry.install(adapter.extension); await host.waitForTask(ids.taskId, context); await assert.rejects(adapter.flush(), /terminal|completion|committed/);
+    registry.install(adapter.extension); await host.waitForTask(ids.taskId, context); await adapter.flush();
+    assert.equal((await intentOf(h.provenanceDir, ids.taskId)).reconciled.state, "undelivered", "a generic interruption is recorded as non-delivery, never as an ACK");
     const task = await storage.task(ids.taskId, context); assert.equal(task.state.outcome.status, "failed");
     const entry = (await storage.entry(task.state.outcome.result.entryId, context)).entry;
     assert.ok(entry.data.diagnostics.some(value => value.code === "interrupted")); assert.equal(executorCalls, 1);
@@ -372,4 +387,223 @@ test("optional Durable is isolated from the base runtime and root declarations",
   assert.equal(metadata.devDependencies["@earendil-works/pi-durable"], "1.0.2"); assert.equal(metadata.peerDependencies["@earendil-works/pi-durable"], "1.0.2"); assert.equal(metadata.peerDependenciesMeta["@earendil-works/pi-durable"].optional, true);
   assert.equal(metadata.exports["./durable"], "./dist/durable.js");
   for (const file of ["index.js", "index.d.ts"]) assert.equal((await readFile(new URL("../dist/" + file, import.meta.url), "utf8")).includes("pi-durable"), false);
+});
+
+// Final review A2-C1 and A2-I1: one undelivered or approval-pending intent must
+// not disable later calls or a reopened adapter, and retained history must not
+// be re-observed by every flush.
+const roundMessage = calls => ({...assistant("unused", {}), content: calls.map(([id, name, args]) => ({type: "toolCall", id, name, arguments: args}))});
+async function committedView(storage, taskId) {
+  const task = await storage.task(taskId, context); const message = (await storage.entry(task.state.outcome.result.entryId, context)).entry.model[0];
+  let outcome; try {outcome = JSON.parse(message.content[0]?.text ?? "");} catch {outcome = undefined;}
+  return {status: task.state.outcome.status, isError: message.isError, outcome};
+}
+async function intentOf(provenanceDir, taskId) {
+  const directory = join(provenanceDir, "intents");
+  for (const name of await readdir(directory)) {const intent = JSON.parse(await readFile(join(directory, name), "utf8")); if (intent.taskId === taskId) return intent;}
+  return undefined;
+}
+async function runCall(h, callId, name, args) {
+  const taskId = await h.conversation.commit(async tx => {
+    const entry = await tx.appendEntry(AssistantEntry, h.conversation.id, {model: [roundMessage([[callId, name, args]])]});
+    return tx.createTask(ToolTask, {assistant: entry.id, callId}, {ownership: {kind: "conversation"}});
+  }, context);
+  await h.host.waitForTask(taskId, context);
+  return {taskId, ...await committedView(h.storage, taskId)};
+}
+async function reopen(h, overrides = {}) {
+  await h.adapter.close();
+  const adapter = await api().createChioDurableTools({storeId: h.storeId, storage: h.storage, session: h.host, provenanceDir: h.provenanceDir, binding: h.f.binding, registry: h.f.registry,
+    originals: h.originals, executor: h.executor, transport: h.transport, context, ...overrides});
+  h.registry.install(adapter.extension); h.adapter = adapter; return adapter;
+}
+
+test("A2-C1: an actual Durable round with two tool calls delivers both originals; later rounds and a reopened adapter keep working", async () => {
+  const faux = fauxProvider(); const models = createModels(); models.setProvider(faux.provider); const reports = [];
+  const h = await setup({memory: true, models, onReport: error => reports.push(error instanceof Error ? error.message : String(error))});
+  try {
+    const model = faux.getModel();
+    await h.conversation.configure({model: {provider: model.provider, modelId: model.id}, extensions: [h.adapter.extension]}, context);
+    faux.setResponses([
+      fauxAssistantMessage([fauxToolCall("chio_write", {path: "a.ts", content: "A"}, {id: "round-1-a"}), fauxToolCall("chio_write", {path: "b.ts", content: "B"}, {id: "round-1-b"})], {stopReason: "toolUse"}),
+      fauxAssistantMessage([fauxToolCall("chio_write", {path: "c.ts", content: "C"}, {id: "round-2-c"})], {stopReason: "toolUse"}),
+      fauxAssistantMessage("done"),
+    ]);
+    const submission = await h.conversation.submit({type: "input", content: "write three files"}, context);
+    assert.equal((await submission.wait(context)).status, "done");
+    const results = (await h.conversation.context(context)).messages.filter(message => message.role === "toolResult");
+    assert.deepEqual(results.map(message => [message.toolCallId, message.isError, JSON.parse(message.content[0].text).state]),
+      [["round-1-a", false, "completed"], ["round-1-b", false, "completed"], ["round-2-c", false, "completed"]], "the second call of a sequential round is not fenced by its predecessor");
+    await h.adapter.flush();
+    assert.deepEqual(reports, []);
+    assert.deepEqual(h.f.counts(), {effects: 3, acks: 3, nativeCalls: 3});
+    assert.equal((await h.proxy.originals.inventory()).fenced, false);
+    assert.equal(h.client.state.unresolved, false);
+    const reopened = await reopen(h, {executor: {execute() {throw new Error("Reopening observes only")}}});
+    await reopened.flush(); await reopened.flush();
+    assert.deepEqual(h.f.counts(), {effects: 3, acks: 3, nativeCalls: 3});
+  } finally {await h.close();}
+});
+
+test("A2-C1: concurrent tool tasks in one store yield delivered originals or definite non-dispatch, never a poisoned store", async () => {
+  const h = await setup({memory: true});
+  try {
+    const calls = [["concurrent-0", "chio_write", {path: "f0.ts", content: "v0"}], ["concurrent-1", "chio_write", {path: "f1.ts", content: "v1"}]];
+    const ids = await h.conversation.commit(async tx => {
+      const entry = await tx.appendEntry(AssistantEntry, h.conversation.id, {model: [roundMessage(calls)]});
+      const created = []; for (const [callId] of calls) created.push(await tx.createTask(ToolTask, {assistant: entry.id, callId}, {ownership: {kind: "conversation"}})); return created;
+    }, context);
+    for (const id of ids) await h.host.waitForTask(id, context);
+    const views = await Promise.all(ids.map(id => committedView(h.storage, id)));
+    for (const view of views) assert.ok(view.outcome?.state === "completed" || view.outcome?.state === "not_dispatched", JSON.stringify(view));
+    const delivered = views.filter(view => view.outcome.state === "completed").length; assert.ok(delivered >= 1);
+    for (const [index, view] of views.entries()) if (view.outcome.state === "not_dispatched") {
+      assert.equal(view.isError, true);
+      const intent = await intentOf(h.provenanceDir, ids[index]);
+      assert.ok(intent === undefined || intent.reconciled?.state === "not-dispatched", "a definite non-dispatch is never retained as a delivery to verify");
+    }
+    await h.adapter.flush();
+    assert.deepEqual(h.f.counts(), {effects: delivered, acks: delivered, nativeCalls: delivered});
+    assert.equal(h.client.state.unresolved, false, "a definite parent refusal never makes the guest adapter treat later work as unknown");
+    const later = await runCall(h, "after-concurrent", "chio_write", {path: "later.ts", content: "later"});
+    assert.equal(later.status, "completed"); assert.equal(later.outcome.state, "completed");
+    await h.adapter.flush();
+    assert.deepEqual(h.f.counts(), {effects: delivered + 1, acks: delivered + 1, nativeCalls: delivered + 1});
+    await (await reopen(h)).flush();
+  } finally {await h.close();}
+});
+
+async function approve(h, pending, args) {
+  const directory = join(h.f.config.journalDir, "approvals"); await mkdir(directory, {mode: 0o700}).catch(error => {if (error.code !== "EEXIST") throw error;});
+  await writeFile(join(directory, hash(pending.requestId) + ".json"), JSON.stringify({toolCallParams: approvedParams(h.f.config, pending.requestId, args)}), {mode: 0o600});
+}
+
+test("A2-C1: an approval-pending original resumed by chio_resume keeps later calls and a reopened adapter working", async () => {
+  const h = await setup({memory: true, fixture: {approval: true}});
+  try {
+    const args = {path: "source.ts", content: "exact original"};
+    const first = await runCall(h, "approval-call", "chio_write", args);
+    assert.equal(first.outcome.state, "awaiting_approval"); await h.adapter.flush();
+    assert.equal((await intentOf(h.provenanceDir, first.taskId)).reconciled.state, "approval-pending");
+    await approve(h, first.outcome, args);
+    const resumed = await runCall(h, "resume-call", "chio_resume", {requestId: first.outcome.requestId, tool: "write_file", arguments: args});
+    assert.equal(resumed.status, "completed"); assert.equal(resumed.outcome.state, "completed");
+    await h.adapter.flush(); await h.adapter.flush();
+    assert.equal((await intentOf(h.provenanceDir, resumed.taskId)).reconciled.state, "acknowledged");
+    const record = await h.f.record(first.outcome.requestId);
+    assert.deepEqual([record.state, record.acknowledged, record.hostDeliveryConfirmed], ["completed", true, true]);
+    assert.equal((await h.proxy.originals.inventory()).fenced, false);
+    const next = await runCall(h, "next-call", "chio_write", {path: "other.ts", content: "next"});
+    assert.equal(next.status, "completed"); assert.equal(next.outcome.state, "awaiting_approval", "later work reaches native admission instead of a poisoned store");
+    await h.adapter.flush(); await (await reopen(h)).flush();
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 1, nativeCalls: 1});
+  } finally {await h.close();}
+});
+
+test("A2-C1: a pending proposal first observed after its chio_resume completed is recorded as superseded without ACK", async () => {
+  let blocked = false; let firstRequest;
+  const h = await setup({memory: true, fixture: {approval: true},
+    originals: port => ({...port, async lookup(req) {if (blocked && req.toolCallId === firstRequest?.toolCallId) throw new Error("synthetic transient native inspection failure"); return port.lookup(req);}})});
+  try {
+    const args = {path: "source.ts", content: "exact original"};
+    const first = await runCall(h, "approval-late", "chio_write", args); firstRequest = h.adapter.requestFor(first.taskId);
+    assert.equal(first.outcome.state, "awaiting_approval");
+    const intent = await intentOf(h.provenanceDir, first.taskId);
+    if (intent.reconciled === undefined) blocked = true;
+    else {
+      // The automatic observer already recorded it; reproduce an observation
+      // that first happens after the resume by withholding that marker.
+      blocked = true;
+      const {reconciled: _marker, contentDigest: _digest, ...body} = intent;
+      await writeFile(join(h.provenanceDir, "intents", hash(JSON.stringify([h.storeId, intent.conversationId, intent.taskId, intent.callId])) + ".json"),
+        JSON.stringify({...body, contentDigest: hash(canonicalJson(body))}), {mode: 0o600});
+      await reopen(h);
+    }
+    await approve(h, first.outcome, args);
+    const resumed = await runCall(h, "resume-late", "chio_resume", {requestId: first.outcome.requestId, tool: "write_file", arguments: args});
+    assert.equal(resumed.outcome.state, "completed");
+    await assert.rejects(h.adapter.flush(), /transient/, "an inspection failure stays with its own intent");
+    assert.equal(h.f.counts().acks, 1, "the resumed original was acknowledged despite the unrelated failing observation");
+    blocked = false; await h.adapter.flush();
+    assert.equal((await intentOf(h.provenanceDir, first.taskId)).reconciled.state, "superseded");
+    assert.equal((await intentOf(h.provenanceDir, resumed.taskId)).reconciled.state, "acknowledged");
+    await (await reopen(h)).flush();
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 1, nativeCalls: 1});
+  } finally {await h.close();}
+});
+
+test("A2-C1: an executor exception leaves its original natively fenced without poisoning the store; after recovery elsewhere later calls dispatch", async () => {
+  let lose = true; let executorCalls = 0;
+  const h = await setup({executor: inner => ({async execute(req, signal) {
+    executorCalls++; const result = await inner.execute(req, signal);
+    if (lose) {lose = false; throw new Error("response lost after original signed completion");}
+    return result;
+  }})});
+  let receivingHost; let receiving;
+  try {
+    const lost = await runCall(h, "lost-call", "chio_write", {path: "lost.ts", content: "lost"});
+    assert.equal(lost.status, "failed");
+    await h.adapter.flush();
+    assert.equal((await intentOf(h.provenanceDir, lost.taskId)).reconciled.state, "undelivered");
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 0, nativeCalls: 1}); assert.equal((await h.proxy.originals.inventory()).fenced, true);
+    const fenced = await runCall(h, "fenced-call", "chio_write", {path: "fenced.ts", content: "fenced"});
+    assert.equal(fenced.status, "completed"); assert.equal(fenced.isError, true); assert.equal(fenced.outcome.state, "not_dispatched");
+    assert.equal(executorCalls, 1, "a fenced call never reaches the executor");
+    assert.equal(await intentOf(h.provenanceDir, fenced.taskId), undefined, "a definite non-dispatch retains no intent");
+    await h.adapter.flush(); await (await reopen(h)).flush();
+    // Explicit recovery of the exact original in another actual store.
+    const logical = h.adapter.requestFor(lost.taskId);
+    const storage = new MemoryStorage(); const registry = createRegistry(); receivingHost = await Harness.open(storage, {models: {}, registry}, context);
+    const provenanceDir = join(h.f.directory, "receiving-parent"); await mkdir(provenanceDir, {mode: 0o700});
+    receiving = await api().createChioDurableTools({storeId: randomBytes(32).toString("hex"), storage, session: receivingHost, provenanceDir, binding: h.f.binding, registry: h.f.registry,
+      originals: h.proxy.originals, executor: {execute() {throw new Error("Receiving host recovers the original only");}}, transport: h.f.native, context});
+    registry.install(receiving.extension); const conversation = await receivingHost.root(context);
+    const task = await runTool({...h, host: receivingHost, conversation}, logical.arguments, "recover-lost", false, true);
+    await receiving.bindRecovery({taskId: task.taskId, conversationId: conversation.id, callId: "recover-lost", request: logical});
+    await receivingHost.waitForTask(task.taskId, context); await receiving.flush();
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 1, nativeCalls: 1}); assert.equal((await h.proxy.originals.inventory()).fenced, false);
+    const later = await runCall(h, "after-recovery", "chio_write", {path: "later.ts", content: "later"});
+    assert.equal(later.status, "completed"); assert.equal(later.outcome.state, "completed");
+    await h.adapter.flush(); await (await reopen(h)).flush();
+    assert.deepEqual(h.f.counts(), {effects: 2, acks: 2, nativeCalls: 2});
+  } finally {await receiving?.close(); await receivingHost?.close(context); await h.close();}
+});
+
+test("A2-I1: flush observes only unreconciled intents, so its cost does not grow with retained history", async () => {
+  const counted = {lookup: 0, retainHostCommit: 0, acknowledgeCommitted: 0}; const total = () => counted.lookup + counted.retainHostCommit + counted.acknowledgeCommitted;
+  const h = await setup({memory: true, originals: port => ({...port,
+    async lookup(req) {counted.lookup++; return port.lookup(req);},
+    async retainHostCommit(...args) {counted.retainHostCommit++; return port.retainHostCommit(...args);},
+    async acknowledgeCommitted(...args) {counted.acknowledgeCommitted++; return port.acknowledgeCommitted(...args);}})});
+  try {
+    const perFlush = [];
+    for (let index = 0; index < 4; index++) {
+      assert.equal((await runCall(h, `history-${index}`, "chio_write", {path: `f${index}.ts`, content: `v${index}`})).outcome.state, "completed");
+      const before = total(); await h.adapter.flush(); perFlush.push(total() - before);
+    }
+    // Re-observing every retained intent costs three native port calls per
+    // historical call per flush (0, 3, 6, 9 more here). At most the newest
+    // intent is still unreconciled when a flush starts.
+    assert.ok(perFlush.every(calls => calls <= 3), `port calls per flush: ${JSON.stringify(perFlush)}`);
+    const before = total(); await h.adapter.flush(); await h.adapter.flush();
+    assert.equal(total() - before, 0, "reconciled history is never observed again");
+    for (const name of await readdir(join(h.provenanceDir, "intents"))) assert.equal(JSON.parse(await readFile(join(h.provenanceDir, "intents", name), "utf8")).reconciled.state, "acknowledged");
+    assert.deepEqual(h.f.counts(), {effects: 4, acks: 4, nativeCalls: 4});
+  } finally {await h.close();}
+});
+
+test("A2-C1: an unresolved ACK stays with its own intent; a later flush delivers it and fresh work proceeds", async () => {
+  let attempts = 0;
+  const h = await setup({memory: true, transport: inner => ({async acknowledgeReceivedOutcome(outcome) {attempts++; if (attempts === 1) return {acknowledged: false}; return inner.acknowledgeReceivedOutcome(outcome);}})});
+  try {
+    const first = await runCall(h, "ack-retry", "chio_write", {path: "first.ts", content: "first"});
+    // The automatic observer or the first flush meets the unresolved ACK.
+    const rejected = await h.adapter.flush().then(() => undefined, error => error);
+    if (rejected) {assert.match(rejected.message, /acknowledgement unresolved/); await h.adapter.flush();}
+    assert.equal(attempts, 2, "only the verified original ACK is retried");
+    assert.equal((await intentOf(h.provenanceDir, first.taskId)).reconciled.state, "acknowledged");
+    const next = await runCall(h, "after-ack-retry", "chio_write", {path: "next.ts", content: "next"});
+    assert.equal(next.outcome.state, "completed"); await h.adapter.flush();
+    assert.deepEqual(h.f.counts(), {effects: 2, acks: 2, nativeCalls: 2});
+  } finally {await h.close();}
 });

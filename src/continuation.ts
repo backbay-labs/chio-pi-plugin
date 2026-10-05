@@ -35,6 +35,15 @@ const NATIVE_OPERATOR_SHA256 = "84602a3f626ecf47283f0ada72fd4d2116104b167adc16ee
 function bindingFor(context: OperatorContext): ContinuationBinding {return {authorityDigest: preparedAuthorityDigest(context.config, context.registry), registryDigest: context.registry.digest};}
 function fingerprint(context: OperatorContext): string {return sha256(canonicalJson([...context.records.entries()].sort(([a], [b]) => a < b ? -1 : 1)));}
 function delivered(record: Record<string, unknown>): boolean {return record.state === "not_dispatched" || record.state === "completed" && record.acknowledged === true && (record.hostDeliveryRequired === false || record.hostDeliveryConfirmed === true);}
+/** Fresh effects require an unfenced native inventory. An explicit chio_resume
+ * may proceed only for its own retained pending proposal while every other
+ * original is delivered or not dispatched. Refusal here is a definite non-dispatch. */
+export function admitsDispatch(inventory: OriginalInventory, request: KernelRequest): boolean {
+  if (request.tool !== "chio_resume") return !inventory.fenced;
+  const id = request.arguments.requestId;
+  return inventory.operations.some(op => op.nativeRequestId === id && op.state === "awaiting_approval")
+    && inventory.operations.every(op => op.nativeRequestId === id || op.state === "not_dispatched" || op.state === "completed" && op.acknowledged && op.hostDeliveryConfirmed);
+}
 function retainedCall(request: KernelRequest): {tool: string; arguments: unknown} {
   return request.tool === "chio_resume" ? {tool: String(request.arguments.tool), arguments: request.arguments.arguments} : request;
 }
@@ -136,14 +145,27 @@ export async function createNativeOriginalOperationPort(options: {configPath: st
       const missingOriginal = snapshot.maps.some(mapping => !snapshot.context.records.has(mapping.identity.nativeRequestId));
       return {fenced: snapshot.status.fenced === true || missingOriginal || [...snapshot.context.records.values()].some(record => !delivered(record)), operations};
     },
-    async retainHostCommit(request, reference) {validateCommit(reference); await exactCompletion(request, (await lookup(request)).outcome); await mappings.update(request, {hostCommit: frozenJson(reference)});},
+    async retainHostCommit(request, reference) {
+      validateCommit(reference);
+      const original = await lookup(request);
+      if (original.state !== "completed" || !original.verified || original.outcome === undefined) throw new Error("Original completion verification failed; preserve its fence");
+      await mappings.update(request, {hostCommit: frozenJson(reference)});
+    },
     async acknowledgeCommitted(request, outcome, reference, transport) {
-      validateCommit(reference); await exactCompletion(request, outcome);
+      validateCommit(reference); const original = await exactCompletion(request, outcome);
       const mapping = await mappings.find(request);
       if (!mapping?.hostCommit || canonicalJson(mapping.hostCommit) !== canonicalJson(reference)) throw new Error("Exact committed entry reference must be durably retained before ACK");
+      const acknowledgement = {acknowledged: true as const, outcomeDigest: sha256(canonicalJson(outcome))};
+      // Native ACK already confirmed for this exact verified completion: only
+      // the parent mark may be missing (crash after ACK). Repeating the native
+      // call would rewrite its journal without adding delivery evidence.
+      if (original.acknowledged && original.hostDeliveryConfirmed) {
+        if (mapping.acknowledgement === undefined || canonicalJson(mapping.acknowledgement) !== canonicalJson(acknowledgement)) await mappings.update(request, {acknowledgement});
+        return;
+      }
       const result = await transport.acknowledgeReceivedOutcome(outcome);
       if (!result.acknowledged) throw new Error("Original native delivery acknowledgement unresolved; retry only verified original ACK");
-      await mappings.update(request, {acknowledgement: {acknowledged: true, outcomeDigest: sha256(canonicalJson(outcome))}});
+      await mappings.update(request, {acknowledgement});
     },
     async acknowledgeHistory(outcome, transport) {
       if (!object(outcome) || typeof outcome.requestId !== "string") throw new Error("Complete original host history outcome required");

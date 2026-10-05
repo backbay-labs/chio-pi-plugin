@@ -189,7 +189,13 @@ export async function runRoadmapWorkflow({loss = "after-native-retention", trace
         registry: f.registry, originals: proxy.originals, executor, transport: f.native, context});
       registry.install(adapter.extension);
       const conversation = await host.root(context); let closed = false;
-      return {name, proxy, client, storage, host, adapter, conversation, counted, async close() {if (closed) return; closed = true; await adapter.close(); await host.close(context);}};
+      // Read-only view of the adapter's private per-task reconciliation marker.
+      const reconciliation = async taskId => {
+        const directory = join(provenanceDir, "intents");
+        for (const name of await readdir(directory)) {const intent = JSON.parse(await readFile(join(directory, name), "utf8")); if (intent.taskId === taskId) return intent.reconciled?.state ?? null;}
+        return null;
+      };
+      return {name, proxy, client, storage, host, adapter, conversation, counted, reconciliation, async close() {if (closed) return; closed = true; await adapter.close(); await host.close(context);}};
     }
     const alias = kernelTool => f.registry.tools.find(tool => tool.kernelTool === kernelTool).name;
     async function runTool(h, kernelTool, args, callId, {defer = false} = {}) {
@@ -211,10 +217,10 @@ export async function runRoadmapWorkflow({loss = "after-native-retention", trace
       return {status: task.state.outcome.status, outcome, details: message.details};
     }
     // Wait for the adapter's own committed-history observer to deliver this
-    // task. flush() rescans every retained intent, which is quadratic over a
-    // long workflow; this bounded wait reads only this original's native record
-    // and parent mapping. After the bound, the documented flush() wait either
-    // surfaces a retained observer failure or completes the same delivery.
+    // task, reading only this original's native record and parent mapping.
+    // After the bound, the documented flush() wait either surfaces this
+    // intent's observation failure or completes the same delivery; the test
+    // requires every step to report the automatic observer.
     async function delivered(h, taskId, nativeRequestId) {
       const logical = h.adapter.requestFor(taskId);
       const mappingPath = join(f.config.journalDir, "pi-parent-mappings", sha256(JSON.stringify([logical.sessionId, logical.toolCallId])) + ".json");
@@ -322,8 +328,9 @@ export async function runRoadmapWorkflow({loss = "after-native-retention", trace
     const logical = hostA.adapter.requestFor(publishTask);
     const firstLookup = await proxyA.originals.lookup(logical);
     evidence.firstHost = {publicationResponse: lossRun.lost() === 1 ? "lost" : loss === "before-native-retention" ? "unknown-native-outcome" : "delivered",
-      taskStatus: publishView.status, guestUnresolved: hostA.client.state.unresolved, flushError, nativeOriginalState: firstLookup.state, nativeOriginalVerified: firstLookup.verified,
-      nativeRequestId: firstLookup.nativeRequestId, resourceDispatches: kernel.dispatches.length - dispatchesBeforePublish};
+      taskStatus: publishView.status, guestUnresolved: hostA.client.state.unresolved, flushError, reconciliation: await hostA.reconciliation(publishTask),
+      nativeOriginalState: firstLookup.state, nativeOriginalVerified: firstLookup.verified, nativeOriginalAcknowledged: firstLookup.acknowledged,
+      fencedAfterFlush: (await proxyA.originals.inventory()).fenced, nativeRequestId: firstLookup.nativeRequestId, resourceDispatches: kernel.dispatches.length - dispatchesBeforePublish};
     trace(`first-host publish: native original ${firstLookup.state}, host ${publishView.status}`);
     const publishedNames = await observer.listing();
     evidence.originalArtifact = publishedNames.length === 1 ? (({bundle: _bundle, ...metadata}) => metadata)(await observer.artifact(publishedNames[0])) : null;
@@ -350,16 +357,22 @@ export async function runRoadmapWorkflow({loss = "after-native-retention", trace
     let replacementAttempt = null;
     if (!recovered) {
       // A replacement publication would make the demo finish; it must stay refused.
-      const before = {...f.counts(), dispatches: kernel.dispatches.length}; let refusal = null; let parentRefusal = null;
+      const before = {...f.counts(), dispatches: kernel.dispatches.length}; let refusal = null; let parentRefusal = null; let outcome = null;
       const genuine = globalThis.fetch;
+      // The parent answers a fenced fresh call with a definite not_dispatched
+      // result (or, for malformed input, a JSON-RPC error). Record either reason.
+      const reason = body => {
+        if (body?.error?.message) return body.error.message;
+        try {const value = JSON.parse(body.result.content[0].text); return value.state === "not_dispatched" ? value.reason : null;} catch {return null;}
+      };
       globalThis.fetch = async (input, init) => {
         const response = await genuine(input, init);
-        if (String(input) === proxyB.url) parentRefusal = (await response.clone().json().catch(() => undefined))?.error?.message ?? null;
+        if (String(input) === proxyB.url) parentRefusal = reason(await response.clone().json().catch(() => undefined));
         return response;
       };
-      try {await hostB.client.executor.execute({sessionId: "second-host-replacement", toolCallId: "replacement-publication", tool: "publish_artifact", arguments: publication});}
+      try {const result = await hostB.client.executor.execute({sessionId: "second-host-replacement", toolCallId: "replacement-publication", tool: "publish_artifact", arguments: publication}); outcome = result.outcome; refusal = result.outcome === "not_dispatched" ? result.content : null;}
       catch (error) {refusal = error.message;} finally {globalThis.fetch = genuine;}
-      replacementAttempt = {refusal, parentRefusal, dispatched: kernel.dispatches.length !== before.dispatches || f.counts().nativeCalls !== before.nativeCalls};
+      replacementAttempt = {refusal, parentRefusal, outcome, dispatched: kernel.dispatches.length !== before.dispatches || f.counts().nativeCalls !== before.nativeCalls};
     }
     const recoveryEnd = {...f.counts(), dispatches: kernel.dispatches.length};
     const nativeOutcome = f.outcomes.get(evidence.firstHost.nativeRequestId);

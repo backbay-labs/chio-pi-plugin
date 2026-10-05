@@ -138,6 +138,8 @@ export async function componentChecks(run, backend) {
   }
   await check("every admitted step has a verified signed completion delivered and acknowledged at the native gateway",
     () => ({passed: signed.length === 9 && signed.every(item => item.ok), detail: {steps: signed.length, unverified: signed.filter(item => !item.ok).map(item => item.step.name)}}));
+  await check("every admitted step was acknowledged by the automatic committed-history observer",
+    () => ({passed: signed.length === 9 && signed.every(item => item.step.deliveredBy === "commit-observer"), detail: {deliveredBy: signed.map(item => [item.step.name, item.step.deliveredBy])}}));
   const testData = name => {const item = signed.find(value => value.step.name === name); return item?.record ? JSON.parse(item.record.outcome.result.content[0].text) : null;};
   const before = testData("before-test"); const after = testData("after-test");
   const bound = result => {if (!result) return false; const {resultSha256, ...body} = result; return sha256(canonicalJson(body)) === resultSha256;};
