@@ -463,6 +463,23 @@ test("B-M1 arguments beyond the input bound return input_bound with the document
   assert.equal(data(await io.call("repo_status", {}, meta("2"))).sourceDigest, f.sourceDigest, "the transport stays open"); await io.close();
   const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout); assert.equal(state.fenced, false); assert.deepEqual(state.operations.map(x => x.tool), ["repo_status"]);
 });
+test("final review: the input bound reserves the request envelope so an accepted config carries a full-size patch", async t => {
+  const maxPatchBytes = 65536; const reserve = maxPatchBytes + 8192;
+  const short = await fixture({bounds: {maxPatchBytes, maxInputBytes: reserve + codingConfig.MCP_REQUEST_ENVELOPE_BYTES - 1}}); t.after(() => short.close());
+  const refused = await command(["init", "--config", short.configPath]);
+  assert.equal(refused.code, 1, "a config that cannot carry its own full-size patch inside the input bound is refused"); assert.match(refused.stderr, /input and output bounds/i);
+  assert.deepEqual(await readdir(short.root("state")), []);
+  const f = await initialized({bounds: {maxPatchBytes, maxInputBytes: reserve + codingConfig.MCP_REQUEST_ENVELOPE_BYTES}}); t.after(() => f.close());
+  const io = stdio(f); t.after(() => io.close());
+  // A full-size patch whose structure (32 changes, about 2.2 KB) fits the 8192-byte
+  // reserve. Without the envelope term it validated and then got input_bound.
+  const changes = Array.from({length: 32}, (_, index) => ({path: `full-${String(index).padStart(2, "0")}.txt`, expectedFileSha256: null, replacement: "x".repeat(maxPatchBytes / 32)}));
+  const args = {sourceDigest: f.sourceDigest, changes};
+  assert.ok(Buffer.byteLength(JSON.stringify(args)) - maxPatchBytes > 8192 - codingConfig.MCP_REQUEST_ENVELOPE_BYTES);
+  const applied = await io.call("apply_patch", args);
+  assert.equal(applied.isError, undefined, JSON.stringify(applied));
+  assert.deepEqual(await readFile(join(f.root("state"), "generations", data(applied).sourceDigest, "full-31.txt")), Buffer.from("x".repeat(maxPatchBytes / 32)));
+});
 for (const [kind, change] of [
   ["an edit splitting a surrogate pair", sha => ({path: "e.txt", expectedFileSha256: sha, edits: [{oldText: "\ud83d", newText: "Z"}]})],
   ["an unpaired surrogate replacement", sha => ({path: "e.txt", expectedFileSha256: sha, replacement: "a\ude00"})],

@@ -44,7 +44,9 @@ export async function loadCodingConfig(path: string): Promise<LoadedConfig> {
   for (const root of roots) await privateDirectory(root);
   for (let i = 0; i < roots.length; i++) for (let j = i + 1; j < roots.length; j++) if (within(roots[i], roots[j]) || within(roots[j], roots[i])) throw new Error("Repository, state, artifact and job roots must be disjoint");
   if (roots.some(root => within(root, path))) throw new Error("Private operator configuration must be outside resource roots");
-  if (config.bounds.maxReadBytes + 8192 + MCP_RESULT_ENVELOPE_BYTES > config.bounds.maxOutputBytes || config.bounds.maxPatchBytes + 8192 > config.bounds.maxInputBytes) throw new Error("Configured input and output bounds cannot contain admitted work");
+  // The input bound charges every call the fixed request envelope, so the patch
+  // reserve keeps its 8192 structural bytes after that charge.
+  if (config.bounds.maxReadBytes + 8192 + MCP_RESULT_ENVELOPE_BYTES > config.bounds.maxOutputBytes || config.bounds.maxPatchBytes + 8192 + MCP_REQUEST_ENVELOPE_BYTES > config.bounds.maxInputBytes) throw new Error("Configured input and output bounds cannot contain admitted work");
   const names = new Set<string>();
   for (const recipe of config.recipes) {
     // Stdout/stderr are encoded into RecipeResult JSON, then content.text JSON.

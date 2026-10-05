@@ -86,7 +86,10 @@ unsigned forensic export rather than being replaced or reexecuted.
 
 `maxInputBytes` bounds one admitted call: its canonical arguments plus the
 largest permitted request envelope (a 512-character JSON-RPC ID and attempt ID
-needing six-byte escapes, the longest tool name and the native `_meta`). Larger
+needing six-byte escapes, the longest tool name and the native `_meta`, 6,576
+bytes). Configuration requires `maxPatchBytes + 8192 + 6576 <= maxInputBytes`, so
+a full-size patch keeps 8,192 bytes for its paths, digests and JSON structure after
+that envelope. Larger
 arguments receive an `input_bound` tool error before any intent; exact retained
 replay is checked first. The JSONL reader itself accepts lines up to a fixed
 ceiling of 1 MiB of arguments plus that envelope, which covers every argument
