@@ -1,14 +1,14 @@
 # Getting started
 
-The complete operator walkthrough for Chio for Pi: building and verifying the
-candidate archive, running a protected task, the execution boundary, and
+The complete operator walkthrough for Chio for Pi: installing the package or
+building it from source, running a protected task, the execution boundary, and
 resuming or recovering a session. The [README](../README.md) is the short tour.
 
 ## Status and qualification
 
-This is an unpublished restricted candidate. The public Pi
-peer is available on npm; build this plugin from source below. Bounded real-host
-observations exist, while complete published-release acceptance remains open.
+This is a restricted candidate. Its npm package is `@chio-protocol/pi-plugin`,
+installed beside the public Pi peer. Bounded real-host observations exist, while
+complete published-release acceptance remains open.
 [Current qualification](FINAL-QUALIFICATION.md) covers only the frozen
 `@chio/pi-plugin@0.1.0` archive `ec609539...` with Pi 0.85.1 on macOS, together
 with its [static-kernel follow-up](STATIC-KERNEL-QUALIFICATION.md). The
@@ -25,44 +25,49 @@ Use Node.js **22.19.0 or newer** and npm. Native runtime observations used Node
 The protected launcher requires macOS `sandbox-exec`, or Linux bubblewrap with a
 pinned runtime manifest as described in [run limits and Linux](RUN-LIMITS-LINUX.md).
 
-Start in a new working directory:
+Install the plugin and its exact Pi peer with one command, in a new directory:
+
+```sh
+mkdir ~/chio-pi && cd ~/chio-pi
+npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2
+npx chio-pi --help
+npx chio-coding-resource --help
+```
+
+To use the optional [Pi Durable adapter](CONTINUATION.md#native-pi-durable-tools),
+add `@earendil-works/pi-durable@1.0.2` to the same `npm install` command. The
+root entrypoint never loads Pi Durable.
+
+The package bundles the Chio bridge and SDK; npm fetches Pi and the public
+TypeBox and Ajv dependencies from the registry. npm's default settings work: no
+install strategy, ordering or script flags are needed, and adding
+`--ignore-scripts` also works. When a directory has no `package.json`, npm installs
+into the nearest parent directory that has a `package.json` or `node_modules`, so
+run `npm init -y` first if a parent such as your home directory has either. Exact peers do not
+freeze Pi's transitive graph, so keep the generated `package-lock.json`. Help
+verifies the entrypoints; it does not start protected execution. See
+[release qualification](RELEASE-QUALIFICATION.md) for clean installation
+checks, provenance and publication procedures.
+
+### Build from source
+
+Alternatively, build and install the archive from a clone of this repository:
 
 ```sh
 git clone https://github.com/backbay-labs/chio-pi-plugin.git
 cd chio-pi-plugin
 npm ci --ignore-scripts
 npm run pack:release
+(cd artifacts && shasum -a 256 -c chio-protocol-pi-plugin-0.2.0.tgz.sha256)
+mkdir ../chio-pi && cd ../chio-pi
+npm install ../chio-pi-plugin/artifacts/chio-protocol-pi-plugin-0.2.0.tgz \
+  @earendil-works/pi-coding-agent@1.0.2
+npx chio-pi --help
 ```
 
 The packer builds TypeScript and writes a tarball, SHA-256 file and provenance
 record to `artifacts/`. Checked-in vendor archives supply the Chio bridge and SDK;
 the resulting package bundles them. No private sibling checkout is required.
-
-Install the exact public Pi peer first, then the local plugin archive:
-
-```sh
-(cd artifacts && shasum -a 256 -c chio-pi-plugin-0.2.0.tgz.sha256)
-mkdir ../chio-pi-install
-cd ../chio-pi-install
-npm install --ignore-scripts --install-strategy=nested --save-exact \
-  @earendil-works/pi-coding-agent@1.0.2
-npm install --ignore-scripts --install-strategy=nested \
-  ../chio-pi-plugin/artifacts/chio-pi-plugin-0.2.0.tgz
-./node_modules/.bin/chio-pi --help
-./node_modules/.bin/chio-coding-resource --help
-```
-
-To use the optional [Pi Durable adapter](CONTINUATION.md#native-pi-durable-tools),
-add `@earendil-works/pi-durable@1.0.2` to the first command so both exact peers
-are installed before the plugin. The root entrypoint never loads Pi Durable.
-
-Registry access is required for Pi and the public TypeBox and Ajv dependencies.
-Keep the peer-first, nested installation order: it avoids the documented
-transitive resolution failure in Pi's published shrinkwrap. Exact peers do not
-freeze Pi's transitive graph, so keep the consumer lockfile. Help verifies the
-entrypoints; it does not start protected execution. See
-[release qualification](RELEASE-QUALIFICATION.md) for clean installation
-checks, provenance and publication procedures.
 
 ## Run a task
 
@@ -199,8 +204,8 @@ The root entrypoint exports `chioExtension`, `createChioPiSession`,
 `createToolRegistry`, `bridgeExecutor`, `readPreparedConfig`, `configuredExecutor`
 and the continuation, governance and limits APIs for adapter development. Their
 [TypeScript entrypoint](../src/index.ts) exposes the corresponding types.
-`@chio/pi-plugin/coding-resource` exports the resource participant and
-`@chio/pi-plugin/durable` the optional Pi Durable adapter. These in-process APIs
+`@chio-protocol/pi-plugin/coding-resource` exports the resource participant and
+`@chio-protocol/pi-plugin/durable` the optional Pi Durable adapter. These in-process APIs
 do not establish the launcher's OS boundary on their own. The
 [roadmap crosswalk](ROADMAP-IMPLEMENTATION.md#shipped-entrypoints) lists a
 runnable check for every shipped entrypoint.

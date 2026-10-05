@@ -1,7 +1,7 @@
 # Roadmap implementation crosswalk
 
 This page maps the twelve ideas in the [October 4 research memo](RESEARCH-2026-10-04.md)
-to the `@chio/pi-plugin@0.2.0` candidate. Each row names the shipped entrypoints,
+to the `@chio-protocol/pi-plugin@0.2.0` candidate. Each row names the shipped entrypoints,
 the current component or host evidence and its command, the native acceptance
 prerequisites and the remaining limitations. It routes readers to records; it is
 not itself a qualification record.
@@ -18,7 +18,8 @@ that same frozen archive on kernel `c03a8a711dbb...`. Neither record transfers t
 the 0.2.0 candidate, to Pi 1.0.2 or to any rebuilt archive. Historical acceptance,
 subscription and qualification records are preserved unchanged.
 
-The 0.2.0 candidate is unpublished. Its evidence has four separate layers:
+Publishing the 0.2.0 candidate to npm as `@chio-protocol/pi-plugin` distributes it;
+it does not qualify it. Its evidence has four separate layers:
 
 - **Component and stock-host tests.** `npm test` drives the installed Pi 1.0.2
   and Pi Durable 1.0.2 public contracts, the bundled bridge gateway and scripted
@@ -50,11 +51,11 @@ records resolve in the source repository at the recorded source commit.
 | --- | --- | --- | --- | --- |
 | 1 | Typed native tools | `createToolRegistry`, prepared `toolMode`, `chio-pi` | Component, stock Pi 1.0.2 | Open |
 | 2 | Trusted operator console | `chio-pi doctor`, `status`, `inspect`, `recover` | Component, bundled native utility | Open; `approval-decide` refused |
-| 3 | Constrained coding workspace | `chio-coding-resource`, `@chio/pi-plugin/coding-resource` | Component, signed bridge fixture, measured local confinement | Open |
+| 3 | Constrained coding workspace | `chio-coding-resource`, `@chio-protocol/pi-plugin/coding-resource` | Component, signed bridge fixture, measured local confinement | Open |
 | 4 | Pi 1.0.2 compatibility lane | Exact Pi 1.0.2 peer, `createChioPiSession`, `createChioPiRuntime`, `chio-pi` | Component, stock Pi 1.0.2, cold consumers | Open |
 | 5 | Governed repository context | `repo_context` resource tool; executable discovery disabled | Component | Open |
 | 6 | Explanations and authorized continuations | `explainNativeRecovery`, `verifyExplanationView`, `prepareNativeContinuation`, `executeNativeRemedy` | Real Ed25519 P2 views, callback fixtures | Interface only; native services absent |
-| 7 | Pi Durable adapter | `@chio/pi-plugin/durable` | Component, actual Durable contracts, cold consumer registration | Open |
+| 7 | Pi Durable adapter | `@chio-protocol/pi-plugin/durable` | Component, actual Durable contracts, cold consumer registration | Open |
 | 8 | Model context and labeled artifacts | `createNativeEmbedding`, `releaseGovernedModel`, `nativeKnowledge`, `--governance required` | Callback fixtures | Interface only; CLI refuses |
 | 9 | Cross-host original-operation continuation | `exportContinuation`, `importContinuation`, `recoverOriginalOperation`, Durable `bindRecovery` | Component, signed bridge fixture | Open; same authority only |
 | 10 | Bounded native delegation | `submitNativeChild`, `reconcileNativeChild`, `cancelNativeChild`, `waitNativeChild` | Callback fixtures | Interface only; attenuation unsupported |
@@ -111,7 +112,7 @@ research usability experiment with another developer was not run.
 ## 3. Constrained coding workspace
 
 **Shipped.** The `chio-coding-resource init|serve|inspect|export|recover-lock`
-binary and the `@chio/pi-plugin/coding-resource` export. Nine closed tools:
+binary and the `@chio-protocol/pi-plugin/coding-resource` export. Nine closed tools:
 `read_range`, `search`, `repo_status`, `repo_diff`, `apply_patch`, `test_recipe`,
 `publish_artifact`, `repo_context` and `read_many`. See
 [coding resource](CODING-RESOURCE.md).
@@ -199,7 +200,7 @@ installed or qualified. Explanations are advisory and never authorize an effect.
 
 ## 7. Pi Durable adapter
 
-**Shipped.** `createChioDurableTools` from `@chio/pi-plugin/durable`, with
+**Shipped.** `createChioDurableTools` from `@chio-protocol/pi-plugin/durable`, with
 `flush`, `close`, `requestFor` and `bindRecovery`. `@earendil-works/pi-durable@1.0.2`
 is an optional exact peer; the root entrypoint and its declarations never load
 it. Tools use `replay: "unsafe"` and sequential execution. See
@@ -322,7 +323,7 @@ are `null`. Stream bytes are not token measurements or a spending ceiling.
 
 ## Shipped entrypoints
 
-Run these from a consumer that installed the archive as described in the
+Run these from a consumer that installed the package as described in the
 [README](../README.md#build-and-install).
 
 | Entrypoint | Runnable check | Guide |
@@ -330,9 +331,9 @@ Run these from a consumer that installed the archive as described in the
 | `chio-pi` launcher | `./node_modules/.bin/chio-pi --help` | [README](../README.md#run-a-task) |
 | `chio-pi` operator console | `./node_modules/.bin/chio-pi doctor --help` | [Operator](OPERATOR.md) |
 | `chio-coding-resource` | `./node_modules/.bin/chio-coding-resource --help` | [Coding resource](CODING-RESOURCE.md) |
-| `@chio/pi-plugin` | `node --input-type=module -e "import('@chio/pi-plugin').then(m => console.log(typeof m.createToolRegistry))"` | [Typed tools](TYPED-TOOLS.md) |
-| `@chio/pi-plugin/coding-resource` | `node --input-type=module -e "import('@chio/pi-plugin/coding-resource').then(m => console.log(typeof m.CodingResource))"` | [Coding resource](CODING-RESOURCE.md) |
-| `@chio/pi-plugin/durable` | `node --input-type=module -e "import('@chio/pi-plugin/durable').then(m => console.log(typeof m.createChioDurableTools))"` with Pi Durable 1.0.2 installed | [Continuation](CONTINUATION.md) |
+| `@chio-protocol/pi-plugin` | `node --input-type=module -e "import('@chio-protocol/pi-plugin').then(m => console.log(typeof m.createToolRegistry))"` | [Typed tools](TYPED-TOOLS.md) |
+| `@chio-protocol/pi-plugin/coding-resource` | `node --input-type=module -e "import('@chio-protocol/pi-plugin/coding-resource').then(m => console.log(typeof m.CodingResource))"` | [Coding resource](CODING-RESOURCE.md) |
+| `@chio-protocol/pi-plugin/durable` | `node --input-type=module -e "import('@chio-protocol/pi-plugin/durable').then(m => console.log(typeof m.createChioDurableTools))"` with Pi Durable 1.0.2 installed | [Continuation](CONTINUATION.md) |
 | Linux guest bootstrap | Started only by `chio-pi --linux-runtime` | [Run limits and Linux](RUN-LIMITS-LINUX.md) |
 
 The qualification commands `scripts/pack-release.mjs`, `scripts/qualify-release.mjs`,

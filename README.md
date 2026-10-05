@@ -45,36 +45,25 @@ delegated authority and executes it through the resource server.
 
 ## Build and install
 
-Requires Node.js 22.19 or newer and npm, on macOS or Linux.
+Requires Node.js 22.19 or newer and npm, on macOS or Linux. Install the plugin
+and its exact Pi peer into a new directory:
 
 ```sh
-git clone https://github.com/backbay-labs/chio-pi-plugin.git
-cd chio-pi-plugin
-npm ci --ignore-scripts
-npm run pack:release
-```
-
-Verify the archive, then install the exact Pi peer and the plugin into a fresh
-directory:
-
-```sh
-(cd artifacts && shasum -a 256 -c chio-pi-plugin-0.2.0.tgz.sha256)
-mkdir ../chio-pi-install && cd ../chio-pi-install
-npm install --ignore-scripts --install-strategy=nested --save-exact \
-  @earendil-works/pi-coding-agent@1.0.2
-npm install --ignore-scripts --install-strategy=nested \
-  ../chio-pi-plugin/artifacts/chio-pi-plugin-0.2.0.tgz
-./node_modules/.bin/chio-pi --help
+mkdir ~/chio-pi && cd ~/chio-pi
+npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2
+npx chio-pi --help
 ```
 
 The [guide](docs/GETTING-STARTED.md#build-and-install) covers the optional Pi
-Durable adapter, the Linux runtime manifest and why the install order matters.
+Durable adapter and the Linux runtime manifest. To build the archive yourself,
+see [build from source](docs/GETTING-STARTED.md#build-from-source).
 
 ## Run a task
 
-A task needs a Chio kernel with an isolated resource server and a prepared
-gateway session; the [guide](docs/GETTING-STARTED.md#run-a-task) walks through
-both. With `OPENAI_API_KEY` set in the operator's environment:
+Installing gives you the launcher, not a kernel. A task needs a Chio kernel with
+an isolated resource server and a prepared gateway session; the
+[guide](docs/GETTING-STARTED.md#run-a-task) walks through both. From the install
+directory, with `OPENAI_API_KEY` set in the operator's environment:
 
 ```sh
 ./node_modules/.bin/chio-pi \
@@ -97,16 +86,17 @@ and the [operator console](docs/OPERATOR.md).
 | --- | --- |
 | `chio-pi` | The protected launcher, plus `doctor`, `status`, `inspect` and `recover` operator commands |
 | `chio-coding-resource` | A kernel-owned coding resource: search, compare-and-swap patches, confined tests and artifact publication |
-| `@chio/pi-plugin` | The SDK: extension, session, typed tool registry, continuation, governance and run limits |
-| `@chio/pi-plugin/coding-resource` | The coding resource participant |
-| `@chio/pi-plugin/durable` | The optional Pi Durable adapter |
+| `@chio-protocol/pi-plugin` | The SDK: extension, session, typed tool registry, continuation, governance and run limits |
+| `@chio-protocol/pi-plugin/coding-resource` | The coding resource participant |
+| `@chio-protocol/pi-plugin/durable` | The optional Pi Durable adapter |
 
 The SDK entrypoints run in-process. Only the `chio-pi` launcher establishes the
 operating-system boundary.
 
 ## Status
 
-`0.2.0` is a source-built candidate for Pi 1.0.2. It is not published to npm.
+`0.2.0` is a candidate for Pi 1.0.2. Its npm package is `@chio-protocol/pi-plugin`;
+the frozen `0.1.0` archive was named `@chio/pi-plugin` and was never published.
 
 - **Qualified.** The frozen `0.1.0` archive with Pi 0.85.1 on macOS, recorded in
   [final qualification](docs/FINAL-QUALIFICATION.md).
