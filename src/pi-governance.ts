@@ -51,14 +51,36 @@ export function installNativeSessionGates(pi: ExtensionAPI, governance?: Session
 }
 /** Trusted SDK seam at the PUBLIC boundary dispatcher. No arbitrary executable
  * extensions are loaded. Direct SessionManager mutation is outside this seam. */
+const restrictedRunners = new WeakSet<AgentSession["extensionRunner"]>();
+const restrictedSessions = new WeakSet<AgentSession>();
 export function restrictBoundaryDrafts(session: AgentSession, governance?: SessionGovernance) {
   if (!governance?.required) return;
-  const original = session.extensionRunner.emitBoundary.bind(session.extensionRunner);
-  session.extensionRunner.emitBoundary = async (...args) => {
-    const result = await original(...args);
-    if (result.entries.length) return {...result, entries: [], continue: false, valid: false};
-    return result;
+  const restrictCurrentRunner = () => {
+    const runner = session.extensionRunner;
+    if (restrictedRunners.has(runner)) return;
+    const original = runner.emitBoundary.bind(runner);
+    runner.emitBoundary = async (...args) => {
+      const result = await original(...args);
+      if (result.entries.length) return {...result, entries: [], continue: false, valid: false};
+      return result;
+    };
+    restrictedRunners.add(runner);
   };
+  restrictCurrentRunner();
+  if (restrictedSessions.has(session)) return;
+  const reload = session.reload.bind(session);
+  session.reload = async (options) => {
+    try {
+      return await reload({...options, beforeSessionStart: async () => {
+        restrictCurrentRunner();
+        await options?.beforeSessionStart?.();
+      }});
+    } finally {
+      // Pi can replace the runner before reload fails or omit beforeSessionStart.
+      restrictCurrentRunner();
+    }
+  };
+  restrictedSessions.add(session);
 }
 /** Invoke Pi's existing public action methods so native lifecycle gates run.
  * Boundary draft objects themselves never carry authority. */

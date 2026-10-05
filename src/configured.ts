@@ -8,6 +8,12 @@ import type { KernelExecutor } from "./extension.js";
 import { canonicalJson, frozenJson, registryForConfig, validateKernelArguments, type ChioToolSpec, type ToolMode, type ToolRegistry } from "./tool-registry.js";
 import { VERSION } from "@earendil-works/pi-coding-agent";
 
+export type GovernanceProfile = "execution-only" | "required";
+export function selectGovernanceProfile(value: unknown = "execution-only"): GovernanceProfile {
+  if (value !== "execution-only" && value !== "required") throw new Error("Invalid governance profile; select execution-only or required");
+  return value;
+}
+
 export interface PreparedPiConfig {
   execution: McpExecutionOptions & { sessionId: string };
   sessionId: string;
@@ -40,11 +46,12 @@ export function preparedAuthorityDigest(config: PreparedPiConfig, registry: Tool
 
 /** The protected launcher's journal is inaccessible to the guest. A writable
  * guest ownership marker alone cannot pin resumed host or tool semantics. */
-export async function pinHostRegistry(config: PreparedPiConfig, registry: ToolRegistry, journalDirectory: string): Promise<void> {
+export async function pinHostRegistry(config: PreparedPiConfig, registry: ToolRegistry, journalDirectory: string, profile: GovernanceProfile = "execution-only"): Promise<void> {
+  const governanceProfile = selectGovernanceProfile(profile);
   if (VERSION !== "1.0.2") throw new Error("Pi host version differs from the pinned 1.0.2 contract");
   if (resolve(journalDirectory) !== journalDirectory) throw new Error("Trusted parent journal path must be absolute");
   const binding = canonicalJson({schema: "chio.pi.host-binding.v1", piVersion: VERSION, registryDigest: registry.digest,
-    authorityDigest: preparedAuthorityDigest(config, registry), sessionId: config.sessionId, kernelSessionId: config.execution.sessionId});
+    authorityDigest: preparedAuthorityDigest(config, registry), sessionId: config.sessionId, kernelSessionId: config.execution.sessionId, governanceProfile});
   await mkdir(journalDirectory, {recursive: true, mode: 0o700});
   const directory = await lstat(journalDirectory);
   if (!directory.isDirectory() || directory.isSymbolicLink() || directory.mode & 0o077 || directory.uid !== process.getuid?.()) throw new Error("Trusted parent journal must be a private operator-owned directory");
@@ -53,7 +60,10 @@ export async function pinHostRegistry(config: PreparedPiConfig, registry: ToolRe
   async function check() {
     const stat = await lstat(path);
     if (!stat.isFile() || stat.isSymbolicLink() || stat.mode & 0o077 || stat.uid !== process.getuid?.() || stat.size > 1024 * 1024) throw new Error("Trusted host binding must be a private regular file");
-    if (canonicalJson(JSON.parse(await readFile(path, "utf8"))) !== binding) throw new Error("Trusted parent host, registry or authority binding is incompatible; no migration or dispatch");
+    const previous = JSON.parse(await readFile(path, "utf8"));
+    // Historical hosts had execution-only semantics. Preserve their original bytes.
+    const previousProfile = selectGovernanceProfile(previous.governanceProfile);
+    if (canonicalJson({...previous, governanceProfile: previousProfile}) !== binding) throw new Error("Trusted parent host, governance, registry or authority binding is incompatible; no migration or dispatch");
   }
   try {await check();}
   catch (error) {

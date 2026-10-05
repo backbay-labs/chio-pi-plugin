@@ -179,8 +179,11 @@ export async function readOperatorContext(path: string, redactor: OperatorRedact
   const hostBindingPresent = names.includes("pi-host.binding");
   if (hostBindingPresent) {
     const binding = (await privateJson(join(config.journalDir, "pi-host.binding"))).value;
+    if (!object(binding) || (Object.hasOwn(binding, "governanceProfile") && binding.governanceProfile !== "execution-only" && binding.governanceProfile !== "required"))
+      return refuse("host_binding_mismatch", "Pinned governance profile is invalid; preserve the original host binding.");
     const expected = {schema: "chio.pi.host-binding.v1", piVersion: "1.0.2", registryDigest: registry.digest,
-      authorityDigest: preparedAuthorityDigest(config, registry), sessionId: config.sessionId, kernelSessionId: config.execution.sessionId};
+      authorityDigest: preparedAuthorityDigest(config, registry), sessionId: config.sessionId, kernelSessionId: config.execution.sessionId,
+      ...(Object.hasOwn(binding, "governanceProfile") ? {governanceProfile: binding.governanceProfile} : {})};
     if (canonicalJson(binding) !== canonicalJson(expected)) return refuse("host_binding_mismatch", "Pinned Pi host, registry or authority differs from the original host binding.");
   }
   for (const name of ["gateway.lock", "recovery.lock"]) if (names.includes(name)) redactor.collect((await privateJson(join(config.journalDir, name))).value);

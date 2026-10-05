@@ -45,8 +45,11 @@ by this change. Task 6 limits/Linux and Task 7 release work remain separate.
   validation, explicit lifecycle cancellation and native custom summary gates.
   Public boundary dispatcher refuses unmediated drafts. Mediated compact/tree
   operations use public session APIs. Executable discovery stays disabled.
-- Default CLI refusal before credential/profile/service/provider access when
-  required native governance is unavailable. Doctor gives explicit native-model,
+- CLI defaults to the existing execution-only kernel/credential-relay scope.
+  Explicit `--governance required` refuses before credential/profile/service/provider
+  access when native governance is unavailable, with no fallback. Closed profile
+  selection and private parent/profile resume bindings prevent profile changes.
+  Doctor gives explicit native-model,
   native-knowledge and Pi-custody unavailability; complete programmatic ports
   report native-qualification-required.
 
@@ -67,7 +70,7 @@ Further focused RED/GREEN cycles reproduced and fixed class-instance native
 method loss, premature fence clearing after response-stream loss, missing adopted
 history references, concurrent asynchronous account lookup producing two native
 submissions, unchecked child launch selectors and verified-flag observations,
-missing accepted semantic-step acquisition, default CLI credential access before
+missing accepted semantic-step acquisition, required CLI credential access before
 refusal, missing JSON selector/doctor gates, required SDK direct-provider setup,
 post-installation caller mutation disabling required governance, unverified P2
 DTO rendering, stale fixture-time reuse in the native explanation path, and the installed
@@ -76,14 +79,42 @@ repins same-model routes and refuses changed provider/model/API before egress. E
 these fixes was verified with its focused failing specimen and then the complete
 focused suite.
 
+Independent spec review at `4423ee6` found that public Pi reload replaces its
+ExtensionRunner and removed the initial boundary restriction. Four new tests
+first failed with accepted draft entries: successful and failed reload for both
+`turn_end` and `agent_before_settle`. The narrow fix reinstalls the guard before
+the public reload callback and in finalization, including failure after runner
+replacement. All four then passed, during and after reload, and their subsequent
+ordinary provider calls retained the exact selected embedding/relay with zero
+remote fetches. Stock Chio supplies no drafts; tests instrument the installed
+public dispatcher and do not claim arbitrary callback injection authority.
+
+The root-owned compatibility correction at `a690f1a` requires native governance
+when explicitly selected rather than disabling the existing execution-only CLI.
+Five CLI/profile tests first failed: parser/default selection missing, default
+launch blocked by native governance, explicit required option unrecognized,
+profile pinning absent and historical binding allowing an implicit upgrade.
+All five then passed. Default and explicit execution-only reach the existing
+credential check on macOS without loading config or launching services; required
+and invalid profiles refuse earlier. Both profile changes fail against the
+original private host binding. Historical absent fields retain execution-only
+semantics without rewriting bytes or allowing a required-profile upgrade.
+The combined run exposed the operator validator's exact old binding shape.
+A sixth CLI test reproduced that rejection before updating its validator to
+accept both explicit profiles and historical absence, reject unknown values,
+and leave original bytes untouched. That regression and the complete focused
+suite passed after the integration fix.
+
 ## Verification
 
 | Command | Result |
 | --- | --- |
 | `npm run build` | Pass |
 | `npm run typecheck` | Pass |
-| `node --test test/governance.test.mjs test/delegation.test.mjs test/governance-lifecycle.test.mjs` | Pass: 39 tests, 0 failures, 0 skips |
-| `npm test` | Pass: 322 tests, 0 failures, 0 skips |
+| `node --test test/governance.test.mjs test/delegation.test.mjs test/governance-lifecycle.test.mjs test/governance-cli.test.mjs test/configured.test.mjs` | Pass: 53 tests, 0 failures, 0 skips |
+| `npm test` at the original implementation `4423ee6` | Pass: 322 tests, 0 failures, 0 skips |
+| Fresh follow-up `npm test` retry, no source/test changes after first full run | Pass: 332 tests, 0 failures, 0 skips; 78.04 s |
+| `node --test --test-name-pattern='real recipe output bounds' test/coding-confinement.test.mjs` | Pass: 1 test, 0 failures, 0 skips |
 | `git diff --check` | Pass |
 | `shasum -a 256 vendor/chio-bridge-0.3.0-7d9e34f7408a.tgz` | Unchanged `7d9e34f7408a316e35125982a23faaecfd2f31f4da6b50ca8eab287c2c918f67` |
 
@@ -96,6 +127,14 @@ Public same-model `setModel` and stock bug-report summarization retain the relay
 route; changed catalog models refuse before ordinary or summary provider bytes.
 Original import-source validation runs before file copy, and projected transcript
 changes leave native knowledge basis and retained history references intact.
+
+The first follow-up default full run completed 331/332. Its only failure was the
+existing macOS recipe output-bound test: the 300 ms recipe deadline produced
+`timeout` before `output`. The exact isolated specimen immediately passed 1/1.
+No confinement implementation or timing budget was changed.
+The fresh default full rerun passed 332/332, including that same specimen.
+The initial observation does not establish a cause beyond the deadline winning
+over the output limit in that run.
 
 The child-facade contract fixture uses real Ed25519 signatures with independent
 retained-registry/accounting and launch observers. Missing authority, widening,
@@ -127,3 +166,10 @@ and rejoin at release. No context hook or cancellable session_start is claimed.
 Provider-specific run caps still belong to Task 6, before final request freezing.
 The reviewed Task 4 mappings, no-execute recovery and full-history-before-ACK
 paths are unchanged. Frozen bridge/operator artifact identities were not edited.
+
+Follow-up self-review checked public reload callback/failure ordering, guard
+idempotence, unchanged lifecycle handlers and retained provider ownership.
+CLI parsing finishes before credentials; required has no fallback, execution-only
+retains its existing launch path, and guest marker tampering cannot change the
+selected profile in the private parent binding. Diagnostics accept historical
+and explicit closed profiles without rewriting records or claiming governance.

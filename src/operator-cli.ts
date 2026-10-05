@@ -66,7 +66,7 @@ function doctor(context: OperatorContext, status: Record<string, unknown>, bridg
       missing("original-approval-decide", "The frozen utility does not bind the requested decision and approval ID to the signed credential before artifact retention. A separately qualified native operator is required."),
       missing("owner-result-import", "Absent from the bundled operator. Requires the separately qualified native exporter/importer in FINAL-QUALIFICATION.md."),
       missing("capability-attenuation", "No native issuer-backed child authority contract is exposed here; retained-session tool filtering is not attenuation."),
-      missing("native-model-egress", "Default CLI refuses required governance before provider credentials or egress. A compatible trusted native committed-release facade and selected provider sink are required."),
+      missing("native-model-egress", "CLI --governance required refuses before provider credentials or egress. Default execution-only uses its fixed credential relay without native disclosure governance. A compatible trusted native committed-release facade and selected provider sink are required."),
       missing("native-knowledge", "P4 writer/broker, classifier roots, same-process custody and selected native artifact sinks are not installed by prepared JSON."),
       missing("native-pi-custody", "Native session preflight, checkpoint and summary-release services require trusted programmatic composition and native qualification."),
       missing("semantic-recovery", "No qualified native semantic host facade is configured; schema existence does not establish a service."),

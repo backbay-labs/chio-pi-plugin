@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { constants } from "node:fs";
 import { startGatewayHttp } from "@chio/bridge";
-import { pinHostRegistry, preparedAuthorityDigest, readPreparedConfig } from "./configured.js";
+import { pinHostRegistry, preparedAuthorityDigest, readPreparedConfig, selectGovernanceProfile } from "./configured.js";
 import {startParentGatewayProxy} from "./parent-gateway.js";
 import { createHostDeliveryObserver } from "./host-delivery.js";
 import { canonicalJson, registryForConfig } from "./tool-registry.js";
@@ -16,6 +16,22 @@ import { buildSandboxPolicy, isWithin, requireSessionCredential } from "./sandbo
 import { requireNativeGovernance } from "./governance.js";
 import { runOperatorCommand } from "./operator-cli.js";
 
+export function parseProtectedLaunchArguments(args: string[]) {
+  const values = new Map<string, string>();
+  const names = new Set(["--config", "--profile", "--cwd", "--provider", "--model", "--prompt", "--resume", "--codex-auth", "--governance"]);
+  for (let index = 0; index < args.length; index += 2) {
+    const name = args[index]; const value = args[index + 1];
+    if (!name || !names.has(name) || values.has(name) || !value) throw new Error("Invalid or missing argument; use chio-pi --help");
+    values.set(name, value);
+  }
+  for (const name of [...names].filter(name => !["--resume", "--codex-auth", "--governance"].includes(name))) if (!values.has(name)) throw new Error(`Required argument ${name}`);
+  const governanceProfile = selectGovernanceProfile(values.get("--governance"));
+  const subscription = values.get("--provider") === "openai-codex" && values.get("--model") === "gpt-5.5";
+  if (!subscription && (values.get("--provider") !== "openai" || values.get("--model") !== "gpt-4.1-mini")) throw new Error("Model relay supports openai/gpt-4.1-mini or openai-codex/gpt-5.5");
+  if (subscription !== values.has("--codex-auth")) throw new Error("--codex-auth is required only for openai-codex");
+  return {values, subscription, governanceProfile};
+}
+
 async function main() {
   const args = process.argv.slice(2);
   if (["doctor", "status", "inspect", "recover"].includes(args[0])) {
@@ -23,24 +39,15 @@ async function main() {
     return;
   }
   if (args.length === 1 && args[0] === "--help") {
-    process.stdout.write("Usage: chio-pi --config /absolute/delegated.json --profile /absolute/profile --cwd /absolute/disposable-workspace --provider openai|openai-codex --model gpt-4.1-mini|gpt-5.5 --prompt 'task' [--codex-auth /absolute/private/codex/auth.json] [--resume /absolute/profile/sessions/session.jsonl]\nRequired native governance is unavailable in the default CLI. A trusted programmatic embedding is required before provider egress. Protected candidate requires macOS, an installed package, and delegated retained-session credentials. Codex subscription mode requires --codex-auth; API mode requires operator OPENAI_API_KEY.\nTrusted diagnostics and recovery: chio-pi doctor|status|inspect|recover --help. Operator commands launch no model and require no provider credentials.\n");
+    process.stdout.write("Usage: chio-pi --config /absolute/delegated.json --profile /absolute/profile --cwd /absolute/disposable-workspace --provider openai|openai-codex --model gpt-4.1-mini|gpt-5.5 --prompt 'task' [--governance execution-only|required] [--codex-auth /absolute/private/codex/auth.json] [--resume /absolute/profile/sessions/session.jsonl]\nDefault execution-only preserves kernel-mediated tool execution and the fixed credential relay. Model disclosure and Pi knowledge custody are not native governed. Required native governance is unavailable in this CLI and refuses before provider credential access, with no fallback. Protected candidate requires macOS, an installed package, and delegated retained-session credentials. Codex subscription mode requires --codex-auth; API mode requires operator OPENAI_API_KEY.\nTrusted diagnostics and recovery: chio-pi doctor|status|inspect|recover --help. Operator commands launch no model and require no provider credentials.\n");
     return;
   }
-  if (process.platform !== "darwin") throw new Error("Protected candidate currently requires macOS sandbox-exec");
-  const values = new Map<string, string>();
-  const names = new Set(["--config", "--profile", "--cwd", "--provider", "--model", "--prompt", "--resume", "--codex-auth"]);
-  for (let index = 0; index < args.length; index += 2) {
-    const name = args[index]; const value = args[index + 1];
-    if (!name || !names.has(name) || values.has(name) || !value) throw new Error("Invalid or missing argument; use chio-pi --help");
-    values.set(name, value);
-  }
-  for (const name of [...names].filter(name => name !== "--resume" && name !== "--codex-auth")) if (!values.has(name)) throw new Error(`Required argument ${name}`);
-  const subscription = values.get("--provider") === "openai-codex" && values.get("--model") === "gpt-5.5";
-  if (!subscription && (values.get("--provider") !== "openai" || values.get("--model") !== "gpt-4.1-mini")) throw new Error("Model relay supports openai/gpt-4.1-mini or openai-codex/gpt-5.5");
-  if (subscription !== values.has("--codex-auth")) throw new Error("--codex-auth is required only for openai-codex");
+  const {values, subscription, governanceProfile} = parseProtectedLaunchArguments(args);
+  values.delete("--governance");
   // No compatible trusted host facade is shipped with the frozen bridge.
   // Prepared JSON cannot activate missing governance or choose a native sink.
-  await requireNativeGovernance();
+  if (governanceProfile === "required") await requireNativeGovernance();
+  if (process.platform !== "darwin") throw new Error("Protected candidate currently requires macOS sandbox-exec");
   if (!subscription && !process.env.OPENAI_API_KEY) throw new Error("Operator OPENAI_API_KEY required");
   const authPath = subscription ? await realpath(values.get("--codex-auth")!) : undefined;
   const authority: ModelAuthority = authPath ? await readCodexAuthority(authPath) : {provider: "openai", apiKey: process.env.OPENAI_API_KEY!};
@@ -68,10 +75,10 @@ async function main() {
     const markerStat = await lstat(profileMarker);
     if (!markerStat.isFile() || markerStat.isSymbolicLink() || markerStat.mode & 0o077) throw new Error("Existing profile lacks a private Chio ownership marker");
     const marker = JSON.parse(await readFile(profileMarker, "utf8"));
-    if (marker.schema !== "chio.pi.profile.v2" || marker.sessionId !== config.execution.sessionId || marker.registryDigest !== registry.digest || marker.piVersion !== "1.0.2") throw new Error("Profile host or registry binding is incompatible; frozen profiles are not migrated");
+    if (marker.schema !== "chio.pi.profile.v2" || marker.sessionId !== config.execution.sessionId || marker.registryDigest !== registry.digest || marker.piVersion !== "1.0.2" || selectGovernanceProfile(marker.governanceProfile) !== governanceProfile) throw new Error("Profile host, governance or registry binding is incompatible; frozen profiles are not migrated");
   } else {
     const marker = await open(profileMarker, "wx", 0o600);
-    try { await marker.writeFile(JSON.stringify({ schema: "chio.pi.profile.v2", sessionId: config.execution.sessionId, registryDigest: registry.digest, piVersion: "1.0.2" })); await marker.sync(); }
+    try { await marker.writeFile(JSON.stringify({ schema: "chio.pi.profile.v2", sessionId: config.execution.sessionId, registryDigest: registry.digest, piVersion: "1.0.2", governanceProfile })); await marker.sync(); }
     finally { await marker.close(); }
   }
   const requestedCwd = resolve(values.get("--cwd")!);
@@ -83,7 +90,7 @@ async function main() {
   if (journal !== config.journalDir || isWithin(profile, journal) || isWithin(installation, journal)
     || isWithin(journal, profile) || isWithin(journal, installation) || isWithin(journal, configPath)) throw new Error("Authoritative gateway journal must be outside guest-readable and writable state");
   values.set("--config", configPath); values.set("--profile", profile); values.set("--cwd", cwd);
-  await pinHostRegistry(prepared, registry, journal);
+  await pinHostRegistry(prepared, registry, journal, governanceProfile);
   const transport = await startGatewayHttp(config);
   let proxy: Awaited<ReturnType<typeof startParentGatewayProxy>> | undefined;
   let relay: Awaited<ReturnType<typeof startModelRelay>> | undefined;
@@ -102,7 +109,7 @@ async function main() {
     const policyPath = join(control, "profile.sb");
     await writeFile(policyPath, policy, { mode: 0o600 });
     const temporary = join(profile, "tmp"); await mkdir(temporary, { recursive: true, mode: 0o700 });
-    process.stdout.write(JSON.stringify({ type: "chio_protected_runtime", policyPath, policySha256: createHash("sha256").update(policy).digest("hex"), node: executable, installation, sessionId: config.execution.sessionId }) + "\n");
+    process.stdout.write(JSON.stringify({ type: "chio_protected_runtime", governanceProfile, disclosureGoverned: false, knowledgeGoverned: false, policyPath, policySha256: createHash("sha256").update(policy).digest("hex"), node: executable, installation, sessionId: config.execution.sessionId }) + "\n");
     const child = spawn("/usr/bin/sandbox-exec", ["-f", policyPath, executable, join(packageRoot, "dist", "cli.js"), ...[...values].flat()], {
       cwd, stdio: ["ignore", "inherit", "inherit"],
       env: { PATH: dirname(executable), LANG: "en_US.UTF-8", TMPDIR: temporary, PI_CODING_AGENT_DIR: profile, OPENSSL_CONF: "/dev/null", CHIO_PI_MODEL_TOKEN: relay.token, CHIO_PI_GATEWAY_TRANSPORT: "1", CHIO_PI_MODEL_BASE_URL: `http://127.0.0.1:${relay.port}/v1` },

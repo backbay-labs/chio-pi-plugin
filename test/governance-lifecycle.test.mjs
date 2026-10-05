@@ -46,6 +46,26 @@ test("public boundary dispatcher refuses unmediated draft compaction and context
  try {const result=await session.extensionRunner.emitBoundary({type:"turn_end"},()=>({canContinue:true}));assert.deepEqual(result.entries,[]);assert.equal(result.continue,false);assert.equal(result.valid,false);}finally{session.dispose();}
 });
 
+for (const eventType of ["turn_end","agent_before_settle"]) for (const fails of [false,true]) {
+ test(`public ${fails?"failed":"successful"} reload preserves ${eventType} restriction and governed provider binding`,async()=>{
+  const f=await fixture();let releases=0;const e=embedding({async preflight(){},async mediate(){return {};}},{async releaseFrozenRequest(){releases++;return {state:"refused"};}});
+  const {session}=await governedSession(f,e);const originalFetch=globalThis.fetch;let remote=0;
+  globalThis.fetch=(url,init)=>{if(!String(url).startsWith("http://127.0.0.1:")){remote++;return Promise.resolve(new Response("refused",{status:401}));}return originalFetch(url,init);};
+  // Instrument the public dispatcher only; stock Chio supplies no boundary drafts.
+  const instrument=()=>session.extensionRunner.extensions.push({path:"reload-fixture",handlers:new Map([[eventType,[()=>({entries:[{type:"compaction",summary:"drop history",firstKeptEntryId:"x",tokensBefore:1}],continue:true})]]])});
+  const boundary=()=>session.extensionRunner.emitBoundary({type:eventType},()=>({canContinue:true}));
+  const refused=result=>{assert.deepEqual(result.entries,[]);assert.equal(result.continue,false);assert.equal(result.valid,false);};
+  try {
+   await session.bindExtensions({onError(){}});instrument();refused(await boundary());const oldRunner=session.extensionRunner;let duringReload;
+   const reload=session.reload({async beforeSessionStart(){instrument();duringReload=await boundary();if(fails)throw Error("reload fixture failure");}});
+   if(fails)await assert.rejects(reload,/reload fixture failure/);else await reload;
+   assert.notEqual(session.extensionRunner,oldRunner);refused(await boundary());refused(duringReload);
+   assert.equal(session.model.provider,f.provider);assert.equal(session.model.id,f.model);
+   await session.prompt("reload retained native owner");assert.equal(remote,0);assert.equal(releases,1);
+  } finally {session.dispose();globalThis.fetch=originalFetch;}
+ });
+}
+
 test("custom summaries appear only after native checkpoint/release and preserve monotone basis",async()=>{
  const f=await fixture();let knowledge=7;let mediated=0;const e=embedding({async preflight(){},async mediate(_p,action){mediated++;knowledge=Math.max(knowledge,8);return action==="session_before_compact"?{compaction:{summary:"native retained",firstKeptEntryId:"entry",tokensBefore:100}}:{summary:{summary:"native tree"}};}});
  const {session}=await governedSession(f,e);

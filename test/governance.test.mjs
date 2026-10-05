@@ -95,9 +95,9 @@ test("advisory output cannot execute a remedy and unknown original cannot use re
  assert.equal((await plugin.executeNativeRemedy(e,"unknown",{kind:"reconcile_original",requestId:"original"})).state,"unresolved");assert.equal(calls.length,1);
 });
 
-test("default CLI refuses required governance before profile or credential inspection",async()=>{
+test("explicit required CLI refuses native governance before profile or credential inspection",async()=>{
  const {execFile}=await import("node:child_process");const {promisify}=await import("node:util");
- await assert.rejects(promisify(execFile)(process.execPath,["dist/protected-cli.js","--config","/missing-config","--profile","/missing-profile","--cwd","/missing-workspace","--provider","openai","--model",body.model,"--prompt","task"],{env:{PATH:process.env.PATH}}),error=>/native.*governance.*unavailable/i.test(error.stderr));
+ await assert.rejects(promisify(execFile)(process.execPath,["dist/protected-cli.js","--config","/missing-config","--profile","/missing-profile","--cwd","/missing-workspace","--provider","openai","--model",body.model,"--prompt","task","--governance","required"],{env:{PATH:process.env.PATH}}),error=>/native.*governance.*unavailable/i.test(error.stderr));
 });
 
 test("response loss after provider submission preserves original fence",async()=>{

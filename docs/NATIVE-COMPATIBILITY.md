@@ -1,12 +1,24 @@
 # Native governance compatibility
 
-The default `chio-pi` model launcher refuses required governance before reading
-provider credentials, opening a Pi session, starting gateway services or sending
-provider bytes. The frozen bridge archive does not implement a compatible native
-model-release, knowledge, semantic or child-process facade. Prepared JSON cannot
-select native modules, executables, verifiers, callbacks or provider sinks.
+The `chio-pi` model launcher accepts `--governance execution-only|required`.
+The default `execution-only` preserves existing kernel-mediated tool execution
+and its fixed credential relay. Model disclosure and Pi knowledge custody are
+outside native governance in this mode; launch output reports that scope.
+Explicit `required` refuses before reading provider credentials, opening a Pi
+session, starting gateway services or sending provider bytes. There is no
+automatic fallback. Unknown profiles refuse. The frozen bridge archive does not
+implement a compatible native model-release, knowledge, semantic or child-process
+facade. Prepared JSON cannot select native modules, executables, verifiers,
+callbacks or provider sinks.
 `doctor` reports native model egress, knowledge and Pi custody as unavailable.
 Its existing native operator commands retain their separately documented scope.
+
+The selected profile is pinned in the private profile ownership marker and the
+trusted parent journal's existing host binding before gateway or relay startup.
+Resume cannot change either profile. Historical markers and bindings without
+that field retain their original execution-only semantics and bytes; they cannot
+implicitly upgrade to required governance. The parent binding is outside the
+guest's writable profile. No native activation is added to prepared JSON.
 
 ## Trusted programmatic embedding
 
@@ -72,9 +84,9 @@ or credential-profile label is treated as an account ID. Account-specific
 contracts refuse unknown mappings. The native provider sink pins its own actual
 credential profile and generation.
 
-Explicitly ungoverned legacy transport fixtures remain available for adapter
-comparisons. Their local fetch path is outside required native governance and
-cannot be described as protected disclosure acceptance.
+The execution-only CLI and explicitly ungoverned transport fixtures retain the
+fixed provider relay's local fetch path. That path is outside required native
+governance and cannot be described as native disclosure acceptance.
 
 ## Knowledge and Pi lifecycle
 
@@ -108,7 +120,11 @@ restore. Its declaration's `skipConversationRestore` is ignored by runtime fork.
 
 The trusted public boundary-dispatcher seam refuses drafts returned by `turn_end`
 or `agent_before_settle`; mediated SDK operations invoke Pi's existing public
-compact/tree methods and therefore run the lifecycle gates. Executable discovery
+compact/tree methods and therefore run the lifecycle gates. Public `session.reload`
+reinstalls the restriction before its supported `beforeSessionStart` callback and
+in a finalization path, including failures after runner replacement. Lifecycle
+gates and the selected provider relay/embedding remain bound across reload.
+Executable discovery
 remains disabled. This seam cannot intercept arbitrary direct SessionManager
 mutation by trusted host code. Context/provider hooks are transformation hooks,
 not disclosure gates; all required provider calls use the governed relay.
