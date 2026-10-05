@@ -5,10 +5,13 @@ import { join } from "node:path";
 import { Socket } from "node:net";
 import test, { after, before, mock } from "node:test";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
-import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
+import { createAssistantMessageEventStream, getCurrentTools } from "@earendil-works/pi-ai";
 import { createChioPiSession } from "../dist/index.js";
+import * as plugin from "../dist/index.js";
 import { createRestrictedSession } from "../dist/session.js";
 import { withUncertaintyInterlock } from "../dist/uncertainty.js";
+import { CHIO_RESUME_SPEC } from "../dist/tool-registry.js";
+import { validateModelRequest } from "../dist/model-relay.js";
 
 // These exercise stock Pi's AgentSession and tool dispatcher with a scripted
 // provider. They are contract tests, not live-model or real-kernel acceptance.
@@ -38,7 +41,7 @@ async function fixture() {
   const authPath = join(agentDir, "auth.json");
   await writeFile(authPath, JSON.stringify({ openai: { type: "api_key", key: "fixture-only-not-a-real-api-key" } }), { mode: 0o600 });
   const modelRuntime = await ModelRuntime.create({ authPath, modelsPath: null, modelsStorePath: join(agentDir, "models-cache.json"), allowModelNetwork: false });
-  return { root, cwd, agentDir, modelRuntime, provider: "openai", model: "gpt-4.1-mini" };
+  return { root, cwd, agentDir, modelRuntime, provider: "openai", model: "gpt-4.1-mini", toolMode: "legacy" };
 }
 
 function scriptedTools(session, calls) {
@@ -201,4 +204,135 @@ test("stock Pi retains verified denials and terminal tool errors as unsuccessful
     assert.equal(result.details.outcome, denied ? "denied" : "completed");
     session.dispose();
   }
+});
+
+const typedTools = [
+  {name: "read_text_file", description: "Read source", inputSchema: {type: "object", properties: {path: {type: "string", minLength: 1}}, required: ["path"], additionalProperties: false}},
+  {name: "write_file", description: "Write source", inputSchema: {type: "object", properties: {path: {type: "string"}, content: {type: "string"}}, required: ["path", "content"], additionalProperties: false}},
+  {name: "edit_file", inputSchema: {type: "object", properties: {path: {type: "string"}, edits: {type: "array", items: {type: "string"}}}, required: ["path", "edits"], additionalProperties: false}},
+  {name: "list_directory", inputSchema: {type: "object", properties: {path: {type: "string"}}, required: ["path"], additionalProperties: false}},
+];
+
+test("typed native Pi dispatcher binds aliases and exact native arguments without local effects", async () => {
+  const f = await fixture();
+  const requests = [];
+  const fullOutcome = {state: "completed", evidence: "verified", requestId: "gateway-original", result: {content: [{type: "text", text: "source bytes"}]}, receipt: {signature: "fixture"}, delivery: {acknowledgement: "retained-delivery"}};
+  const executor = {async execute(request) {requests.push(request); return {outcome: "completed", content: JSON.stringify(fullOutcome), evidence: fullOutcome.receipt, retainedOutcome: fullOutcome};}};
+  const {session} = await createChioPiSession({...f, toolMode: "typed", toolInventory: typedTools, executor, trustedGatewayTransport: true});
+  assert.deepEqual(session.getActiveToolNames().sort(), ["chio_edit", "chio_list", "chio_read", "chio_write"]);
+  assert.deepEqual(session.getCallableToolNames().sort(), session.getActiveToolNames().sort());
+  assert.equal(session.getToolDefinition("chio_read").exposure, "direct");
+  assert.deepEqual(session.getToolDefinition("chio_read").parameters, typedTools[0].inputSchema);
+  assert.ok(!session.systemPrompt.includes('"parameters"'), "native typed schemas must not be duplicated in the system prompt");
+  scriptedTools(session, [{name: "chio_read", arguments: {path: "src/example.ts"}}, {name: "chio_write", arguments: {path: "src/example.ts", content: "new source"}}]);
+  const stream = session.agent.streamFunction; let observedNativeHistory = false;
+  session.agent.streamFunction = (model, context, options) => {
+    const outputs = context.messages.filter(message => message.role === "toolResult");
+    if (outputs.length) {
+      assert.equal(outputs.length, 2);
+      assert.ok(outputs.every(output => output.content[0].text === JSON.stringify(fullOutcome)));
+      observedNativeHistory = true;
+    }
+    return stream(model, context, options);
+  };
+  await session.prompt("Read and write through the kernel");
+  assert.equal(observedNativeHistory, true);
+  assert.deepEqual(requests.map(request => ({tool: request.tool, arguments: request.arguments})), [
+    {tool: "read_text_file", arguments: {path: "src/example.ts"}}, {tool: "write_file", arguments: {path: "src/example.ts", content: "new source"}},
+  ]);
+  assert.ok(requests.every((request, index) => request.sessionId === session.sessionId && request.toolCallId === `call-${index}`));
+  const results = session.messages.filter(message => message.role === "toolResult");
+  assert.ok(results.every(result => !result.isError));
+  assert.deepEqual(JSON.parse(results[0].content[0].text), fullOutcome);
+  assert.deepEqual(results[0].details.retainedOutcome, fullOutcome);
+  await assert.rejects(readFile(join(f.cwd, "src/example.ts")), {code: "ENOENT"});
+  session.dispose();
+});
+
+test("typed Pi dispatch refuses malformed and coerced arguments, wrappers and unknown aliases before execution", async () => {
+  const f = await fixture(); let calls = 0;
+  const executor = {async execute() {calls++; return {outcome: "completed", content: "unexpected dispatch", evidence: {fixture: true}};}};
+  const {session} = await createChioPiSession({...f, toolMode: "typed", toolInventory: typedTools, executor, trustedGatewayTransport: true});
+  scriptedTools(session, [
+    {name: "chio_read", arguments: {}}, {name: "chio_read", arguments: {path: 7}},
+    {name: "chio_read", arguments: {path: "source", unpinned: true}},
+    {name: "chio_write", arguments: {path: "source", content: false}},
+    {name: "read_text_file", arguments: {path: "source"}}, {name: "chio_unknown", arguments: {}},
+    {name: "chio_execute", arguments: {tool: "write_file", arguments: {path: "source", content: "bad"}}},
+  ]);
+  await session.prompt("Try malformed tools");
+  assert.equal(calls, 0);
+  assert.equal(session.messages.filter(message => message.role === "toolResult").length, 7);
+  assert.ok(session.messages.filter(message => message.role === "toolResult").every(result => result.isError));
+  session.dispose();
+});
+
+test("Pi 1.0.2 keeps MCP, codemode, deferred and resource discovery absent from declared and callable tools", async () => {
+  const f = await fixture();
+  const poison = {defaultTools: ["read", "bash", "codemode", "tool_search"], codemode: {mode: "only"}, enableSkillCommands: true, extensions: ["./poison.ts"], packages: ["npm:must-not-load"]};
+  await mkdir(join(f.cwd, ".pi"), {recursive: true});
+  await writeFile(join(f.cwd, ".pi/settings.json"), JSON.stringify(poison));
+  await writeFile(join(f.agentDir, "settings.json"), JSON.stringify(poison));
+  await writeFile(join(f.cwd, ".pi/mcp.json"), JSON.stringify({mcpServers: {poison: {command: "must-not-run"}}}));
+  await writeFile(join(f.agentDir, "mcp.json"), JSON.stringify({mcpServers: {poison: {url: "http://127.0.0.1:1"}}}));
+  assert.equal(typeof plugin.createToolRegistry, "function");
+  const registry = plugin.createToolRegistry(typedTools);
+  const extension = pi => {
+    plugin.chioExtension(undefined, registry)(pi);
+    for (const [name, exposure] of [["codemode", "direct"], ["deferred_poison", "deferred"], ["codemode_poison", "codemode"], ["hidden_poison", "hidden"], ["mcp", "direct"], ["tool_search", "direct"]]) {
+      pi.registerTool({name, exposure, label: name, description: "must not become callable", parameters: {type: "object"}, async execute() {throw new Error("Poison tool executed");}});
+    }
+  };
+  const {session} = await createRestrictedSession({...f, toolMode: "typed", registry}, extension);
+  const expected = registry.tools.map(tool => tool.name).sort();
+  assert.deepEqual(session.getActiveToolNames().sort(), expected);
+  assert.deepEqual(session.getCallableToolNames().sort(), expected);
+  assert.deepEqual(session.getAllTools().map(tool => tool.name).sort(), expected);
+  session.setActiveToolsByName(["codemode", "tool_search", "mcp", "deferred_poison", "codemode_poison", "hidden_poison", "read", "bash"]);
+  assert.deepEqual(session.getActiveToolNames(), []);
+  assert.deepEqual(session.getCallableToolNames(), []);
+  session.dispose();
+});
+
+test("typed approval resume preserves original completion in actual Pi history before parent ACK observation", async () => {
+  const f = await fixture(); const requests = []; let acknowledgements = 0;
+  const registry = plugin.createToolRegistry([...typedTools, CHIO_RESUME_SPEC]);
+  const resume = {requestId: "original-kernel-operation", tool: "read_text_file", arguments: {path: "source.ts"}};
+  const fullOutcome = {state: "completed", evidence: "verified", requestId: resume.requestId, receipt: {tool_name: resume.tool, action: {parameters: resume.arguments}, signature: "component-fixture-only"}, result: {content: [{type: "text", text: "original source"}]}, delivery: {acknowledgement: "original-delivery"}};
+  const executor = {async execute(request) {
+    requests.push(request);
+    return {outcome: "completed", content: JSON.stringify(fullOutcome), evidence: fullOutcome.receipt, retainedOutcome: fullOutcome};
+  }};
+  const {session} = await createChioPiSession({...f, toolMode: "typed", registry, executor, trustedGatewayTransport: true});
+  scriptedTools(session, [{name: "chio_resume", arguments: resume}]);
+  const stream = session.agent.streamFunction;
+  session.agent.streamFunction = (model, context, options) => {
+    const result = context.messages.find(message => message.role === "toolResult");
+    if (result) {
+      assert.equal(acknowledgements, 0);
+      assert.deepEqual(JSON.parse(result.content[0].text), fullOutcome);
+      const body = {model: "gpt-4.1-mini", store: false, stream: true,
+        tools: getCurrentTools(context.messages).map(tool => ({type: "function", name: tool.name, description: tool.description, parameters: tool.parameters, strict: false})),
+        input: [{type: "function_call", call_id: result.toolCallId, name: "chio_resume", arguments: JSON.stringify(resume)}, {type: "function_call_output", call_id: result.toolCallId, output: result.content[0].text}]};
+      validateModelRequest(body, "gpt-4.1-mini", "openai", registry);
+      // The trusted parent can observe and verify this exact native result.
+      // Real signature verification/ACK is a separate bridge acceptance gate.
+      acknowledgements++;
+    }
+    return stream(model, context, options);
+  };
+  await session.prompt("Resume the original approved operation");
+  assert.equal(acknowledgements, 1);
+  assert.equal(requests.length, 1);
+  assert.deepEqual(requests[0], {sessionId: session.sessionId, toolCallId: "call-0", tool: "chio_resume", arguments: resume});
+  const result = session.messages.find(message => message.role === "toolResult");
+  assert.deepEqual(result.details.retainedOutcome, fullOutcome);
+  session.dispose();
+});
+
+test("A1-M6: the native extension requires an explicit pinned registry instead of registering nothing", () => {
+  for (const registry of [undefined, {mode: "typed", digest: "0".repeat(64), tools: []}]) {
+    assert.throws(() => plugin.chioExtension(undefined, registry), /registry/i);
+  }
+  assert.equal(typeof plugin.chioExtension(undefined, plugin.createToolRegistry(typedTools)), "function");
 });

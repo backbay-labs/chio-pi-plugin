@@ -105,6 +105,8 @@ jobs:
       - name: Install locked dependencies
         working-directory: ${{ env.PACKAGE_DIRECTORY }}
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install Linux sandbox prerequisite for launcher contract tests
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends bubblewrap
       - name: Typecheck, build, and unit regressions
         working-directory: ${{ env.PACKAGE_DIRECTORY }}
         run: |
@@ -119,42 +121,21 @@ jobs:
           set -euo pipefail
           npm run pack:release -- "${RUNNER_TEMP}/chio-release"
 
-      - name: Verify clean consumer installation and packaged entrypoints
+      - name: Qualify base and Durable cold consumers
+        id: consumers
+        working-directory: ${{ env.PACKAGE_DIRECTORY }}
+        run: |
+          set -euo pipefail
+          node scripts/qualify-release.mjs --release "${RUNNER_TEMP}/chio-release" \
+            --work "${RUNNER_TEMP}/chio-consumers" --evidence "${RUNNER_TEMP}/chio-consumer-evidence"
+      - name: Dry-run publication
         run: |
           set -euo pipefail
           cd "${RUNNER_TEMP}/chio-release"
           sha256sum --check ./*.sha256
           artifacts=(./*.tgz)
           test "${#artifacts[@]}" -eq 1
-          package_artifact="$(realpath "${artifacts[0]}")"
-          consumer_dir="$(mktemp -d "${RUNNER_TEMP}/chio-consumer.XXXXXX")"
-          cache_dir="$(mktemp -d "${RUNNER_TEMP}/chio-empty-cache.XXXXXX")"
-          cd "${consumer_dir}"
-          printf '%s\n' '{"private":true}' > package.json
-          npm install --ignore-scripts --install-strategy=nested --save-exact --no-audit --no-fund --cache "${cache_dir}" @earendil-works/pi-coding-agent@0.85.1
-          npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund --cache "${cache_dir}" "${package_artifact}"
-          ./node_modules/.bin/chio-pi --help
-          node --input-type=module <<'NODE'
-          import { readFileSync, existsSync, realpathSync } from 'node:fs';
-          import { resolve, relative, isAbsolute } from 'node:path';
-          import { execFileSync } from 'node:child_process';
-          const root = resolve('node_modules', process.env.PACKAGE_NAME);
-          const pkg = JSON.parse(readFileSync(`${root}/package.json`));
-          if (pkg.name !== process.env.PACKAGE_NAME) throw new Error('wrong installed package');
-          if (pkg.scripts) throw new Error('staged release retains lifecycle scripts');
-          for (const version of Object.values(pkg.dependencies ?? {})) {
-            if (/^(file:|link:|workspace:)/.test(version)) throw new Error('unresolved local dependency');
-          }
-          const bins = typeof pkg.bin === 'string' ? [pkg.bin] : Object.values(pkg.bin ?? {});
-          for (const entry of [pkg.main, ...bins].filter(Boolean)) {
-            const target = resolve(root, entry);
-            if (!existsSync(target)) throw new Error(`missing entrypoint ${entry}`);
-            const rel = relative(root, realpathSync(target));
-            if (rel.startsWith('..') || isAbsolute(rel)) throw new Error('entrypoint escapes installed package');
-            execFileSync(process.execPath, ['--check', target], { stdio: 'inherit' });
-          }
-          NODE
-          npm publish "${package_artifact}" --dry-run --ignore-scripts --access public
+          npm publish "$(realpath "${artifacts[0]}")" --dry-run --ignore-scripts --access public
       - name: Record source and artifact identities
         id: subjects
         env:
@@ -181,6 +162,16 @@ jobs:
           name: qualified-package
           path: ${{ runner.temp }}/chio-release
           if-no-files-found: error
+          retention-days: 90
+      - name: Retain cold consumer evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: consumer-evidence
+          path: ${{ runner.temp }}/chio-consumer-evidence
+          # Missing evidence fails only a run whose qualification succeeded; an
+          # earlier failure keeps one failing step and uploads any partial evidence.
+          if-no-files-found: ${{ steps.consumers.outcome == 'success' && 'error' || 'warn' }}
           retention-days: 90
 
   provenance:

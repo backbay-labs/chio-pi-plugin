@@ -6,14 +6,16 @@ real-host I01-I08 acceptance, a compatible public kernel, or six-host completion
 
 ## Current boundary
 
-- Package version: `0.1.0`. Existing local candidate tarball hashes do
-  not identify newly rebuilt archives, including metadata-only rebuilds.
+- Package version: `0.2.0` candidate. The frozen `0.1.0` archive and its
+  hashes remain the scope of [FINAL-QUALIFICATION.md](FINAL-QUALIFICATION.md).
+  Existing local candidate tarball hashes do not identify newly rebuilt
+  archives, including metadata-only rebuilds.
 - Public repository identity: `backbay-labs/chio-pi-plugin`.
 - Workflow: `.github/workflows/release.yml`.
 - Registry package: `@chio/pi-plugin`; GitHub environment: `npm`.
 - Release tags: `v<package.json version>`, reachable from `main`.
-- Manual `workflow_dispatch` always builds, tests, packs, performs a clean
-  consumer install, and generates provenance. It never publishes to npm or
+- Manual `workflow_dispatch` always builds, tests, packs, qualifies the base
+  and Durable cold consumers, and generates provenance. It never publishes to npm or
   creates a GitHub Release. There is no manual publish switch.
 - Source CI, real-host acceptance, kernel qualification, and any repository
   rulesets remain separate gates. Do not treat package checks as replacements.
@@ -37,26 +39,128 @@ npm test
 npm run pack:release -- /absolute/new-candidate-directory
 ```
 
-Install the resulting tarball from a fresh consumer directory and empty npm
-cache, with scripts disabled:
+Qualify the resulting tarball in two fresh consumers, then dry-run publication:
 
 ```sh
-npm install --ignore-scripts --install-strategy=nested --save-exact --no-audit --no-fund \
-  --cache /absolute/new-empty-cache @earendil-works/pi-coding-agent@0.85.1
-npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund \
-  --cache /absolute/new-empty-cache /absolute/new-candidate-directory/package.tgz
-./node_modules/.bin/chio-pi --help
+node scripts/qualify-release.mjs --release /absolute/new-candidate-directory \
+  --work /absolute/new-scratch-directory --evidence /absolute/new-evidence-directory
 npm publish /absolute/new-candidate-directory/package.tgz --dry-run --ignore-scripts --access public
 ```
 
 The filename `package.tgz` above is a placeholder for the emitted tarball. The
-workflow checks the emitted checksum, installed package name, absence of local
-`file:`/`link:`/`workspace:` dependencies, and installed entrypoint syntax.
-Pi installs its exact public host peer first, then installs the plugin with the
-verified nested strategy. CI executes `chio-pi --help` after installation to
-catch missing peer transitive dependencies even when npm exits successfully.
-Registry access is required for the host and public typebox dependency; Chio
+consumer command performs the manual steps below for both consumers, with
+separate empty caches and an isolated home and Pi profile for each. It runs
+every check in [candidate 0.2.0](#candidate-020) and refuses existing work or
+evidence directories. The equivalent manual base consumer, from a new directory
+beside a copy of the tarball, is:
+
+```sh
+npm install --ignore-scripts --install-strategy=nested --save-exact --no-audit --no-fund \
+  --cache /absolute/new-empty-cache @earendil-works/pi-coding-agent@1.0.2
+npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund \
+  --cache /absolute/new-empty-cache ../package.tgz
+./node_modules/.bin/chio-pi --help
+./node_modules/.bin/chio-coding-resource --help
+```
+
+The Durable consumer adds `@earendil-works/pi-durable@1.0.2` to the first
+command. Pi installs its exact public host peer first, then the plugin with the
+verified nested strategy. Executing installed help catches missing peer
+transitive dependencies even when npm exits successfully. Registry access is
+required for the host and the public TypeBox and Ajv dependencies; Chio
 dependencies are bundled.
+
+## Candidate 0.2.0
+
+The `0.2.0` candidate carries the roadmap surface mapped in the
+[implementation crosswalk](ROADMAP-IMPLEMENTATION.md). Pack it from a clean,
+reviewed commit. The packer removes and rebuilds `dist/` from source, and refuses
+any change to `package.json` or `package-lock.json` while packing. It writes the
+archive, its SHA-256 file and a builder provenance record.
+
+The archive contains both binaries (`chio-pi` and `chio-coding-resource`), the
+`.`, `./coding-resource` and `./durable` exports with their declarations, the
+Linux guest bootstrap, the generated Unicode 15.1 module with its complete
+Unicode License V3 text, the bundled `@chio/bridge@0.3.0` from vendor archive
+`7d9e34f7408a...` with its production dependencies, `README.md`, `LICENSE`, the
+user documentation under `docs/` and the vendored bridge archives. The staged
+manifest keeps exact `ajv` and `typebox` registry dependencies, exact peers
+`@earendil-works/pi-coding-agent@1.0.2` and optional
+`@earendil-works/pi-durable@1.0.2`, `engines.node >=22.19.0`, and no scripts or
+development dependencies.
+
+The archive excludes `docs/superpowers/`: plans, specifications and task
+evidence, including machine-readable results that contain local temporary paths.
+Task evidence records candidate and consumer hashes. Shipping it would make
+every evidence commit change the candidate it describes. Retained consumer
+provenance likewise lives outside packaged paths, under `evidence/`. With both
+outside the archive, a later evidence-only commit rebuilds the same bytes.
+
+Builder and consumer provenance are separate records:
+
+- **Builder provenance** (`ARTIFACT.provenance.json` from the packer): source
+  commit and dirty flag, artifact SHA-256 and npm integrity, builder
+  `package-lock.json` SHA-256, bridge archive SHA-256, bundled package versions,
+  registry dependency versions with lock integrity, exact peers, exports, bins,
+  engines, and the builder's Node, npm and platform.
+- **Consumer provenance** (`consumer-provenance.json`, one per consumer): the
+  actual consumer `package.json` and `package-lock.json` with its SHA-256, the
+  resolved `npm ls --all` graph, artifact SHA-256, source commit, Node, npm and
+  platform identities, exact installation commands and every check result. The
+  consumer depends on the archive through `file:../ARTIFACT.tgz`, never through
+  a temporary absolute path. Exact peers alone do not freeze Pi's transitive
+  graph; the consumer lockfile does.
+
+`scripts/qualify-release.mjs` creates two consumers, each with an empty npm
+cache, an isolated `HOME` and `PI_CODING_AGENT_DIR`, and an environment allowlist
+that carries no provider or registry credentials:
+
+- **Base consumer:** exact Pi 1.0.2 and no Pi Durable anywhere in the tree. It
+  imports the root and coding-resource entrypoints, observes that the Durable
+  entrypoint requires its optional peer, and typechecks a consumer of the root
+  and coding-resource declarations.
+- **Durable consumer:** exact Pi 1.0.2 and exact Pi Durable 1.0.2. It imports and
+  typechecks the Durable entrypoint. Its registration smoke opens a real Durable
+  `Harness` over `MemoryStorage` and installs `createChioDurableTools` with one
+  `replay: "unsafe"`, sequential tool per pinned tool, without executing,
+  looking up or acknowledging any operation.
+
+Both consumers check the archive members and exclusions, staged metadata,
+installed file hashes against the archive, export and binary containment,
+refusal of non-exported deep imports, and the exact peers. Every
+`node_modules/.bin` entry must be a symlink inside the installation, and each
+one's `--help`, plus `chio-pi doctor|status|inspect|recover --help`, must exit 0
+with output when run through that symlink. Typechecking runs twice. With
+`skipLibCheck: false`, no diagnostic may fall in this package's declarations or
+the consumer file; upstream Pi diagnostics are recorded. The ordinary
+`skipLibCheck: true` consumer build must pass. The root declaration closure must
+not reference Pi Durable. Each retained lockfile is then replayed with `npm ci`
+from another empty cache and must reproduce the same lockfile and graph. The
+normal Pi profile's metadata must be unchanged, and retained evidence must hold
+no host-specific absolute path.
+
+The command uses the Node running it and the npm installed beside that Node.
+Verify the minimum supported Node by running it with Node 22.19.0 itself.
+
+CI runs the same command with Node 22.19.0 and npm 11.8.0 after typecheck, build
+and tests, then performs only `npm publish --dry-run`. It retains the packed
+candidate as `source-package` and the consumer evidence as `consumer-evidence`.
+In the release workflow, the build job runs the same consumer qualification after
+its tag-build prerequisite check and before provenance generation and the separate
+publication job, whose gates are unchanged. In both workflows the consumer
+evidence upload fails only when qualification succeeded but left no evidence; an
+earlier failure uploads any partial evidence without a second failing step.
+
+The local candidate of record is packed from the final reviewed commit of the
+roadmap branch. Its archive SHA-256, source commit, builder provenance and
+consumer lockfile digests are in the
+[Task 8 final verification record](superpowers/evidence/2026-10-05-task8-final-review-fixes.md#final-verification)
+and under `evidence/2026-10-05/release-candidate-0.2.0-final/` in the source
+repository. This guide ships in the archive, so it does not repeat the hash;
+naming it here would change the archive it names. The pre-review candidate
+`0701bfc7...` from `2059150`, recorded in the
+[Task 7 release record](superpowers/evidence/2026-10-04-task7-release.md), is
+superseded.
 
 ## Hosted qualification and publication
 
@@ -103,11 +207,11 @@ tag, source commit, and expected checksums before trusting the package:
 ```sh
 sha256sum --check SHA256SUMS
 cosign verify-blob --certificate SHA256SUMS.pem --signature SHA256SUMS.sig \
-  --certificate-identity 'https://github.com/backbay-labs/chio-pi-plugin/.github/workflows/release.yml@refs/tags/v0.1.0' \
+  --certificate-identity 'https://github.com/backbay-labs/chio-pi-plugin/.github/workflows/release.yml@refs/tags/v0.2.0' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com SHA256SUMS
 slsa-verifier verify-artifact package.tgz \
   --provenance-path package.intoto.jsonl \
-  --source-uri github.com/backbay-labs/chio-pi-plugin --source-tag 'v0.1.0'
+  --source-uri github.com/backbay-labs/chio-pi-plugin --source-tag 'v0.2.0'
 ```
 
 A timeout or failure after npm publication can leave a published version without
@@ -140,6 +244,9 @@ Trusted Publisher setup remain external inputs before hosted execution.
 
 ## Verification of this workflow change
 
+This section records the September 2026 verification of the 0.1.0 workflow
+change. The 0.2.0 candidate's checks are in [candidate 0.2.0](#candidate-020).
+
 Local execution used Node 22.19.0 and npm 11.8.0 in an isolated checkout. The
 workflow's locked dependency install with scripts disabled, build/type checks,
 and 23 unit tests passed with zero failed or skipped tests. Staged packing,
@@ -154,7 +261,8 @@ not claimed by these results.
 
 `.github/workflows/ci.yml` uses pinned actions, this checkout's locked and
 vendored dependencies, mandatory source checks, and the same staged packaging
-and clean-consumer commands exercised locally. Existing workflow/job check names
+and cold-consumer command exercised locally. It retains the candidate and the
+consumer evidence as workflow artifacts. Existing workflow/job check names
 are retained. No typecheck failure is downgraded to a warning, no real-host test
 is reported successful because credentials are absent, and no legacy normal-home
 smoke cleanup is executed. CI does not publish.

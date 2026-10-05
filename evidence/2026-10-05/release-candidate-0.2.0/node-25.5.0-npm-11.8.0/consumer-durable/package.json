@@ -1,0 +1,15 @@
+{
+  "name": "chio-pi-consumer-durable",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@chio/pi-plugin": "file:../chio-pi-plugin-0.2.0.tgz",
+    "@earendil-works/pi-coding-agent": "1.0.2",
+    "@earendil-works/pi-durable": "1.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "26.5.0",
+    "typescript": "7.0.2"
+  }
+}

@@ -1,0 +1,1009 @@
+{
+  "schema": "chio.pi.roadmap-qualification.v1",
+  "profile": "component",
+  "generatedAt": "2026-10-05T04:52:38.718Z",
+  "environment": {
+    "node": "v25.5.0",
+    "execPath": "/opt/homebrew/Cellar/node/25.5.0/bin/node",
+    "platform": "darwin",
+    "arch": "arm64",
+    "sourceCommit": "193ea5ec2deabc3d5280125065afbdf985bc77f3",
+    "worktreeDirty": false
+  },
+  "layers": {
+    "signedBridgeFixture": {
+      "status": "passed",
+      "scope": "A scripted kernel signs with an ephemeral fixture key and forwards admitted calls to the real coding participant on its kernel-owned stdio pipe, through the bundled native gateway, the trusted parent proxy, the guest adapter and actual Pi Durable hosts. It measures adapter and host contracts and does not qualify a real kernel or authority installation."
+    },
+    "localConfinement": {
+      "status": "passed",
+      "backend": "seatbelt",
+      "scope": "Real OS confinement of the operator-pinned recipe on this host. It is not whole-Pi confinement, P5 acceptance or an ordinary Docker default."
+    },
+    "nativeKernel": {
+      "status": "open",
+      "scope": "Native coding-workflow acceptance stays open until the exact kernel, publisher manifest, custody/launch profile, caller binding and signed recovery fixture in docs/NATIVE-PREREQUISITES.md are supplied and qualified.",
+      "prerequisites": [
+        {
+          "name": "kernelArtifact",
+          "description": "exact retained native kernel artifact"
+        },
+        {
+          "name": "publisherManifest",
+          "description": "publisher-signed nine-tool resource manifest"
+        },
+        {
+          "name": "signerPin",
+          "description": "independently selected kernel signer pin"
+        },
+        {
+          "name": "custodyLaunchProfile",
+          "description": "qualified custody and launch profile for the resource owner"
+        },
+        {
+          "name": "callerCapabilitySha256",
+          "description": "native caller binding from the canonical signed capability"
+        },
+        {
+          "name": "signedRecoveryFixture",
+          "description": "signed response-loss and original-result recovery fixture"
+        }
+      ]
+    }
+  },
+  "workflow": {
+    "layer": "signed bridge fixture: a scripted kernel signs with an ephemeral fixture key and forwards to the real coding participant on its kernel-owned pipe; adapter and host contract evidence only, not native kernel qualification",
+    "loss": "after-native-retention",
+    "status": "recovered",
+    "authority": {
+      "capabilityId": "public-capability-id",
+      "subjectKey": "abababababababababababababababababababababababababababababababab",
+      "serverId": "coding",
+      "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+      "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+    },
+    "nativeKernel": {
+      "status": "open",
+      "reason": "native coding-workflow acceptance remains open until the exact kernel, publisher manifest, custody/launch profile, caller binding and signed recovery fixture are supplied and qualified"
+    },
+    "recipe": {
+      "name": "unit",
+      "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+      "executableSha256": "dd15588a84f33431b4e616b04a2d0f79be676b1d537a43f0537a62279c592d21",
+      "executable": "/opt/homebrew/Cellar/node/25.5.0/bin/node"
+    },
+    "steps": [
+      {
+        "name": "inspect-status",
+        "kernelTool": "repo_status",
+        "callId": "inspect-status",
+        "nativeRequestId": "native-host-session:52fdb2e6f687d3a63f4e4132d2ec7c37f9f6bd1256adc26320601dd55d5ec463",
+        "operationId": "3f399360fae39e9555984410f245632cbb0cd25b09b6d0719c4263613b15c7d1",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "locate",
+        "kernelTool": "search",
+        "callId": "locate",
+        "nativeRequestId": "native-host-session:63bf79661007fc5a239c90675a5fff2b689c38b9d5aa8c60556a3086b6a098b0",
+        "operationId": "22807c4b84537ee6cb5728557206e597837179f9087033b0fe57d7fb0fccf147",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "read",
+        "kernelTool": "read_range",
+        "callId": "read",
+        "nativeRequestId": "native-host-session:f5378524abe71b8be61fda4906c98e3fa5297f04c28be4fac77fade588459f9d",
+        "operationId": "033d41cc02fc0c0216c20a91318108af9aaed5cac377d3e7bf39b5d1308c4081",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "before-test",
+        "kernelTool": "test_recipe",
+        "callId": "before-test",
+        "nativeRequestId": "native-host-session:39219eef2ab4173330473597382c236721ff66806b9448bb4642ca6335952c0b",
+        "operationId": "2c971607b6c575b31be8cd69f9d9fb35b10f09f8102baf99cb94e0ace0864430",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "forbidden-operator-config",
+        "kernelTool": "read_range",
+        "callId": "forbidden-operator-config",
+        "nativeRequestId": "native-host-session:913cab497b916dbf40f69d9294cdf7dfa705922280b299531a8e05ef40decdc6",
+        "operationId": "7ec52c63daaf41599dab8303d9a91316c1e19be8428677bd758cd77f21e6aff8",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": true,
+        "code": "invalid_path",
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "forbidden-failed-publication",
+        "kernelTool": "publish_artifact",
+        "callId": "forbidden-failed-publication",
+        "nativeRequestId": "native-host-session:0b02d8ea09cfbecc896b84ca5b188ee83d5329ae36a4869af560290aeae9a6a7",
+        "operationId": "404778af46ffec62beb756ad3f29eb23787571de81972199e97305c1b0e523ff",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": true,
+        "code": "lineage_mismatch",
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "patch",
+        "kernelTool": "apply_patch",
+        "callId": "patch",
+        "nativeRequestId": "native-host-session:969ce45a3adc95f60f3bc3836060918f10e52eee78bde198d11d5969779dd435",
+        "operationId": "0ddf2dee0939f22cb9ac3e94c6c52cb68570f89e9485e345d49e8c9f5de46df2",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "after-test",
+        "kernelTool": "test_recipe",
+        "callId": "after-test",
+        "nativeRequestId": "native-host-session:b99d615e84d53d30600f5f68af8286b4a691e9febba26bca4b3cd70a70f90ef2",
+        "operationId": "04f83e437a68c24eee0c3fb88a4fb1ff7de237f6d04a5405147833e1fc848861",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "review-diff",
+        "kernelTool": "repo_diff",
+        "callId": "review-diff",
+        "nativeRequestId": "native-host-session:3c7345b6d1211a895ddc2d1b34e7b587b32e65b7dadaaceb7953e5d98d1d9a35",
+        "operationId": "0d76db90425ec7be478d43d14f5bb8c607302b457732ac0d90d4a78837820651",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "7b1d20924099161f9c0b69769bef15cd8423997e1d3da0c20c3832e79a150123",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      }
+    ],
+    "forbidden": [
+      {
+        "name": "forbidden-operator-config",
+        "kernelTool": "read_range",
+        "arguments": {
+          "sourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+          "path": "../operator.json",
+          "startLine": 1,
+          "endLine": 20
+        },
+        "state": "completed",
+        "verdict": "allow",
+        "toolError": true,
+        "code": "invalid_path",
+        "layer": "resource refusal known before effects, retained and delivered as a completed tool error; not a native signed denial",
+        "nativeDenial": false,
+        "fencedAfterDelivery": false,
+        "artifactsAfter": 0
+      },
+      {
+        "name": "forbidden-failed-publication",
+        "kernelTool": "publish_artifact",
+        "arguments": {
+          "sourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+          "testOperationId": "2c971607b6c575b31be8cd69f9d9fb35b10f09f8102baf99cb94e0ace0864430",
+          "testResultSha256": "cb214a96d3532686de19af0b0121d313e4552862aec91715b231c3dcaa200e4c",
+          "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+          "destination": "review"
+        },
+        "state": "completed",
+        "verdict": "allow",
+        "toolError": true,
+        "code": "lineage_mismatch",
+        "layer": "resource refusal known before effects, retained and delivered as a completed tool error; not a native signed denial",
+        "nativeDenial": false,
+        "fencedAfterDelivery": false,
+        "artifactsAfter": 0
+      }
+    ],
+    "beforeTest": {
+      "passed": false,
+      "operationId": "2c971607b6c575b31be8cd69f9d9fb35b10f09f8102baf99cb94e0ace0864430",
+      "nativeRequestId": "native-host-session:39219eef2ab4173330473597382c236721ff66806b9448bb4642ca6335952c0b",
+      "sourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+      "recipe": "unit",
+      "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+      "executableSha256": "dd15588a84f33431b4e616b04a2d0f79be676b1d537a43f0537a62279c592d21",
+      "resultSha256": "cb214a96d3532686de19af0b0121d313e4552862aec91715b231c3dcaa200e4c",
+      "resultBound": true,
+      "sandbox": "seatbelt",
+      "exitCode": 1,
+      "signal": null,
+      "limit": null,
+      "counts": {
+        "pass": 2,
+        "fail": 1
+      },
+      "failedTests": [
+        "isExpired is true at the exact deadline"
+      ],
+      "failedAtEquality": true,
+      "output": "✔ isExpired is false before the deadline (0.835833ms)\n✖ isExpired is true at the exact deadline (0.738167ms)\n✔ isExpired is true after the deadline (0.06425ms)\nℹ tests 3\nℹ suites 0\nℹ pass 2\nℹ fail 1\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 6.3585\n\n✖ failing tests:\n\ntest at fixture-test.mjs:5:1\n✖ isExpired is true at the exact deadline (0.738167ms)\n  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n  \n  false !== true\n  \n      at TestContext.<anonymous> (file:///private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-coding-30uYAd/state/generations/aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08/fixture-test.mjs:5:62)\n      at Test.runInAsyncScope (node:async_hooks:212:14)\n      at Test.run (node:internal/test_runner/test:1109:25)\n      at Test.processPendingSubtests (node:internal/test_runner/test:786:18)\n      at Test.postRun (node:internal/test_runner/test:1238:19)\n      at Test.run (node:internal/test_runner/test:1166:12)\n      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {\n    generatedMessage: true,\n    code: 'ERR_ASSERTION',\n    actual: false,\n    expected: true,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\n\n"
+    },
+    "afterTest": {
+      "passed": true,
+      "operationId": "04f83e437a68c24eee0c3fb88a4fb1ff7de237f6d04a5405147833e1fc848861",
+      "nativeRequestId": "native-host-session:b99d615e84d53d30600f5f68af8286b4a691e9febba26bca4b3cd70a70f90ef2",
+      "sourceDigest": "fc34f6fa3bc9aef8cb5d62d3689400a5422c76aca21ebb3f1714ac03fbff909f",
+      "recipe": "unit",
+      "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+      "executableSha256": "dd15588a84f33431b4e616b04a2d0f79be676b1d537a43f0537a62279c592d21",
+      "resultSha256": "7486d7ead7177df38ea4fb5b47d94f7ce0cbb8bb529919bc5338eb65d905dea5",
+      "resultBound": true,
+      "sandbox": "seatbelt",
+      "exitCode": 0,
+      "signal": null,
+      "limit": null,
+      "counts": {
+        "pass": 3,
+        "fail": 0
+      },
+      "failedTests": [],
+      "failedAtEquality": false,
+      "output": "✔ isExpired is false before the deadline (23.879083ms)\n✔ isExpired is true at the exact deadline (4.283583ms)\n✔ isExpired is true after the deadline (0.204125ms)\nℹ tests 3\nℹ suites 0\nℹ pass 3\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 337.620125\n\n"
+    },
+    "originalArtifact": {
+      "name": "c0ec1e85e051df7b3cd08fb6152347e999c0f53dd353e5814fc612ccd9df3a03",
+      "sha256": "c0ec1e85e051df7b3cd08fb6152347e999c0f53dd353e5814fc612ccd9df3a03",
+      "contentAddressed": true,
+      "bytes": 3329,
+      "ino": 708706654,
+      "mtimeMs": 1791175998059.3845,
+      "birthtimeMs": 1791175998059.2246,
+      "fileMode": 256,
+      "directoryMode": 320
+    },
+    "recoveredArtifact": {
+      "sha256": "c0ec1e85e051df7b3cd08fb6152347e999c0f53dd353e5814fc612ccd9df3a03",
+      "sourceDigest": "fc34f6fa3bc9aef8cb5d62d3689400a5422c76aca21ebb3f1714ac03fbff909f",
+      "diffSha256": "2ed0ce031c33f121494ef3e8fb3347258f23e33ee3a9160bc8b76a46d4092867",
+      "testOperationId": "04f83e437a68c24eee0c3fb88a4fb1ff7de237f6d04a5405147833e1fc848861",
+      "testResultSha256": "7486d7ead7177df38ea4fb5b47d94f7ce0cbb8bb529919bc5338eb65d905dea5",
+      "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+      "destination": "review",
+      "unsigned": true,
+      "authority": false
+    },
+    "publicationEffects": 1,
+    "source": {
+      "initialDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+      "path": "src/expiry.mjs",
+      "buggySha256": "795b17ddd07f34a27f96bfb51de3d392de34cd00b1645e655dc3656c4b69d5a9",
+      "fixedSha256": "08c8961d06ae8095bc2ce854e6eb763f4ec9e3b0524a56bffb31b3d8515d5a55"
+    },
+    "located": {
+      "column": 1,
+      "fileSha256": "795b17ddd07f34a27f96bfb51de3d392de34cd00b1645e655dc3656c4b69d5a9",
+      "line": 2,
+      "path": "src/expiry.mjs",
+      "text": "export function isExpired(now, deadline) {"
+    },
+    "read": {
+      "path": "src/expiry.mjs",
+      "fileSha256": "795b17ddd07f34a27f96bfb51de3d392de34cd00b1645e655dc3656c4b69d5a9",
+      "text": "// Returns true once the deadline has been reached.\nexport function isExpired(now, deadline) {\n  return now > deadline;\n}\n"
+    },
+    "patch": {
+      "arguments": {
+        "sourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+        "changes": [
+          {
+            "path": "src/expiry.mjs",
+            "expectedFileSha256": "795b17ddd07f34a27f96bfb51de3d392de34cd00b1645e655dc3656c4b69d5a9",
+            "edits": [
+              {
+                "oldText": "now > deadline",
+                "newText": "now >= deadline"
+              }
+            ]
+          }
+        ]
+      },
+      "previousSourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+      "sourceDigest": "fc34f6fa3bc9aef8cb5d62d3689400a5422c76aca21ebb3f1714ac03fbff909f",
+      "changedPaths": [
+        "src/expiry.mjs"
+      ]
+    },
+    "diff": {
+      "diffSha256": "2ed0ce031c33f121494ef3e8fb3347258f23e33ee3a9160bc8b76a46d4092867",
+      "changes": [
+        {
+          "after": "// Returns true once the deadline has been reached.\nexport function isExpired(now, deadline) {\n  return now >= deadline;\n}\n",
+          "before": "// Returns true once the deadline has been reached.\nexport function isExpired(now, deadline) {\n  return now > deadline;\n}\n",
+          "path": "src/expiry.mjs"
+        }
+      ],
+      "reviewed": true
+    },
+    "publication": {
+      "arguments": {
+        "sourceDigest": "fc34f6fa3bc9aef8cb5d62d3689400a5422c76aca21ebb3f1714ac03fbff909f",
+        "testOperationId": "04f83e437a68c24eee0c3fb88a4fb1ff7de237f6d04a5405147833e1fc848861",
+        "testResultSha256": "7486d7ead7177df38ea4fb5b47d94f7ce0cbb8bb529919bc5338eb65d905dea5",
+        "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+        "destination": "review"
+      }
+    },
+    "firstHost": {
+      "publicationResponse": "lost",
+      "taskStatus": "failed",
+      "guestUnresolved": true,
+      "flushError": "Actual committed Durable tool task provenance or terminal completion mismatch",
+      "nativeOriginalState": "completed",
+      "nativeOriginalVerified": true,
+      "nativeRequestId": "native-host-session:6d1fc5b944bdb1b2b3563cfaf3e46808a50101119b16a756fcabae51191c5307",
+      "resourceDispatches": 1
+    },
+    "secondHost": {
+      "restartedNativeGateway": true,
+      "executorCalls": 0,
+      "recoveryRefusal": null,
+      "replacementAttempt": null,
+      "recoveredOutcomeMatchesOriginal": true,
+      "recoveredOutcomeDigest": "84a01e6889d7ad1c07348896491d263dd1b6cdcaf41f9f86f044b2b625f60d9a",
+      "fencedAfterRecovery": false
+    },
+    "kernel": {
+      "nativeCalls": 10,
+      "acks": 10,
+      "resourceDispatches": 10,
+      "nativeCallsDuringRecovery": 0,
+      "acksDuringRecovery": 1,
+      "resourceDispatchesDuringRecovery": 0,
+      "resourcePublishCalls": {
+        "refusedBeforeEffects": 1,
+        "published": 1
+      }
+    },
+    "resourceLedger": {
+      "unsigned": true,
+      "kernelFenceClearance": false,
+      "publishCompleted": true
+    },
+    "publications": {
+      "ledgerPublished": [
+        {
+          "operationId": "c85619de1d2065b73d4a7f9d6006b0fb1dc163d8ef8b89cf9b95a2c2676cc6a1",
+          "artifactSha256": "c0ec1e85e051df7b3cd08fb6152347e999c0f53dd353e5814fc612ccd9df3a03"
+        }
+      ],
+      "ledgerRefused": 1,
+      "ledgerUnresolved": [],
+      "artifacts": [
+        "c0ec1e85e051df7b3cd08fb6152347e999c0f53dd353e5814fc612ccd9df3a03"
+      ],
+      "artifactEvents": {
+        "c0ec1e85e051df7b3cd08fb6152347e999c0f53dd353e5814fc612ccd9df3a03": 1
+      }
+    }
+  },
+  "uncertainPublication": {
+    "layer": "signed bridge fixture: a scripted kernel signs with an ephemeral fixture key and forwards to the real coding participant on its kernel-owned pipe; adapter and host contract evidence only, not native kernel qualification",
+    "loss": "before-native-retention",
+    "status": "uncertain-preserved",
+    "authority": {
+      "capabilityId": "public-capability-id",
+      "subjectKey": "abababababababababababababababababababababababababababababababab",
+      "serverId": "coding",
+      "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+      "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+    },
+    "nativeKernel": {
+      "status": "open",
+      "reason": "native coding-workflow acceptance remains open until the exact kernel, publisher manifest, custody/launch profile, caller binding and signed recovery fixture are supplied and qualified"
+    },
+    "recipe": {
+      "name": "unit",
+      "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+      "executableSha256": "dd15588a84f33431b4e616b04a2d0f79be676b1d537a43f0537a62279c592d21",
+      "executable": "/opt/homebrew/Cellar/node/25.5.0/bin/node"
+    },
+    "steps": [
+      {
+        "name": "inspect-status",
+        "kernelTool": "repo_status",
+        "callId": "inspect-status",
+        "nativeRequestId": "native-host-session:55844008b29f986189df69b27a171bccefb851987c8ce955d15bd5aa2d46248a",
+        "operationId": "94800e6ca8d88ab306666edb8497fa5bee072b644fbce635a3b823ed7238a9e9",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "locate",
+        "kernelTool": "search",
+        "callId": "locate",
+        "nativeRequestId": "native-host-session:5bcfab5f9ffd316ec5d3b9d3cfe3ad28aefe2f91b517f7c6550556e297770a4a",
+        "operationId": "dc86263d3251386353bcb570ac1ccc6c35015ccacffe6451e7aa93432e7b7da9",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "read",
+        "kernelTool": "read_range",
+        "callId": "read",
+        "nativeRequestId": "native-host-session:3ade6f74df1d3c591704d3171c313c8db3cf893836266137dce6f2c95104f5f2",
+        "operationId": "61bbcd2f193bd9928a07a92df38dac97e43dbf13d6a190c7a138122e54734731",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "before-test",
+        "kernelTool": "test_recipe",
+        "callId": "before-test",
+        "nativeRequestId": "native-host-session:04b00ccb80b392da95f00368717944ebdd52dfbeb0edc928e46c92da6fba4687",
+        "operationId": "d55aa15f96f72e6056363e5c4401104ed6eb15a374bdbe1eb2849881c5f5e699",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "forbidden-operator-config",
+        "kernelTool": "read_range",
+        "callId": "forbidden-operator-config",
+        "nativeRequestId": "native-host-session:cc944f4354522610ade45f6ee38c91bec033893737317df737981f8f94622bfa",
+        "operationId": "80a2063a095362134c2d3cb3d9a63c1323a16394dd55fd472f0fbe9c3c788048",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": true,
+        "code": "invalid_path",
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "forbidden-failed-publication",
+        "kernelTool": "publish_artifact",
+        "callId": "forbidden-failed-publication",
+        "nativeRequestId": "native-host-session:594a2f7978da185b9aeabaea886789cbae029c5e665e0a83dff51a24436780bf",
+        "operationId": "0418100c3237e6dea65a23bfca04dfb209898964c21f5f7b59473e011301fbf1",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": true,
+        "code": "lineage_mismatch",
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "patch",
+        "kernelTool": "apply_patch",
+        "callId": "patch",
+        "nativeRequestId": "native-host-session:b0e124571c29e8966951c00508a73b4ee52e4e7596afe471545229dd96806f2a",
+        "operationId": "98a5711985b538da0ebbaf1436273e733ee10c22089094f28b75626c9ff67ccb",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "after-test",
+        "kernelTool": "test_recipe",
+        "callId": "after-test",
+        "nativeRequestId": "native-host-session:6869ce9391aaa8bbbadc6a1c3b35639d9d87f2486fad03de61a7d5a45e00c843",
+        "operationId": "bc189bd053a5904ab87c5f40a18a96a47762403c5aee179f8007702a9514d91e",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      },
+      {
+        "name": "review-diff",
+        "kernelTool": "repo_diff",
+        "callId": "review-diff",
+        "nativeRequestId": "native-host-session:e2efbaf5562d3b8f22cb5a2773131d1530c87959c2cd2041e52a719c5613d17b",
+        "operationId": "0ef52fc31ae7fec68d067371152e160ab49920db80e8a939e159a270135eb616",
+        "state": "completed",
+        "deliveredBy": "commit-observer",
+        "verdict": "allow",
+        "toolError": false,
+        "authority": {
+          "capabilityId": "public-capability-id",
+          "subjectKey": "abababababababababababababababababababababababababababababababab",
+          "serverId": "coding",
+          "callerCapabilitySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authorityDigest": "581dd4e4675dcdc895118d8b2264779a2a723355a286c8a37b4767dfb2fed622",
+          "registryDigest": "324f26d7a404b4821e0a852cc81c24a4997d4d693674a4ad43ed96c89eb2db93"
+        }
+      }
+    ],
+    "forbidden": [
+      {
+        "name": "forbidden-operator-config",
+        "kernelTool": "read_range",
+        "arguments": {
+          "sourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+          "path": "../operator.json",
+          "startLine": 1,
+          "endLine": 20
+        },
+        "state": "completed",
+        "verdict": "allow",
+        "toolError": true,
+        "code": "invalid_path",
+        "layer": "resource refusal known before effects, retained and delivered as a completed tool error; not a native signed denial",
+        "nativeDenial": false,
+        "fencedAfterDelivery": false,
+        "artifactsAfter": 0
+      },
+      {
+        "name": "forbidden-failed-publication",
+        "kernelTool": "publish_artifact",
+        "arguments": {
+          "sourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+          "testOperationId": "d55aa15f96f72e6056363e5c4401104ed6eb15a374bdbe1eb2849881c5f5e699",
+          "testResultSha256": "fc05044acbf107d0367b7c3d9c4ed5c8a4ab1bbe626afba40d04c9a73a6a64a1",
+          "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+          "destination": "review"
+        },
+        "state": "completed",
+        "verdict": "allow",
+        "toolError": true,
+        "code": "lineage_mismatch",
+        "layer": "resource refusal known before effects, retained and delivered as a completed tool error; not a native signed denial",
+        "nativeDenial": false,
+        "fencedAfterDelivery": false,
+        "artifactsAfter": 0
+      }
+    ],
+    "beforeTest": {
+      "passed": false,
+      "operationId": "d55aa15f96f72e6056363e5c4401104ed6eb15a374bdbe1eb2849881c5f5e699",
+      "nativeRequestId": "native-host-session:04b00ccb80b392da95f00368717944ebdd52dfbeb0edc928e46c92da6fba4687",
+      "sourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+      "recipe": "unit",
+      "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+      "executableSha256": "dd15588a84f33431b4e616b04a2d0f79be676b1d537a43f0537a62279c592d21",
+      "resultSha256": "fc05044acbf107d0367b7c3d9c4ed5c8a4ab1bbe626afba40d04c9a73a6a64a1",
+      "resultBound": true,
+      "sandbox": "seatbelt",
+      "exitCode": 1,
+      "signal": null,
+      "limit": null,
+      "counts": {
+        "pass": 2,
+        "fail": 1
+      },
+      "failedTests": [
+        "isExpired is true at the exact deadline"
+      ],
+      "failedAtEquality": true,
+      "output": "✔ isExpired is false before the deadline (0.8495ms)\n✖ isExpired is true at the exact deadline (0.707541ms)\n✔ isExpired is true after the deadline (0.05975ms)\nℹ tests 3\nℹ suites 0\nℹ pass 2\nℹ fail 1\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 6.735292\n\n✖ failing tests:\n\ntest at fixture-test.mjs:5:1\n✖ isExpired is true at the exact deadline (0.707541ms)\n  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n  \n  false !== true\n  \n      at TestContext.<anonymous> (file:///private/var/folders/jy/95wms_mn265f0bpj_v6wc4zh0000gn/T/chio-coding-k5MROB/state/generations/aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08/fixture-test.mjs:5:62)\n      at Test.runInAsyncScope (node:async_hooks:212:14)\n      at Test.run (node:internal/test_runner/test:1109:25)\n      at Test.processPendingSubtests (node:internal/test_runner/test:786:18)\n      at Test.postRun (node:internal/test_runner/test:1238:19)\n      at Test.run (node:internal/test_runner/test:1166:12)\n      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {\n    generatedMessage: true,\n    code: 'ERR_ASSERTION',\n    actual: false,\n    expected: true,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\n\n"
+    },
+    "afterTest": {
+      "passed": true,
+      "operationId": "bc189bd053a5904ab87c5f40a18a96a47762403c5aee179f8007702a9514d91e",
+      "nativeRequestId": "native-host-session:6869ce9391aaa8bbbadc6a1c3b35639d9d87f2486fad03de61a7d5a45e00c843",
+      "sourceDigest": "fc34f6fa3bc9aef8cb5d62d3689400a5422c76aca21ebb3f1714ac03fbff909f",
+      "recipe": "unit",
+      "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+      "executableSha256": "dd15588a84f33431b4e616b04a2d0f79be676b1d537a43f0537a62279c592d21",
+      "resultSha256": "9dbbe42e10b57077d4470674434f608ed9c84fed40f0ad0d709b70843b844b18",
+      "resultBound": true,
+      "sandbox": "seatbelt",
+      "exitCode": 0,
+      "signal": null,
+      "limit": null,
+      "counts": {
+        "pass": 3,
+        "fail": 0
+      },
+      "failedTests": [],
+      "failedAtEquality": false,
+      "output": "✔ isExpired is false before the deadline (0.82325ms)\n✔ isExpired is true at the exact deadline (0.063375ms)\n✔ isExpired is true after the deadline (0.058916ms)\nℹ tests 3\nℹ suites 0\nℹ pass 3\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 5.604959\n\n"
+    },
+    "originalArtifact": {
+      "name": "df79da105b3c2fb2779b05b789b7488dfbd2c26ad9da0a793af85cac5a329ad3",
+      "sha256": "df79da105b3c2fb2779b05b789b7488dfbd2c26ad9da0a793af85cac5a329ad3",
+      "contentAddressed": true,
+      "bytes": 3325,
+      "ino": 708707163,
+      "mtimeMs": 1791176030054.4668,
+      "birthtimeMs": 1791176030054.2744,
+      "fileMode": 256,
+      "directoryMode": 320
+    },
+    "recoveredArtifact": null,
+    "publicationEffects": 1,
+    "source": {
+      "initialDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+      "path": "src/expiry.mjs",
+      "buggySha256": "795b17ddd07f34a27f96bfb51de3d392de34cd00b1645e655dc3656c4b69d5a9",
+      "fixedSha256": "08c8961d06ae8095bc2ce854e6eb763f4ec9e3b0524a56bffb31b3d8515d5a55"
+    },
+    "located": {
+      "column": 1,
+      "fileSha256": "795b17ddd07f34a27f96bfb51de3d392de34cd00b1645e655dc3656c4b69d5a9",
+      "line": 2,
+      "path": "src/expiry.mjs",
+      "text": "export function isExpired(now, deadline) {"
+    },
+    "read": {
+      "path": "src/expiry.mjs",
+      "fileSha256": "795b17ddd07f34a27f96bfb51de3d392de34cd00b1645e655dc3656c4b69d5a9",
+      "text": "// Returns true once the deadline has been reached.\nexport function isExpired(now, deadline) {\n  return now > deadline;\n}\n"
+    },
+    "patch": {
+      "arguments": {
+        "sourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+        "changes": [
+          {
+            "path": "src/expiry.mjs",
+            "expectedFileSha256": "795b17ddd07f34a27f96bfb51de3d392de34cd00b1645e655dc3656c4b69d5a9",
+            "edits": [
+              {
+                "oldText": "now > deadline",
+                "newText": "now >= deadline"
+              }
+            ]
+          }
+        ]
+      },
+      "previousSourceDigest": "aad9a555e054359b88a1e89e7aea0974035d79b82a55e53ec358a9a2bb688d08",
+      "sourceDigest": "fc34f6fa3bc9aef8cb5d62d3689400a5422c76aca21ebb3f1714ac03fbff909f",
+      "changedPaths": [
+        "src/expiry.mjs"
+      ]
+    },
+    "diff": {
+      "diffSha256": "2ed0ce031c33f121494ef3e8fb3347258f23e33ee3a9160bc8b76a46d4092867",
+      "changes": [
+        {
+          "after": "// Returns true once the deadline has been reached.\nexport function isExpired(now, deadline) {\n  return now >= deadline;\n}\n",
+          "before": "// Returns true once the deadline has been reached.\nexport function isExpired(now, deadline) {\n  return now > deadline;\n}\n",
+          "path": "src/expiry.mjs"
+        }
+      ],
+      "reviewed": true
+    },
+    "publication": {
+      "arguments": {
+        "sourceDigest": "fc34f6fa3bc9aef8cb5d62d3689400a5422c76aca21ebb3f1714ac03fbff909f",
+        "testOperationId": "bc189bd053a5904ab87c5f40a18a96a47762403c5aee179f8007702a9514d91e",
+        "testResultSha256": "9dbbe42e10b57077d4470674434f608ed9c84fed40f0ad0d709b70843b844b18",
+        "recipeSha256": "5b5c6742afb4427ebe9609676d3cb9266e4669db633c38fe62ef7dde5cd19241",
+        "destination": "review"
+      }
+    },
+    "firstHost": {
+      "publicationResponse": "unknown-native-outcome",
+      "taskStatus": "failed",
+      "guestUnresolved": true,
+      "flushError": "Actual committed Durable tool task provenance or terminal completion mismatch",
+      "nativeOriginalState": "unknown",
+      "nativeOriginalVerified": false,
+      "nativeRequestId": "native-host-session:74c354f62f82db62189b0f1cf1d0143fb4f963bdf89b1fde6cf1638aeb55ab55",
+      "resourceDispatches": 1
+    },
+    "secondHost": {
+      "restartedNativeGateway": true,
+      "executorCalls": 0,
+      "recoveryRefusal": "Original verified completion unavailable (unknown); preserve its fence, no replacement dispatch",
+      "replacementAttempt": {
+        "refusal": "Invalid transport response",
+        "parentRefusal": "native original or parent reservation remains fenced; no fresh effect",
+        "dispatched": false
+      },
+      "recoveredOutcomeMatchesOriginal": false,
+      "recoveredOutcomeDigest": null,
+      "fencedAfterRecovery": true
+    },
+    "kernel": {
+      "nativeCalls": 10,
+      "acks": 9,
+      "resourceDispatches": 10,
+      "nativeCallsDuringRecovery": 0,
+      "acksDuringRecovery": 0,
+      "resourceDispatchesDuringRecovery": 0,
+      "resourcePublishCalls": {
+        "refusedBeforeEffects": 1,
+        "published": 1
+      }
+    },
+    "resourceLedger": {
+      "unsigned": true,
+      "kernelFenceClearance": false,
+      "publishCompleted": true
+    },
+    "publications": {
+      "ledgerPublished": [
+        {
+          "operationId": "70d7377367370a3fe13f28270b9a32f310ad6ac1d633c4c4bd0e711e4615803c",
+          "artifactSha256": "df79da105b3c2fb2779b05b789b7488dfbd2c26ad9da0a793af85cac5a329ad3"
+        }
+      ],
+      "ledgerRefused": 1,
+      "ledgerUnresolved": [],
+      "artifacts": [
+        "df79da105b3c2fb2779b05b789b7488dfbd2c26ad9da0a793af85cac5a329ad3"
+      ],
+      "artifactEvents": {
+        "df79da105b3c2fb2779b05b789b7488dfbd2c26ad9da0a793af85cac5a329ad3": 1
+      }
+    }
+  },
+  "checks": [
+    {
+      "scenario": "recovered",
+      "name": "workflow completed every stage through second-host recovery",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "every admitted step has a verified signed completion delivered and acknowledged at the native gateway",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "operator recipe digest recomputes from the operator configuration",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "first confined run of the pinned recipe fails, only at the equality boundary",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "after the patch the same pinned recipe passes in confinement",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "patch was a full-file compare-and-swap against the imported original",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "forbidden access was a retained completed tool error, not a native denial, with no fence or artifact",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "legitimate work followed under one unchanged retained authority",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "exactly one actual publication effect exists in the resource ledger and artifact store",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "artifact is content addressed and equals the recovered artifact",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "artifact was never replaced during recovery",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "bundle binds the exact successfully tested source, test result, recipe and destination",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "reviewed diff in the bundle is exactly the equality fix",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "published source is the fixed source and import originals are unchanged",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "publication response was lost after the native gateway retained a verified completion",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "second actual host recovered the original outcome without any dispatch",
+      "passed": true
+    },
+    {
+      "scenario": "recovered",
+      "name": "only the original completion was acknowledged and its fence cleared",
+      "passed": true
+    },
+    {
+      "scenario": "uncertain",
+      "name": "workflow preserved the uncertain publication rather than completing",
+      "passed": true
+    },
+    {
+      "scenario": "uncertain",
+      "name": "native original remains unknown without a signed completion",
+      "passed": true
+    },
+    {
+      "scenario": "uncertain",
+      "name": "the resource committed exactly one publication before native evidence",
+      "passed": true
+    },
+    {
+      "scenario": "uncertain",
+      "name": "second host recovery was refused and no replacement publication was dispatched",
+      "passed": true
+    },
+    {
+      "scenario": "uncertain",
+      "name": "native fence is retained and the unsigned resource ledger cannot clear it",
+      "passed": true
+    },
+    {
+      "scenario": "uncertain",
+      "name": "scripted kernel saw one refused and one committed publication",
+      "passed": true
+    }
+  ],
+  "notQualified": [
+    "native kernel coding-workflow acceptance and authority installation",
+    "publisher-signed manifest, custody and launch profile",
+    "resource commit before retained native completion evidence (preserved as an unknown original, never reconciled here)",
+    "P4 cross-authority adoption, P5 and whole-Pi Linux confinement",
+    "live provider or real kernel service behavior"
+  ],
+  "status": "passed"
+}

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { lstat, mkdir, realpath } from "node:fs/promises";
+import {fileURLToPath} from "node:url";
 import { join, resolve, sep } from "node:path";
 import { ModelRuntime, SessionManager } from "@earendil-works/pi-coding-agent";
 import { relayCredentials } from "./model-credentials.js";
@@ -7,8 +8,12 @@ import { configuredExecutor, readPreparedConfig } from "./configured.js";
 import { createChioPiSession } from "./session.js";
 import { gatewayExecutor, readTransportConfig } from "./http-executor.js";
 import { terminalState } from "./terminal.js";
+import { exitWithParent } from "./guest-termination.js";
 
-async function main() {
+export async function runGuestMain() {
+  // The macOS protected parent passes a stdin lifeline; Linux uses die-with-parent.
+  const lifeline = process.env.CHIO_PI_PARENT_LIFELINE_GRACE_MS;
+  if (lifeline !== undefined) exitWithParent(process.stdin, Number(lifeline));
   const args = process.argv.slice(2);
   if (args.length === 1 && args[0] === "--help") {
     process.stdout.write("Usage: chio-pi --config /absolute/prepared.json --profile /absolute/profile --cwd /absolute/disposable-workspace --provider openai --model gpt-4.1-mini --prompt 'task' [--resume /absolute/profile/sessions/session.jsonl]\n");
@@ -45,7 +50,7 @@ async function main() {
     ({ session } = await createChioPiSession({ cwd, agentDir, modelRuntime, provider: values.get("--provider")!, model: values.get("--model")!, executor: controlled.executor,
       modelBaseUrl: process.env.CHIO_PI_MODEL_BASE_URL,
       sessionManager: resume ? SessionManager.open(await realpath(resume), sessions, cwd) : SessionManager.create(cwd, sessions),
-      toolInventory: gateway?.tools ?? config!.tools, trustedGatewayTransport: Boolean(gateway),
+      registry: controlled.registry, trustedGatewayTransport: Boolean(gateway),
     }));
     const current = session;
     const interrupt = () => { termination = "SIGINT"; void current.abort(); };
@@ -77,4 +82,5 @@ async function main() {
   }
 }
 
-main().catch(error => { process.stderr.write(`Chio Pi refused or failed: ${error instanceof Error ? error.message : "unknown failure"}\n`); process.exitCode = 1; });
+if (process.argv[1] && await realpath(process.argv[1]).catch(() => undefined) === await realpath(fileURLToPath(import.meta.url)))
+  runGuestMain().catch(error => { process.stderr.write(`Chio Pi refused or failed: ${error instanceof Error ? error.message : "unknown failure"}\n`); process.exitCode = 1; });

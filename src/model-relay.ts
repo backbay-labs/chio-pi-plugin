@@ -1,7 +1,20 @@
+import {DEFAULT_RUN_LIMITS, providerProfile, type RunBudget} from "./run-limits.js";
+import { finishGovernedModelDelivery, releaseGovernedModel, type NativeEmbedding } from "./governance.js";
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
 import { zstdDecompressSync } from "node:zlib";
 import { lstat, readFile } from "node:fs/promises";
+import { canonicalJson, registryInventory, resolveRegistryCall, type ToolRegistry } from "./tool-registry.js";
+
+declare const relayBrand: unique symbol;
+export interface GovernedRelayReference {readonly [relayBrand]: true}
+const governedRelays = new WeakMap<GovernedRelayReference, {embedding: NativeEmbedding; provider: string; model: string; registryDigest: string; baseUrl: string; token: string; closed: boolean}>();
+/** Trusted SDK composition checks ownership, not a lookalike loopback URL. */
+export function selectGovernedRelay(reference: GovernedRelayReference | undefined, embedding: NativeEmbedding | undefined, provider: string, model: string, registry: ToolRegistry) {
+  const selected = reference && governedRelays.get(reference);
+  if (!selected || selected.closed || selected.embedding !== embedding || selected.provider !== provider || selected.model !== model || selected.registryDigest !== registry.digest) throw new Error("Trusted governed model relay unavailable or ownership mismatch");
+  return {baseUrl: selected.baseUrl, token: selected.token};
+}
 
 export type ModelAuthority = { provider: "openai"; apiKey: string } | { provider: "openai-codex"; accessToken: string; accountId: string };
 
@@ -45,13 +58,37 @@ export function nativeToolOutcome(output: unknown): unknown {
   } catch { return undefined; }
 }
 
-export function validateModelRequest(body: Record<string, unknown>, model: string, provider: ModelAuthority["provider"] = "openai") {
+/** Returns the native outcomes to observe for delivery, only from calls that
+ * resolve against the pinned registry. Pi 1.0.2 keeps calls it refused before
+ * dispatch (unknown alias, schema-invalid, blocked by the argument-binding
+ * guard, salvaged from truncated output) in history and continues. Such a call
+ * stays visible to the model with Pi's own refusal text. It can never carry a
+ * parseable Chio outcome and is never observed for delivery. */
+export function validateModelRequest(body: Record<string, unknown>, model: string, provider: ModelAuthority["provider"] = "openai", registry?: ToolRegistry): unknown[] {
+  if (!registry) throw new Error("An explicit pinned tool registry is required");
+  registryInventory(registry);
   const allowed = new Set(["model", "input", "instructions", "tools", "tool_choice", "parallel_tool_calls", "stream", "store", "reasoning", "text", "temperature", "top_p", "max_output_tokens", "service_tier", "include", "truncation", "prompt_cache_key", "prompt_cache_retention", "prompt_cache_options"]);
   if (Object.keys(body).some(key => !allowed.has(key)) || body.model !== model || body.store !== false || body.stream !== true || !Array.isArray(body.input)) throw new Error("Model request exceeds selected mode");
-  if (body.tools !== undefined && (!Array.isArray(body.tools) || body.tools.some(tool => !object(tool) || tool.type !== "function" || tool.name !== "chio_execute"))) throw new Error("Hosted or alternate tools are unavailable");
+  const aliases = new Map(registry.tools.map(tool => [tool.name, tool]));
+  if (body.tools !== undefined) {
+    if (!Array.isArray(body.tools) || body.tools.length !== registry.tools.length) throw new Error("Model declarations differ from the pinned registry");
+    const declared = new Set<string>();
+    for (const tool of body.tools) {
+      if (!object(tool) || !keys(tool, ["type", "name", "description", "parameters", "strict"]) || tool.type !== "function"
+        || typeof tool.name !== "string" || declared.has(tool.name)
+        || ![undefined, null, false].includes(tool.strict as undefined | null | false)) throw new Error("Hosted, deferred or alternate tools are unavailable");
+      const pinned = aliases.get(tool.name);
+      if (!pinned || tool.description !== pinned.description || canonicalJson(tool.parameters) !== canonicalJson(pinned.parameters)) throw new Error("Model tool schema or description differs from the pinned registry");
+      declared.add(tool.name);
+    }
+  }
   if (body.include !== undefined && (!Array.isArray(body.include) || body.include.some(value => provider !== "openai-codex" || value !== "reasoning.encrypted_content"))) throw new Error("Alternate provider expansions are unavailable");
   const choice = body.tool_choice;
-  if (choice !== undefined && !["auto", "none", "required"].includes(choice as string) && !(object(choice) && keys(choice, ["type", "name"]) && choice.type === "function" && choice.name === "chio_execute")) throw new Error("Alternate tool choice is unavailable");
+  if (choice !== undefined && !["auto", "none", "required"].includes(choice as string) && !(object(choice) && keys(choice, ["type", "name"]) && choice.type === "function" && typeof choice.name === "string" && aliases.has(choice.name))) throw new Error("Alternate tool choice is unavailable");
+  // An undefined entry is a call identity that no dispatcher could resolve.
+  const calls = new Map<string, {tool: string; arguments: Record<string, unknown>} | undefined>();
+  const delivered = new Set<string>();
+  const outcomes: unknown[] = [];
   for (const item of body.input) {
     if (!object(item)) throw new Error("Input must contain complete inline items");
     if ((item.type === undefined || item.type === "message") && keys(item, ["type", "role", "content", "id", "status", "phase"]) && ["system", "developer", "user", "assistant"].includes(item.role as string) && textContent(item.content, item.role === "assistant")) {
@@ -59,9 +96,28 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
       if (provider === "openai-codex" && item.phase !== undefined && (item.role !== "assistant" || !["commentary", "final_answer"].includes(item.phase as string))) throw new Error("Unsupported native assistant phase");
       delete item.id; delete item.status;
       if (provider !== "openai-codex") delete item.phase;
-    } else if (item.type === "function_call" && keys(item, ["type", "id", "call_id", "name", "arguments", "status"]) && item.name === "chio_execute" && typeof item.arguments === "string" && typeof item.call_id === "string") {
+    } else if (item.type === "function_call" && keys(item, ["type", "id", "call_id", "name", "arguments", "status"]) && typeof item.name === "string" && typeof item.arguments === "string" && typeof item.call_id === "string" && item.call_id.length > 0 && item.call_id.length <= 256) {
+      if (calls.has(item.call_id)) throw new Error("Duplicate native function call identity");
+      let call: {tool: string; arguments: Record<string, unknown>} | undefined;
+      try {call = resolveRegistryCall(registry, item.name, JSON.parse(item.arguments));} catch {call = undefined;}
+      calls.set(item.call_id, call);
       delete item.id; delete item.status;
     } else if (item.type === "function_call_output" && keys(item, ["type", "call_id", "output", "id", "status"]) && typeof item.call_id === "string" && textContent(item.output)) {
+      const call = calls.get(item.call_id);
+      if (!calls.has(item.call_id) || delivered.has(item.call_id)) throw new Error("Native function output is missing its exact original call");
+      const outcome = nativeToolOutcome(item.output);
+      if (!call) {
+        if (outcome !== undefined) throw new Error("Undispatchable native function call carries a Chio outcome");
+      } else if (object(outcome) && ["completed", "denied"].includes(outcome.state as string)) {
+        const original = call.tool === "chio_resume" ? {tool: call.arguments.tool, arguments: call.arguments.arguments} : call;
+        if (outcome.evidence !== "verified" || typeof outcome.requestId !== "string" || !outcome.requestId || !object(outcome.receipt)
+          || outcome.receipt.tool_name !== original.tool || !object(outcome.receipt.action)
+          || canonicalJson(outcome.receipt.action.parameters) !== canonicalJson(original.arguments)
+          || outcome.state === "completed" && outcome.result === undefined
+          || call.tool === "chio_resume" && outcome.requestId !== call.arguments.requestId) throw new Error("Native outcome differs from the pinned function argument binding");
+      }
+      if (call && outcome !== undefined) outcomes.push(outcome);
+      delivered.add(item.call_id);
       delete item.id; delete item.status;
     } else if (provider === "openai-codex" && item.type === "reasoning" && keys(item, ["type", "id", "summary", "encrypted_content", "status", "content"])
       && typeof item.encrypted_content === "string" && /^[A-Za-z0-9_=-]+$/.test(item.encrypted_content)
@@ -72,11 +128,23 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
       delete item.id; delete item.status;
     } else throw new Error("Only complete inline text and Chio function history are supported");
   }
+  return outcomes;
 }
 
 /** Operator-owned model transport. It exposes only the selected provider's
  * synchronous function-calling response route, never arbitrary proxying. */
-export async function startModelRelay(authority: ModelAuthority, model: string, onToolResults?: (outcomes: unknown[]) => Promise<void>) {
+export async function startModelRelay(authority: ModelAuthority, model: string, onToolResults?: (outcomes: unknown[]) => Promise<void>, registry?: ToolRegistry, governance?: {required: boolean; embedding?: NativeEmbedding}, budget?: RunBudget) {
+  const profile = providerProfile(authority.provider, model);
+  const limits = budget?.limits ?? DEFAULT_RUN_LIMITS;
+  if (budget && budget.profile.identity !== profile.identity) throw new Error("Model relay budget profile mismatch");
+  authority = Object.freeze({...authority});
+  governance = governance ? Object.freeze({...governance}) : undefined;
+  // Native release must receive the limits and profile identities actually
+  // enforced here, so a required relay never starts without both.
+  if (governance?.required && (!governance.embedding || !budget)) throw new Error("Required governance needs its trusted native embedding and durable run budget");
+  if (!registry) throw new Error("An explicit pinned tool registry is required");
+  registryInventory(registry);
+  if (budget && (budget.binding.registryDigest !== registry.digest || budget.binding.governanceProfile !== (governance?.required ? "required" : "execution-only"))) throw new Error("Model relay budget registry or governance binding mismatch");
   const nonce = randomBytes(32).toString("hex");
   // Native Pi extracts an account claim before making its request. This is
   // an opaque local credential, never an upstream login or signed JWT.
@@ -87,6 +155,8 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
   const server = createServer(async (request, response) => {
     const controller = new AbortController();
     response.on("close", () => controller.abort());
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     try {
       if (request.method !== "POST" || request.url !== route || request.headers.authorization !== `Bearer ${token}` || request.headers.origin || request.headers.host !== `127.0.0.1:${port}`) {
         response.writeHead(403); response.end("Model route refused"); return;
@@ -101,14 +171,8 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
       if (request.headers["content-encoding"] === "zstd" && authority.provider === "openai-codex") raw = zstdDecompressSync(raw, {maxOutputLength: 8 * 1024 * 1024});
       else if (request.headers["content-encoding"]) throw new Error("Unsupported model body encoding");
       const body = JSON.parse(raw.toString()) as Record<string, unknown>;
-      validateModelRequest(body, model, authority.provider);
+      const outcomes = validateModelRequest(body, model, authority.provider, registry);
       body.parallel_tool_calls = false;
-      const outcomes: unknown[] = [];
-      for (const item of body.input as Record<string, unknown>[]) {
-        if (item.type !== "function_call_output") continue;
-        const outcome = nativeToolOutcome(item.output);
-        if (outcome !== undefined) outcomes.push(outcome);
-      }
       await onToolResults?.(outcomes);
       const headers: Record<string, string> = {"content-type": "application/json", accept: "text/event-stream"};
       if (authority.provider === "openai-codex") {
@@ -117,21 +181,66 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
         headers["OpenAI-Beta"] = "responses=experimental";
         headers.originator = "pi";
       } else headers.authorization = `Bearer ${authority.apiKey}`;
-      const upstream = await fetch(authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", {
+      if (budget) await budget.reserveRequest(body);
+      else if (profile.hardOutputTokens) {
+        const requested = body.max_output_tokens ?? limits.maxOutputTokens;
+        if (!Number.isSafeInteger(requested) || Number(requested) < 16) throw new Error("Unsupported token ceiling");
+        body.max_output_tokens = Math.min(Number(requested), limits.maxOutputTokens);
+      } else delete body.max_output_tokens;
+      const remaining = budget ? budget.deadline - Date.now() : limits.providerTimeoutMs;
+      if (remaining <= 0 || controller.signal.aborted) throw new Error("Model deadline reached");
+      timeout = setTimeout(() => controller.abort(), Math.min(limits.providerTimeoutMs, remaining));
+      const finalJson = JSON.stringify(body);
+      const upstreamOperation = governance?.required ? releaseGovernedModel(governance.embedding, finalJson, {provider: authority.provider, model, route: authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", accountId: authority.provider === "openai-codex" ? authority.accountId : null, profileIdentity: profile.identity, limitsIdentity: budget!.identity}, controller.signal) : fetch(authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", {
         method: "POST", redirect: "error", signal: controller.signal,
-        headers, body: JSON.stringify(body),
+        headers, body: finalJson,
       });
-      response.writeHead(upstream.status, { "content-type": upstream.headers.get("content-type") ?? "application/json" });
-      if (upstream.body) for await (const data of upstream.body) response.write(data);
-      response.end();
+      const upstream = await abortable(upstreamOperation.then(result => {
+        if (controller.signal.aborted) {void result.body?.cancel().catch(() => {}); throw new Error("Late model response interrupted");}
+        return result;
+      }), controller.signal);
+      const writeHeaders = () => {if (!response.headersSent) response.writeHead(upstream.status, {"content-type": upstream.headers.get("content-type") ?? "application/json"});};
+      if (upstream.body) {
+        reader = upstream.body.getReader(); let received = 0;
+        while (true) {
+          const item = await abortable(reader.read(), controller.signal);
+          if (item.done) break;
+          received += item.value.byteLength;
+          if (received > limits.maxResponseBytes) throw new Error("Provider response size exceeded");
+          writeHeaders();
+          if (!response.write(item.value)) await abortable(new Promise<void>(resolve => response.once("drain", resolve)), controller.signal);
+        }
+      }
+      if (governance?.required) {
+        if (controller.signal.aborted) throw new Error("Original model delivery uncertain");
+        finishGovernedModelDelivery(upstream);
+      }
+      writeHeaders();response.end();
     } catch {
-      if (!response.headersSent) response.writeHead(502);
-      response.end("Model relay refused or failed");
-    }
+      controller.abort();
+      void reader?.cancel().catch(() => {});
+      if (!response.headersSent) {response.writeHead(502); response.end("Model relay refused or failed");}
+      else response.destroy();
+    } finally { if (timeout) clearTimeout(timeout); reader?.releaseLock(); }
   });
   await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", resolve); });
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("Model relay failed to bind");
   port = address.port;
-  return { port, token, async close() { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); } };
+  const governanceReference = governance?.required && governance.embedding ? Object.freeze({}) as GovernedRelayReference : undefined;
+  if (governanceReference) governedRelays.set(governanceReference, {embedding: governance!.embedding!, provider: authority.provider, model, registryDigest: registry.digest, baseUrl: `http://127.0.0.1:${port}/v1`, token, closed: false});
+  return { port, token, governanceReference, async close() {
+    if (governanceReference) governedRelays.get(governanceReference)!.closed = true;
+    server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); } };
+}
+
+/** Abort even if a provider implementation ignores the signal. Native
+ * release uncertainty stays in its original native fence. */
+function abortable<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => reject(new Error("Model request interrupted"));
+    if (signal.aborted) {abort(); void operation.catch(() => {}); return;}
+    signal.addEventListener("abort", abort, {once:true});
+    operation.then(resolve,reject).finally(() => signal.removeEventListener("abort",abort));
+  });
 }

@@ -10,7 +10,9 @@ const events = (await readFile(tracePath, "utf8")).trim().split("\n").map(JSON.p
 const launch = events.find(event => event.type === "chio_protected_runtime");
 const terminal = events.findLast(event => event.type === "chio_session");
 if (!launch || !terminal) throw new Error("An actual completed protected host trace is required");
-const policy = await readFile(launch.policyPath, "utf8");
+// The launcher removes its control directory on exit; its record keeps the policy text.
+const policy = launch.policy ?? await readFile(launch.policyPath, "utf8");
+if (createHash("sha256").update(policy).digest("hex") !== launch.policySha256) throw new Error("Recorded policy differs from the launched policy hash");
 const profile = dirname(dirname(terminal.sessionFile));
 const cwd = JSON.parse(policy.match(/\(literal ("[^"]+")\) \(vnode-type DIRECTORY\)/)[1]);
 const config = await realpath(configPath);
@@ -19,6 +21,8 @@ const ownControl = join(launch.installation, "chio-probe-readonly-control.txt");
 await writeFile(ownControl, "immutable installation probe");
 const evidence = resolve(process.env.CHIO_PI_EVIDENCE_DIR ?? "evidence/2026-09-09/sandbox-process");
 await mkdir(evidence, { recursive: true });
+const policyPath = join(evidence, "launched-policy.sb");
+await writeFile(policyPath, policy, { mode: 0o600 });
 const files = [await realpath(operatorPath), await realpath(crossHostPath), config];
 const before = { config: createHash("sha256").update(await readFile(config)).digest("hex"), installationControl: await readFile(ownControl, "utf8") };
 const outside = { requests: 0 };
@@ -36,7 +40,7 @@ for(const [name,path] of [['config',config],['installation',control]]){const ali
 for(const executable of [process.execPath,'/bin/sh']){const args=executable===process.execPath?['-e','require("node:fs").writeFileSync('+JSON.stringify(profile+'/probe-child-effect')+',"spawned")']:['-c','true'];const r=cp.spawnSync(executable,args);result.spawns.push({executable,status:r.status,error:r.error?.code})}
 (async()=>{for(const url of ['http://127.0.0.1:${port}/',${JSON.stringify(kernelUrl)}]){try{const r=await fetch(url,{signal:AbortSignal.timeout(1500)});result.network.push({url,allowed:true,status:r.status})}catch(e){result.network.push({url,allowed:false,code:e.cause?.code||e.code})}}process.stdout.write(JSON.stringify(result)+'\\n')})().catch(()=>process.exitCode=1);
 `;
-const child = spawn("/usr/bin/sandbox-exec", ["-f", launch.policyPath, launch.node, "-e", probe], { cwd, env: { OPENSSL_CONF: "/dev/null", PI_CODING_AGENT_DIR: profile }, stdio: ["ignore", "pipe", "pipe"] });
+const child = spawn("/usr/bin/sandbox-exec", ["-f", policyPath, launch.node, "-e", probe], { cwd, env: { OPENSSL_CONF: "/dev/null", PI_CODING_AGENT_DIR: profile }, stdio: ["ignore", "pipe", "pipe"] });
 const stdout = []; const stderr = [];
 child.stdout.on("data", data => stdout.push(data)); child.stderr.on("data", data => stderr.push(data));
 const code = await new Promise(resolve => child.on("exit", resolve));

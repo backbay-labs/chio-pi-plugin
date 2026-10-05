@@ -1,0 +1,131 @@
+{
+  "schema": "chio.pi.task6.measured-linux-evidence.v1",
+  "selectedRuntime": {
+    "kind": "qualification_runtime",
+    "image": "sha256:6d5bbc54ae9fd29177042755c41667006b708874c7ed6d489d543e931e33fe23"
+  },
+  "syscallProbeBuild": {
+    "kind": "syscall_probe_setup",
+    "image": "sha256:8ea000bcc1b93efd77f20fdf059eab1e9950b6210c0837124c3d5d3cb5099c82",
+    "addonSha256": "b9ba696aa07cca66a1ae827871a79e5a32eded68c2f250c7408fc15919b32de3",
+    "sourceSha256": "0d61377bad2a4ba418f0082aa9a3d4a91d4e102975482fd9edbcaca52e06dad8"
+  },
+  "result": {
+    "schema": "chio.pi.linux-whole-guest-qualification.v1",
+    "node": "v22.23.1",
+    "architecture": "arm64",
+    "kernel": "6.8.0-64-generic",
+    "packages": "bubblewrap=0.8.0-2+deb12u1\nlibc6=2.36-9+deb12u14\nlibstdc++6=12.2.0-14+deb12u1",
+    "packageLockSha256": "066a7a6cee4724322e72b64eea80fe391a744590d1884a8bc105077db6ce9fdf",
+    "installedTreeSha256": "14aa68abde39182f86d93cefefcbce999649f601f7a7fb0f50cf2c710e297008",
+    "bubblewrapSha256": "ff5add553bea12a45c18ebe6c67d3ed637052b869a1ca2fc5d74a6a2e8c5cce6",
+    "addonSha256": "b9ba696aa07cca66a1ae827871a79e5a32eded68c2f250c7408fc15919b32de3",
+    "runtime": {
+      "schema": "chio.pi.linux-runtime.v1",
+      "architecture": "arm64",
+      "node": "/usr/local/bin/node",
+      "nodeSha256": "d8fa08f79c8198c5a5ccc9faa5a69803052703fc9513f99e7200e0ab42e1d799",
+      "runtimeFiles": [
+        {
+          "path": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+          "mountPath": "/lib/aarch64-linux-gnu/libdl.so.2",
+          "sha256": "e5e9474a683596d59cc9e13246bc83878433e53c3befbabd73e3da9ccb5fe174"
+        },
+        {
+          "path": "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.30",
+          "mountPath": "/lib/aarch64-linux-gnu/libstdc++.so.6",
+          "sha256": "532f3a12d7b8fef6cc7a064ea106b6c4ab2365674b73e743e4a385d4ffb6c8ab"
+        },
+        {
+          "path": "/usr/lib/aarch64-linux-gnu/libm.so.6",
+          "mountPath": "/lib/aarch64-linux-gnu/libm.so.6",
+          "sha256": "3c4cb3be0b974edf05f023f85ab15107fb5afc2687163593d0d4cf8e80c17b39"
+        },
+        {
+          "path": "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1",
+          "mountPath": "/lib/aarch64-linux-gnu/libgcc_s.so.1",
+          "sha256": "046856f95f4636f1fc7c3a12bf4f3cd5634c2fc5145c3fdf7395d4f349fa69c7"
+        },
+        {
+          "path": "/usr/lib/aarch64-linux-gnu/libpthread.so.0",
+          "mountPath": "/lib/aarch64-linux-gnu/libpthread.so.0",
+          "sha256": "434dcd27f22fc8bf236c0c00541a1e503d302aa796c333729a2cd15a4cfe4814"
+        },
+        {
+          "path": "/usr/lib/aarch64-linux-gnu/libc.so.6",
+          "mountPath": "/lib/aarch64-linux-gnu/libc.so.6",
+          "sha256": "e4ac8ae1d81e4865e3aadedb962879cf9415903b3f2ba81ec75e9962b86ab8b0"
+        },
+        {
+          "path": "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+          "mountPath": "/lib/ld-linux-aarch64.so.1",
+          "sha256": "17538b8f9889a470c061f69a8fea8124da89627311cd16546c133a89f09056df"
+        }
+      ]
+    },
+    "filterSha256": "9b1c9a8f90090d090d2b71f93cab11a176b036b9153030a35f819455beae4f4a",
+    "parentNamespaces": {
+      "user": "user:[4026531837]",
+      "mnt": "mnt:[4026533039]",
+      "net": "net:[4026533044]",
+      "pid": "pid:[4026533042]",
+      "ipc": "ipc:[4026533041]"
+    },
+    "guest": {
+      "kind": "whole_guest_probe",
+      "routes": [
+        {
+          "service": "gateway",
+          "session": "qualified-session"
+        },
+        {
+          "service": "model",
+          "session": "qualified-session"
+        }
+      ],
+      "namespaces": {
+        "user": "user:[4026533663]",
+        "mnt": "mnt:[4026533664]",
+        "net": "net:[4026533706]",
+        "pid": "pid:[4026533687]",
+        "ipc": "ipc:[4026533686]"
+      },
+      "pid": 2,
+      "sdk": "1.0.2",
+      "denials": "files,installed-write,network,extra-unix,process,namespace"
+    },
+    "observedRequests": {
+      "gateway": 3,
+      "model": 2
+    },
+    "parentLimits": {
+      "remainingRequests": 0,
+      "remainingOutputTokens": 0,
+      "deadlineRetained": true
+    },
+    "nativePiSdk": {
+      "version": "1.0.2",
+      "outcome": "completed",
+      "toolEffects": 0
+    },
+    "deadlineCleanup": {
+      "confinedWrapper": {
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "rawIgnoringChild": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "survivors": [],
+      "zombies": []
+    },
+    "outerContainer": {
+      "privileged": true,
+      "network": "none"
+    },
+    "nativeP5": "OPEN",
+    "actualX64": "UNMEASURED",
+    "ordinaryDocker": "UNMEASURED"
+  }
+}

@@ -7,7 +7,7 @@ export function isWithin(base: string, target: string) {
   return path === "" || (path !== ".." && !path.startsWith("../") && !isAbsolute(path));
 }
 
-async function runtimeLibraries(executable: string): Promise<string[]> {
+export async function runtimeLibraries(executable: string, declaredAliases?: Set<string>): Promise<string[]> {
   const files = new Set<string>(); const pending = [executable];
   while (pending.length) {
     const path = pending.pop()!;
@@ -25,6 +25,7 @@ async function runtimeLibraries(executable: string): Promise<string[]> {
       else if (library.startsWith("@loader_path/")) resolved = join(dirname(path), library.slice(13));
       else if (library.startsWith("@executable_path/")) resolved = join(dirname(executable), library.slice(17));
       if (!isAbsolute(resolved)) throw new Error(`Unsupported runtime library resolution: ${library}`);
+      declaredAliases?.add(resolved);
       pending.push(await realpath(resolved));
     }
   }
@@ -54,7 +55,9 @@ export async function buildSandboxPolicy(options: { executable: string; installa
 }
 
 export async function requireSessionCredential(path: string) {
-  const config = JSON.parse(await readFile(path, "utf8"));
+  let config;
+  try {config = JSON.parse(await readFile(path, "utf8"));}
+  catch {throw new Error("Private session configuration is unreadable or malformed; source bytes are withheld");}
   const credential = config.sessionCredential;
   const execution = config.execution;
   if (!credential || credential.schema !== "chio.mcp.session-credential.v1" || credential.sessionId !== execution?.sessionId || credential.subjectKey !== execution?.subjectKey || credential.serverId !== execution?.serverId || credential.endpointPath !== "/mcp" || !Array.isArray(credential.capabilityIds) || credential.capabilityIds.length !== 1 || credential.capabilityIds[0] !== execution?.capabilityId) throw new Error("Protected launcher requires operator-prepared delegated session authority");
