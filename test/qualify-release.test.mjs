@@ -87,24 +87,27 @@ test("command refuses missing arguments and existing directories before any inst
 
 test("consumer lock must record the artifact's integrity, not merely omit it", () => {
   assert.equal(typeof qualify.consumerLockProblems, "function");
-  const manifest = {dependencies: {"@chio/pi-plugin": "file:../a.tgz"}};
+  assert.equal(qualify.PACKAGE_NAME, "@chio-protocol/pi-plugin");
+  const manifest = {dependencies: {"@chio-protocol/pi-plugin": "file:../a.tgz"}};
   const entry = {resolved: "file:../a.tgz", version: "0.2.0", integrity: "sha512-good"};
   assert.deepEqual(qualify.consumerLockProblems(manifest, entry, "a.tgz", "sha512-good", "0.2.0"), []);
   assert.deepEqual(qualify.consumerLockProblems(manifest, {...entry, integrity: undefined}, "a.tgz", "sha512-good", "0.2.0"), ["lock integrity absent"]);
   assert.deepEqual(qualify.consumerLockProblems(manifest, {...entry, integrity: "sha512-other"}, "a.tgz", "sha512-good", "0.2.0"), ["lock integrity differs from artifact"]);
   assert.deepEqual(qualify.consumerLockProblems({dependencies: {}}, {}, "a.tgz", "sha512-good", "0.2.0"),
     ["manifest dependency undefined", "lock resolved undefined", "lock integrity absent", "lock version undefined"]);
+  // The pre-0.2.0 registry name is not the archive this checkout builds.
+  assert.deepEqual(qualify.consumerLockProblems({dependencies: {"@chio/pi-plugin": "file:../a.tgz"}}, entry, "a.tgz", "sha512-good", "0.2.0"), ["manifest dependency undefined"]);
 });
 
 test("redacted UUID paths normalize only the selected archive and other absolute file URLs fail", () => {
-  const graph = {dependencies: {"@chio/pi-plugin": {resolved: "file:/private/tmp/session-***/chio-pi-plugin-0.2.0.tgz"}}};
-  const normalized = qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-pi-plugin-0.2.0.tgz");
+  const graph = {dependencies: {"@chio-protocol/pi-plugin": {resolved: "file:/private/tmp/session-***/chio-protocol-pi-plugin-0.2.0.tgz"}}};
+  const normalized = qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-protocol-pi-plugin-0.2.0.tgz");
   assert.deepEqual(normalized.problems, []); assert.equal(normalized.absoluteArtifactResolutions, 1);
-  assert.equal(JSON.parse(normalized.text).dependencies["@chio/pi-plugin"].resolved, "file:../chio-pi-plugin-0.2.0.tgz");
+  assert.equal(JSON.parse(normalized.text).dependencies["@chio-protocol/pi-plugin"].resolved, "file:../chio-protocol-pi-plugin-0.2.0.tgz");
   for (const resolved of ["file:/redacted/***/other.tgz", "file:///unknown/path.tgz", "file:C:\\redacted\\other.tgz"]) {
     graph.dependencies.other = {resolved};
-    assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-pi-plugin-0.2.0.tgz").problems.includes("graph retains an absolute file resolution"));
+    assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-protocol-pi-plugin-0.2.0.tgz").problems.includes("graph retains an absolute file resolution"));
   }
-  graph.dependencies["@chio/pi-plugin"].resolved = "file:/unknown/other.tgz";
-  assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-pi-plugin-0.2.0.tgz").problems.includes("selected archive lacks exactly one absolute graph resolution"));
+  graph.dependencies["@chio-protocol/pi-plugin"].resolved = "file:/unknown/other.tgz";
+  assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-protocol-pi-plugin-0.2.0.tgz").problems.includes("selected archive lacks exactly one absolute graph resolution"));
 });

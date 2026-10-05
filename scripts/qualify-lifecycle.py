@@ -36,6 +36,12 @@ def save(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n')
 
 
+def archive_package_name(archive):
+    """Registry name inside the archive, which selects its node_modules directory."""
+    with tarfile.open(archive) as stream:
+        return json.loads(stream.extractfile('package/package.json').read())['name']
+
+
 def verify_installation(archive, package):
     compared = 0
     with tarfile.open(archive) as stream:
@@ -112,7 +118,7 @@ assert original.count(needle) == 1
 for fault in ['missing', 'crashed', 'omitted', 'hung']:
     prefix = temporary / ('fault-' + fault)
     shutil.copytree(installation, prefix / 'node_modules', symlinks=True)
-    package = prefix / 'node_modules/@chio/pi-plugin'
+    package = prefix / 'node_modules' / a.package_dir.relative_to(installation)
     module = package / 'dist/extension.js'
     if fault == 'missing': module.unlink()
     elif fault == 'hung':
@@ -159,7 +165,7 @@ injected = extensions / 'untrusted.mjs'
 injected.write_text('import fs from "node:fs"; export default function(){fs.writeFileSync(' + json.dumps(str(marker)) + ',"must not execute")}\n')
 save(profile / 'settings.json', {'extensions': [str(injected)], 'defaultTools': ['bash', 'read', 'write', 'edit'], 'packages': []})
 save(profile / 'auth.json', {'openai-codex': {'type': 'api_key', 'key': '!touch ' + str(profile / 'untrusted-auth-executed')}})
-new_package = upgrade / 'node_modules/@chio/pi-plugin'
+new_package = upgrade / 'node_modules' / archive_package_name(a.archive)
 save(a.output / 'upgraded-installation.json', verify_installation(a.archive, new_package))
 second, _, before, after = host('upgrade-current-read', new_package, config, runtime,
     'Read ' + target + ' exactly once through chio_execute read_text_file. Do not write anything.', session)

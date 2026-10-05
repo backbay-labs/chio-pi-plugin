@@ -10,6 +10,8 @@ import {fileURLToPath} from "node:url";
 import {gunzipSync} from "node:zlib";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+/** The registry name this checkout builds; the archive's provenance must match it. */
+export const PACKAGE_NAME = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).name;
 const HELP = `Usage: node scripts/qualify-release.mjs --release DIR --work NEW_DIR --evidence NEW_DIR [--npm-cli NPM_CLI_JS]
 DIR holds exactly one packed .tgz with its .sha256 and .provenance.json from scripts/pack-release.mjs.
 Creates two fresh consumers (base: exact Pi, no Pi Durable; durable: exact Pi and exact Pi Durable), each
@@ -37,7 +39,7 @@ export function containsHostPath(text, path) {
  * graph location and artifact basename, then reject every remaining absolute
  * file resolution, including redacted paths that cannot match hostPaths. */
 export function normalizeConsumerGraph(text, artifactName) {
-  const graph = JSON.parse(text); const plugin = graph.dependencies?.["@chio/pi-plugin"];
+  const graph = JSON.parse(text); const plugin = graph.dependencies?.[PACKAGE_NAME];
   const absolute = value => typeof value === "string" && /^file:(?:[/\\]|[A-Za-z]:[/\\])/.test(value);
   let absoluteArtifactResolutions = 0;
   if (absolute(plugin?.resolved) && plugin.resolved.endsWith(`/${artifactName}`)) {
@@ -122,7 +124,7 @@ export function declarationSpecifiers(entry) {
  * artifact's exact npm integrity. An absent integrity is a failure. */
 export function consumerLockProblems(manifest, pluginLock, artifactName, integrity, version) {
   return [
-    ...(manifest.dependencies?.["@chio/pi-plugin"] === `file:../${artifactName}` ? [] : [`manifest dependency ${manifest.dependencies?.["@chio/pi-plugin"]}`]),
+    ...(manifest.dependencies?.[PACKAGE_NAME] === `file:../${artifactName}` ? [] : [`manifest dependency ${manifest.dependencies?.[PACKAGE_NAME]}`]),
     ...(pluginLock.resolved === `file:../${artifactName}` ? [] : [`lock resolved ${pluginLock.resolved}`]),
     ...(pluginLock.integrity === undefined ? ["lock integrity absent"] : pluginLock.integrity === integrity ? [] : ["lock integrity differs from artifact"]),
     ...(pluginLock.version === version ? [] : [`lock version ${pluginLock.version}`])];
@@ -207,22 +209,22 @@ import {mkdtemp, mkdir, readFile, writeFile} from "node:fs/promises";
 import {tmpdir, hostname} from "node:os";
 import {join} from "node:path";
 const report = {kind: ${JSON.stringify(kind)}};
-const root = await import("@chio/pi-plugin");
+const root = await import(${JSON.stringify(PACKAGE_NAME)});
 for (const name of ["chioExtension", "createChioPiSession", "createChioPiRuntime", "createToolRegistry", "runOperatorCommand", "summarizeGatewayStatus",
   "startParentGatewayProxy", "exportContinuation", "importContinuation", "recoverOriginalOperation", "createNativeEmbedding", "nativeFeatureAvailability",
   "explainNativeRecovery", "submitNativeChild", "openRunBudget", "prepareLinuxGuest", "createUnixRelay", "superviseGuest"]) assert.equal(typeof root[name], "function", name);
 const registry = root.createToolRegistry(${JSON.stringify(tools)});
 assert.match(registry.digest, /^[a-f0-9]{64}$/);
 report.registryTools = registry.tools.map(tool => tool.name);
-const coding = await import("@chio/pi-plugin/coding-resource");
+const coding = await import(${JSON.stringify(`${PACKAGE_NAME}/coding-resource`)});
 assert.equal(typeof coding.CodingResource, "function");
-await assert.rejects(import("@chio/pi-plugin/dist/operator.js"), error => error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
+await assert.rejects(import(${JSON.stringify(`${PACKAGE_NAME}/dist/operator.js`)}), error => error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
 report.rootAndCodingImports = true; report.deepImportRefused = true;
 if (report.kind === "base") {
-  await assert.rejects(import("@chio/pi-plugin/durable"), error => error.code === "ERR_MODULE_NOT_FOUND" && error.message.includes("@earendil-works/pi-durable"));
+  await assert.rejects(import(${JSON.stringify(`${PACKAGE_NAME}/durable`)}), error => error.code === "ERR_MODULE_NOT_FOUND" && error.message.includes("@earendil-works/pi-durable"));
   report.durableWithoutOptionalPeer = "ERR_MODULE_NOT_FOUND @earendil-works/pi-durable";
 } else {
-  const durable = await import("@chio/pi-plugin/durable");
+  const durable = await import(${JSON.stringify(`${PACKAGE_NAME}/durable`)});
   const {Harness, MemoryStorage, createRegistry} = await import("@earendil-works/pi-durable");
   const calls = []; const refuse = name => () => {calls.push(name); throw new Error("registration smoke must not call " + name);};
   const binding = {authorityDigest: "a".repeat(64), registryDigest: registry.digest};
@@ -254,13 +256,13 @@ process.stdout.write(JSON.stringify(report) + "\\n");
 
 function typecheckSource(kind) {
   const durable = kind === "durable" ? `
-import {createChioDurableTools, DURABLE_REQUEST_MEMO} from "@chio/pi-plugin/durable";
+import {createChioDurableTools, DURABLE_REQUEST_MEMO} from "${PACKAGE_NAME}/durable";
 type DurableAdapter = Awaited<ReturnType<typeof createChioDurableTools>>;
 export const durableMemo: string = DURABLE_REQUEST_MEMO;
 export type Recovery = DurableAdapter["bindRecovery"];
 ` : "";
-  return `import {createToolRegistry, runOperatorCommand, type ToolRegistry, type KernelRequest, type ContinuationBinding, type RunLimits} from "@chio/pi-plugin";
-import {CodingResource} from "@chio/pi-plugin/coding-resource";
+  return `import {createToolRegistry, runOperatorCommand, type ToolRegistry, type KernelRequest, type ContinuationBinding, type RunLimits} from "${PACKAGE_NAME}";
+import {CodingResource} from "${PACKAGE_NAME}/coding-resource";
 export const registry: ToolRegistry = createToolRegistry([{name: "read_file", description: "Read", inputSchema: {type: "object"}}]);
 export const operator: (args: string[]) => Promise<number> = runOperatorCommand;
 export const binding: ContinuationBinding = {authorityDigest: "a".repeat(64), registryDigest: registry.digest};
@@ -369,13 +371,13 @@ export async function main(argv = process.argv.slice(2)) {
     if (installed) {
       const lockBytes = readFileSync(join(consumer, "package-lock.json")); const lock = JSON.parse(lockBytes);
       const manifest = JSON.parse(readFileSync(join(consumer, "package.json"), "utf8"));
-      const pluginLock = lock.packages?.["node_modules/@chio/pi-plugin"] ?? {};
+      const pluginLock = lock.packages?.[`node_modules/${PACKAGE_NAME}`] ?? {};
       check(kind, "relative artifact dependency and lock integrity", consumerLockProblems(manifest, pluginLock, artifactName, sha512(artifact), source.version),
         {lockIntegrityRecorded: pluginLock.integrity !== undefined});
       const ls = run(consumer, env, process.execPath, [npmCli, "ls", "--all", "--json"], `consumer-${kind}-ls`);
       let graph = {}; try {graph = JSON.parse(ls.stdout);} catch {}
       check(kind, "npm ls resolves the complete graph without problems", ls.status === 0 && !graph.problems ? [] : [`npm ls exited ${ls.status}`, ...(graph.problems ?? [])]);
-      const packageRoot = join(consumer, "node_modules", "@chio", "pi-plugin");
+      const packageRoot = join(consumer, "node_modules", ...PACKAGE_NAME.split("/"));
       check(kind, "staged metadata, containment and installed file fidelity", installedPackageProblems(packageRoot, expected));
       const pi = JSON.parse(readFileSync(join(consumer, "node_modules", "@earendil-works", "pi-coding-agent", "package.json"), "utf8"));
       const durableDirs = findPackageDirs(consumer, "@earendil-works/pi-durable");
@@ -412,8 +414,8 @@ export async function main(argv = process.argv.slice(2)) {
       const strict = run(consumer, env, tscBin, ["-p", "tsconfig.strict-lib.json", "--pretty", "false"], `consumer-${kind}-tsc-strict-lib`);
       const diagnostics = strict.stdout.split("\n").filter(line => /error TS\d+/.test(line) && !/^\s/.test(line));
       const located = diagnostics.map(line => /^(.+?)\(\d+,\d+\): error (TS\d+)/.exec(line));
-      const ours = diagnostics.filter((line, index) => !located[index] || !located[index][1].startsWith("node_modules/") || located[index][1].startsWith("node_modules/@chio/pi-plugin/"));
-      const upstream = [...new Set(located.filter(Boolean).filter(match => !match[1].startsWith("node_modules/@chio/pi-plugin/")).map(match => `${match[2]} ${match[1].split("/").slice(0, match[1].startsWith("node_modules/@") ? 3 : 2).join("/")}`))].sort();
+      const ours = diagnostics.filter((line, index) => !located[index] || !located[index][1].startsWith("node_modules/") || located[index][1].startsWith(`node_modules/${PACKAGE_NAME}/`));
+      const upstream = [...new Set(located.filter(Boolean).filter(match => !match[1].startsWith(`node_modules/${PACKAGE_NAME}/`)).map(match => `${match[2]} ${match[1].split("/").slice(0, match[1].startsWith("node_modules/@") ? 3 : 2).join("/")}`))].sort();
       const tsc = run(consumer, env, tscBin, ["-p", "tsconfig.json", "--pretty", "false"], `consumer-${kind}-tsc`);
       check(kind, kind === "base" ? "typecheck root and coding declarations without Pi Durable" : "typecheck the Durable entrypoint", [
         ...ours.map(line => `strict library check: ${line.slice(0, 200)}`),

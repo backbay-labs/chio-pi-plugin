@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { access, lstat, mkdir, mkdtemp, open, readdir, realpath, rm, writeFile } from "node:fs/promises";
+import { access, lstat, mkdir, mkdtemp, open, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -77,7 +77,11 @@ async function main() {
   await access(process.platform === "darwin" ? "/usr/bin/sandbox-exec" : "/usr/bin/bwrap", constants.X_OK);
   const packageRoot = await realpath(join(dirname(fileURLToPath(import.meta.url)), ".."));
   const installation = dirname(dirname(packageRoot));
-  if (basename(dirname(packageRoot)) !== "@chio" || basename(installation) !== "node_modules") throw new Error("Protected launcher requires the installed artifact, not a source checkout");
+  // npm installs this scoped package at node_modules/<scope>/<name>; bind that
+  // layout to the package's own manifest name rather than a second literal.
+  const packageName = (JSON.parse(await readFile(join(packageRoot, "package.json"), "utf8")) as {name?: unknown}).name;
+  if (typeof packageName !== "string" || !packageName.startsWith("@") || `${basename(dirname(packageRoot))}/${basename(packageRoot)}` !== packageName
+    || basename(installation) !== "node_modules") throw new Error("Protected launcher requires the installed artifact, not a source checkout");
   const executable = await realpath(process.execPath);
   const configPath = await realpath(values.get("--config")!);
   const prepared = await readPreparedConfig(configPath);

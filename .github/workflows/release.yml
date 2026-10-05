@@ -22,7 +22,7 @@ env:
   TZ: UTC
   LC_ALL: C
   PACKAGE_DIRECTORY: .
-  PACKAGE_NAME: "@chio/pi-plugin"
+  PACKAGE_NAME: "@chio-protocol/pi-plugin"
   TAG_PREFIX: v
 
 jobs:

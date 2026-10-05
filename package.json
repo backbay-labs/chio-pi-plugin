@@ -1,5 +1,5 @@
 {
-  "name": "@chio/pi-plugin",
+  "name": "@chio-protocol/pi-plugin",
   "version": "0.2.0",
   "description": "Restricted native Pi integration for kernel-owned Chio tool execution",
   "main": "dist/index.js",

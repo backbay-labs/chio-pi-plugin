@@ -13,7 +13,7 @@ defaults:
   run:
     shell: bash
 env:
-  PACKAGE_NAME: '@chio/pi-plugin'
+  PACKAGE_NAME: '@chio-protocol/pi-plugin'
   TZ: UTC
   LC_ALL: C
 jobs:
