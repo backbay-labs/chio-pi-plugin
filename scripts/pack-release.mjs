@@ -10,7 +10,9 @@ import { spawnSync } from "node:child_process";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const destination = resolve(process.argv[2] ?? join(root, "artifacts"));
 const manifestPath = join(root, "package.json");
+const lockPath = join(root, "package-lock.json");
 const original = readFileSync(manifestPath);
+const originalLock = readFileSync(lockPath);
 const manifest = JSON.parse(original);
 const stage = mkdtempSync(join(tmpdir(), "chio-release-stage-"));
 const nodeModules = join(root, "node_modules");
@@ -59,6 +61,8 @@ function bundlePackage(source, target, chain = []) {
 }
 try {
   if (!existsSync(nodeModules) || lstatSync(nodeModules).isSymbolicLink()) throw new Error("run npm ci in this checkout; shared node_modules symlinks are unsupported");
+  // Rebuild from source alone so stale compiled files cannot enter the archive.
+  rmSync(join(root, "dist"), {recursive: true, force: true});
   run("npm", ["run", "build"], root);
   // Ask npm for the selected release files before adding stage-only dependencies.
   const listing = JSON.parse(run("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], root, true))[0];
@@ -88,19 +92,36 @@ try {
   writeFileSync(`${artifact}.sha256`, `${sha256}  ${basename(artifact)}\n`);
   const digest = path => createHash("sha256").update(readFileSync(path)).digest("hex");
   const bridgeSource = manifest.dependencies["@chio/bridge"];
+  // Builder-lock provenance only. Consumer lockfiles are separate records.
+  const lock = JSON.parse(originalLock);
+  const bundledTree = [];
+  for (const name of production) {
+    const walk = (directory, path) => {
+      const pkg = JSON.parse(readFileSync(join(directory, "package.json"), "utf8"));
+      bundledTree.push({path, name: pkg.name, version: pkg.version, packageJsonSha256: digest(join(directory, "package.json"))});
+      for (const child of pkg.bundleDependencies ?? []) walk(join(directory, "node_modules", child), `${path}/node_modules/${child}`);
+    };
+    walk(join(stage, "node_modules", name), `node_modules/${name}`);
+  }
+  const registryDependencies = Object.fromEntries(Object.entries(staged.dependencies).filter(([name]) => !production.includes(name))
+    .map(([name, version]) => [name, {version, integrity: lock.packages?.[`node_modules/${name}`]?.integrity ?? null}]));
   const provenance = {
     name: manifest.name, version: manifest.version,
     sourceCommit: run("git", ["rev-parse", "HEAD"], root, true).trim(),
     sourceDirty: Boolean(run("git", ["status", "--porcelain"], root, true).trim()),
-    artifact: basename(artifact), sha256,
-    packageLockSha256: digest(join(root, "package-lock.json")),
+    artifact: basename(artifact), sha256, integrity: packed.integrity, packedFiles: packed.entryCount,
+    packageLockSha256: digest(lockPath),
     bridgeArtifactSha256: bridgeSource.startsWith("file:") ? digest(resolve(root, bridgeSource.slice(5))) : undefined,
     piVersion: manifest.peerDependencies["@earendil-works/pi-coding-agent"],
-    node: process.version, platform: process.platform, architecture: process.arch,
+    peerDependencies: manifest.peerDependencies, peerDependenciesMeta: manifest.peerDependenciesMeta,
+    registryDependencies, bundled: bundledTree,
+    exports: manifest.exports, bin: manifest.bin, engines: manifest.engines,
+    node: process.version, npm: run("npm", ["--version"], root, true).trim(), platform: process.platform, architecture: process.arch,
   };
   writeFileSync(`${artifact}.provenance.json`, `${JSON.stringify(provenance, null, 2)}\n`);
   process.stdout.write(`${JSON.stringify({name:manifest.name,version:manifest.version,artifact,sha256,bundled:production})}\n`);
 } finally {
   rmSync(stage, {recursive:true,force:true});
   if (!readFileSync(manifestPath).equals(original)) throw new Error("source manifest changed while packaging");
+  if (!readFileSync(lockPath).equals(originalLock)) throw new Error("source lockfile changed while packaging");
 }

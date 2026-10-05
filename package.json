@@ -1,6 +1,6 @@
 {
   "name": "@chio/pi-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Restricted native Pi integration for kernel-owned Chio tool execution",
   "main": "dist/index.js",
   "scripts": {
@@ -36,6 +36,7 @@
     "dist",
     "README.md",
     "docs",
+    "!docs/superpowers",
     "vendor",
     "LICENSE"
   ],
