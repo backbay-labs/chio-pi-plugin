@@ -410,3 +410,212 @@ shared Docker VM was heavily loaded by other work (load average up to about 200,
   each). A participant probe showed the sandboxed Node sometimes not starting
   within 300 ms right after the pre-launch executable hash, so this is the
   existing load-sensitive flake, not a change from this area.
+
+## Area C: protected launcher, run limits, Linux guest, relays, termination and release tooling
+
+Findings fixed: C-I1, C-I2, C-M1, C-M2, C-M3, C-M4, C-M5, C-M7, C-M8, plus the
+Task 6 and Task 7b deferred items in scope (bounded marker read, guide wording,
+lock integrity, CI evidence upload, release ordering sentence). C-M6 is
+documented. The remaining Task 7b items stay follow-ups.
+
+### C-I1: the Linux model relay bearer was in bubblewrap argv
+
+Before: `prepareLinuxGuest` turned every guest environment entry into
+`--setenv KEY VALUE`, including `CHIO_PI_MODEL_TOKEN`, so the bearer for the
+parent model relay was in the long-lived bubblewrap process's world-readable
+`/proc/<pid>/cmdline`.
+
+Now the launcher passes the bearer only as `secrets`. `prepareLinuxGuest`
+refuses credential-like names (`CHIO_PI_MODEL_TOKEN`, `CHIO_PI_SECRET_FD`, and
+names containing TOKEN, SECRET, PASSWORD, CREDENTIAL or API_KEY) as bubblewrap
+environment, adds only `--setenv CHIO_PI_SECRET_FD 4`, and returns a bounded
+JSON payload. The launcher spawns bubblewrap with that payload on an inherited
+pipe at descriptor 4 and an environment without the bearer. The guest bootstrap
+(`dist/linux-guest.js`) requires a socket or FIFO there, reads it to end of file
+(4 KiB bound), closes it, sets the value in its own process environment and only
+then imports the Pi CLI. Its error text never echoes values. The macOS guest
+keeps the bearer in its owner-only environment, as before. The gateway proxy
+bearer stays in the private transport file.
+
+### C-I2: a macOS guest outlived a parent ending by anything but SIGINT/SIGTERM
+
+- `superviseGuest` treats SIGHUP and SIGQUIT like SIGTERM and adds an `exit`
+  hook that sends group SIGKILL while the guest runs, which covers an uncaught
+  exception in the parent. An optional `abort` signal stops the guest.
+- After spawning, the launcher records the guest process group in the run owner
+  lock (`owner.json`, `guestProcessGroup`). Stale-owner recovery now refuses
+  while that group exists or cannot be proven gone (ESRCH required, EPERM
+  refuses), both before and inside the exclusive recovery section. A failure to
+  record stops the guest and refuses the run.
+- Best effort for a parent killed by SIGKILL on macOS: the guest's stdin is a
+  pipe held only by the parent and `CHIO_PI_PARENT_LIFELINE_GRACE_MS` carries the
+  graceful-kill interval. The guest CLI arms `exitWithParent` first; when the
+  pipe closes it stops as on SIGTERM and exits 143 after the interval even if
+  it ignores that request. The handle is unreferenced, so it never keeps a
+  finished guest alive. Linux keeps bubblewrap's `--die-with-parent`.
+
+### Minor findings
+
+- C-M1: two defects, not one. The relay disconnected when a read plus the
+  peer's queue exceeded the bound, and a cleanly ended side's `close` destroyed
+  its peer while bytes were still queued, losing the tail of every large
+  transfer. Now the queue bound is the pause threshold (the source resumes in
+  the flushed write's callback, so a queue stays under the bound plus one read),
+  only a queue already over the bound disconnects, and a cleanly ended side
+  closes after its peer finishes. The idle timeout is configurable; the
+  launcher uses the larger of 120,000 ms and the provider timeout plus
+  10,000 ms on both relay ends.
+- C-M2: `superviseGuest` swallows EPERM as well as ESRCH inside its timer,
+  signal and exit callbacks and arms escalation before signalling. EPERM is
+  what macOS reports for a group of unreaped zombies; it previously escaped as
+  an uncaught exception from the trusted parent and skipped escalation and
+  cleanup. This is the cause of the recurring guest-termination EPERM flake.
+- C-M3: the whole-guest filter also denies `ptrace`, `process_vm_readv`,
+  `process_vm_writev` and `pidfd_getfd` (arm64 117, 270, 271, 438; x64 101,
+  310, 311, 438), so a guest cannot drive bubblewrap's unfiltered PID 1. The
+  x32 refusal still precedes the list.
+- C-M4: the run record is opened first and the ownership marker is then
+  published through `writePrivateJson` (exclusive temporary, file fsync, link,
+  directory fsync). A refusal or crash between them leaves no marker without a
+  record. An empty profile whose record exists resumes that record and is not
+  recreated (previously a raw EEXIST forever). An existing marker is read with
+  the bounded private reader (4 KiB, single link, no follow).
+- C-M5: `--limits` and `--linux-runtime` files inside the profile, the
+  disposable workspace or the installed tree refuse before any profile write.
+- C-M6 (documented): `OPERATOR.md` gives the manual stale run-limits lock
+  procedure, linked from `RUN-LIMITS-LINUX.md`.
+- C-M7: the launcher removes its control directory after the guest exits; the
+  macOS runtime record carries the exact policy text, and
+  `scripts/probe-sandbox.mjs` uses it (hash checked) instead of the removed
+  file. `scripts/qualify-linux-guest.mjs` removes its scratch directory and its
+  probe image tag on every path.
+- C-M8: a Linux-only test pins the actual `prepareLinuxGuest` argument vector
+  (option vocabulary, exact bind list, exactly two socket sources, environment
+  keys, no secret). The Linux runtime record reports `seccompSha256` and a
+  `profileSha256` over the launcher, complete argument vector and BPF hash. The
+  guest bootstrap reports its bounded failure reason.
+- Deferred items: `RUN-LIMITS-LINUX.md` says "before any parent write into the
+  profile" and the long line is rewrapped; `qualify-release.mjs` fails a
+  consumer lock without integrity (`consumerLockProblems`); the CI and release
+  consumer evidence upload fails only when qualification succeeded without
+  evidence; `RELEASE-QUALIFICATION.md` states the release job ordering.
+
+### Existing tests and harness changed
+
+`test/unix-relay.test.mjs`, `test/guest-profile.test.mjs`,
+`test/qualify-release.test.mjs` and the others only gained cases; the
+launcher test's `launch` helper accepts alternative pins and environment. The
+Linux runner (`scripts/linux-guest/runner.mjs`) now delivers the SDK session's
+bearer on descriptor 4 with a random value, records the model request's
+Authorization header, samples every `/proc/<pid>/cmdline` and `environ` during
+each launch, adds the four cross-process syscall probes, and runs the installed
+`chio-pi` launcher's Linux branch against the scripted kernel fixture from
+`test/helpers/continuation-fixture.mjs` with an unreachable provider. Its
+non-termination guest walls are 600 s and the hung-guest wall is 5 s
+(previously 10 s and 500 ms): at a VM load average near 140, guest launches
+were killed at a 10 s wall twice and at a 120 s wall once before producing
+output. The termination assertions are unchanged.
+
+### RED and GREEN
+
+RED, unchanged `04b1e0d` code with the new tests, Homebrew Node v25.5.0, macOS
+arm64:
+
+- `node --test test/guest-termination.test.mjs`: 7 of 10 failed. The EPERM case
+  threw `kill EPERM` out of the supervisor; guests survived parents ending by
+  SIGHUP, SIGQUIT and an uncaught exception; `exitWithParent` was missing; the
+  shipped guest CLI kept running after its parent was SIGKILLed.
+- `node --test --test-name-pattern "C-I2" test/run-limits.test.mjs`: 2 of 2
+  failed (recovery admitted a second owner beside a live recorded guest group;
+  no `recordGuest`).
+- `node --test test/linux-sandbox.test.mjs`: the C-M3 case failed on arm64
+  `ptrace`; the descriptor case failed (module missing).
+- `node --test test/guest-profile.test.mjs`: 7 of 16 failed: guest-writable
+  limits accepted, a marker left without a record after an early refusal, raw
+  `EEXIST` after a guest emptied its profile, oversized and hardlinked markers
+  accepted, and a `cp-*` control directory left in `TMPDIR`.
+- `node --test test/unix-relay.test.mjs`: the small-bound transfer received 0
+  of 1 MiB, the default-bound transfers each lost the final 65,536 bytes, and
+  `relayBounds` was missing.
+- `node --test --test-name-pattern integrity test/qualify-release.test.mjs`:
+  failed (no lock check helper; absent integrity passed).
+- Pinned Linux image, `docker run --rm --network none`, read-only worktree at
+  `/input`: the argument-vector test failed with an AssertionError on the
+  unchanged code.
+
+GREEN, Homebrew Node v25.5.0 (npm 11.8.0), macOS arm64:
+
+- `npm run typecheck`: clean. `actionlint` 1.7.12 on both workflows: clean.
+- Focused: `node --test test/run-limits.test.mjs test/model-limits.test.mjs
+  test/unix-relay.test.mjs test/linux-sandbox.test.mjs
+  test/guest-termination.test.mjs test/governance-cli.test.mjs
+  test/guest-profile.test.mjs`: 72 tests, 71 passed, 1 skipped (Linux only).
+- A control probe under the real Seatbelt policy kept a lifeline guest running
+  for 3 s, then on lifeline close saw its SIGTERM request and exited 143 after
+  212 ms.
+- `npm test`: first run 465 tests, 462 passed, 2 skipped, 1 failed: the known
+  `real recipe output bounds` flake (`timeout` instead of `output`) in
+  `coding-confinement`, outside this area. Rerun: 465 tests, 463 passed,
+  2 skipped (both Linux only), 0 failed. A third run without rebuild (same
+  `dist`) also passed 463 with 2 skipped. No guest-termination EPERM appeared
+  in any run.
+
+Linux, pinned image
+`sha256:6d5bbc54ae9fd29177042755c41667006b708874c7ed6d489d543e931e33fe23`
+(Node 22.23.1, bubblewrap 0.8.0-2+deb12u1, arm64, kernel 6.8.0-64-generic):
+
+- Unit suites, disposable `docker run --rm --network none`, read-only worktree
+  at `/input`, `--workdir /input`, no privilege (no namespaces needed):
+  `node --test test/run-limits.test.mjs test/model-limits.test.mjs
+  test/unix-relay.test.mjs test/linux-sandbox.test.mjs
+  test/guest-termination.test.mjs test/governance-cli.test.mjs
+  test/guest-profile.test.mjs`: 73 tests, 72 passed, 1 skipped (Seatbelt
+  only), 0 failed, in 1,417 s. This includes the actual `prepareLinuxGuest`
+  argument-vector test and the three Linux `C-M5` cases.
+- Whole-guest acceptance in disposable `--rm --privileged --network none`
+  containers. `node scripts/qualify-linux-guest.mjs` started, but its
+  `docker build` of the probe image stalled for 30 minutes on registry
+  metadata while the VM was saturated (load average about 140, under 200 MB
+  available, the user's long-running containers left untouched), so it was
+  cancelled. That exercised the script's new failure path: its scratch
+  directory was removed. The same steps then ran by hand with the existing
+  Task 6 probe image
+  `sha256:8ea000bcc1b93efd77f20fdf059eab1e9950b6210c0837124c3d5d3cb5099c82`
+  (unchanged `probe.c` SHA-256 `0d61377b...6dad8`, addon SHA-256
+  `b9ba696a...32de3`, both equal to the Task 6 record): extract the addon with
+  `--network none`, then `node /input/scripts/linux-guest/runner.mjs` in the
+  pinned image with the worktree and addon mounted read-only. Three earlier
+  attempts failed only at a guest wall (10 s twice, 120 s once; the SDK attempt
+  had already received the session prompt); a diagnostic copy with a 60 s SDK
+  wall then passed every stage on the same product code, with the SDK session
+  completing in 13.9 s. The committed runner then passed every assertion
+  (exit 0). The
+  [machine-readable result](2026-10-05-task8-area-c-linux-result.json) records
+  it. Highlights: the whole-guest probe saw all five namespaces differ, both
+  routes, and EPERM for `ptrace`, `process_vm_readv`, `process_vm_writev` and
+  `pidfd_getfd` in addition to the earlier denials; the SDK session completed
+  with three gateway and two model requests and the model request carried the
+  FD4 bearer, while 492 samples of every process command line and environment
+  (980 bubblewrap command lines) never contained it; the installed launcher's
+  Linux branch reported `seccompSha256` equal to the compiled arm64 filter,
+  reserved exactly one request (the relay checks the bearer first), released
+  its owner lock and left no `cp-*` directory, with no bearer name in 465
+  samples; the confined wrapper exited by SIGTERM, the raw ignoring child by
+  SIGKILL, and the observer found no survivors and no zombies.
+
+Compiled whole-guest BPF, superseding the Task 6 hashes for the current code
+(the Task 6 record is unchanged):
+
+- arm64, 47 instructions:
+  `d00965ae3ff6ab335a5821438e016df5ce92233eebb51eb2503f7aa7808c4119`
+  (Task 6: `9b1c9a8f...e4f4a`). Measured in the guest above.
+- x64 component, 53 instructions:
+  `2d9d366003bb02e85c53eefa20da39339fbb45f381756c8d125d2c3f15820a5f`
+  (Task 6: `0ed82883...a3364`). Evaluated by the unit tests only; actual x64
+  runtime remains unmeasured.
+
+The privileged outer container is needed for nested namespaces on this VM; it
+does not qualify ordinary Docker defaults, another installation or native P5.
+No provider, native kernel or credential was used. Eight `chio-pi-task6-probe`
+tags leaked by earlier Task 6 runs and one Task 6 scratch directory beside the
+worktree remain; they predate this fix and were left in place.
