@@ -17,8 +17,7 @@ export const hash = value => createHash("sha256").update(value).digest("hex");
 export const tools = [{name: "write_file", description: "Synthetic retained write", inputSchema: {type: "object", properties: {path: {type: "string"}, content: {type: "string"}}, required: ["path", "content"], additionalProperties: false}}];
 export const request = (call = "call-1") => ({sessionId: "pi-host-1", toolCallId: call, tool: "write_file", arguments: {path: "source.ts", content: "exact original"}});
 
-export function signedOutcome(config, nativeRequest, state = "completed", overrides = {}) {
-  const result = {content: [{type: "text", text: "synthetic resource committed once"}], isError: false};
+export function signedOutcome(config, nativeRequest, state = "completed", overrides = {}, result = {content: [{type: "text", text: "synthetic resource committed once"}], isError: false}) {
   const body = {timestamp: 1783000000, capability_id: config.execution.capabilityId, tool_server: config.execution.serverId, tool_name: nativeRequest.tool,
     action: {parameters: nativeRequest.arguments, parameter_hash: sha256Hex(canonicalizeJson(nativeRequest.arguments))}, decision: {verdict: state === "completed" ? "allow" : "deny", ...(state === "denied" ? {reason: "retained original denial"} : {})},
     receipt_kind: "mediated_decision", boundary_class: "prevent", trust_level: "mediated", tool_origin: "caller_executed", redaction_mode: "none", content_hash: sha256Hex(canonicalizeJson(result)), policy_hash: "cd".repeat(32), kernel_key: signer,
@@ -40,6 +39,7 @@ export async function nativeFixture(options = {}) {
   const directory = await mkdtemp(join(tmpdir(), "chio-continuation-"));
   const journalDir = join(directory, "journal"); await mkdir(journalDir, {mode: 0o700});
   let effects = 0; let acks = 0; let nativeCalls = 0; const messages = []; const outcomes = new Map();
+  const selectedTools = options.tools ?? tools;
   let config;
   const server = createServer(async (req, res) => {
     const chunks = []; for await (const chunk of req) chunks.push(chunk);
@@ -52,8 +52,13 @@ export async function nativeFixture(options = {}) {
       nativeCalls++;
       const p = message.params; const id = p._meta.chioRequestId;
       if (!outcomes.has(id)) {
+        const nativeRequest = {requestId: id, tool: p.name, arguments: p.arguments, ...(p._meta.chioApprovalToken ? {approval: {chioApprovalToken: p._meta.chioApprovalToken, chioGovernedIntent: p._meta.chioGovernedIntent}} : {})};
+        // Optional scripted kernel dispatch to a trusted resource connection.
+        // It signs with this ephemeral fixture key; it is not a real kernel.
+        const dispatched = options.dispatch ? await options.dispatch(nativeRequest) : undefined;
         if (options.state !== "denied") effects++;
-        outcomes.set(id, signedOutcome(config, {requestId: id, tool: p.name, arguments: p.arguments, ...(p._meta.chioApprovalToken ? {approval: {chioApprovalToken: p._meta.chioApprovalToken, chioGovernedIntent: p._meta.chioGovernedIntent}} : {})}, options.state ?? "completed"));
+        if (dispatched?.drop) {req.socket.destroy(); return;}
+        outcomes.set(id, signedOutcome(config, nativeRequest, options.state ?? "completed", {}, ...(dispatched ? [dispatched.result] : [])));
       }
       const outcome = outcomes.get(id);
       result = {...outcome.result, _meta: {chioEvidence: {schema: "chio.mcp.execution-evidence.v1", requestId: id, receipt: outcome.receipt, terminalState: outcome.state, outputKind: "value", output: outcome.result}, ...(outcome.delivery ? {chioDelivery: outcome.delivery} : {})}};
@@ -63,9 +68,9 @@ export async function nativeFixture(options = {}) {
   });
   await new Promise(done => server.listen(0, "127.0.0.1", done));
   const now = Math.floor(Date.now() / 1000);
-  config = {sessionId: "native-host-session", journalDir, tools,
-    execution: {sessionId: "retained-kernel-session", endpoint: `http://127.0.0.1:${server.address().port}`, bearerToken: "private-synthetic-bearer", subjectKey: "ab".repeat(32), capabilityId: "public-capability-id", serverId: "coding", trustedSigners: [signer], timeoutMs: 1500},
-    sessionCredential: {schema: "chio.mcp.session-credential.v1", sessionId: "retained-kernel-session", subjectKey: "ab".repeat(32), capabilityIds: ["public-capability-id"], serverId: "coding", endpointPath: "/mcp", allowedTools: tools.map(t => t.name), issuedAt: now - 5, expiresAt: now + 300, sessionToken: "private-synthetic-session"},
+  config = {sessionId: "native-host-session", journalDir, tools: selectedTools,
+    execution: {sessionId: "retained-kernel-session", endpoint: `http://127.0.0.1:${server.address().port}`, bearerToken: "private-synthetic-bearer", subjectKey: "ab".repeat(32), capabilityId: "public-capability-id", serverId: "coding", trustedSigners: [signer], timeoutMs: options.timeoutMs ?? 1500},
+    sessionCredential: {schema: "chio.mcp.session-credential.v1", sessionId: "retained-kernel-session", subjectKey: "ab".repeat(32), capabilityIds: ["public-capability-id"], serverId: "coding", endpointPath: "/mcp", allowedTools: selectedTools.map(t => t.name), issuedAt: now - 5, expiresAt: now + 300, sessionToken: "private-synthetic-session"},
     ...(options.approval ? {approval: {requiredTools: ["write_file"], purpose: "synthetic approved write", ttlSeconds: 300}} : {})};
   const configPath = join(directory, "config.json"); await writeFile(configPath, JSON.stringify(config), {mode: 0o600});
   const registry = registryForConfig(config); await pinHostRegistry(config, registry, journalDir);
