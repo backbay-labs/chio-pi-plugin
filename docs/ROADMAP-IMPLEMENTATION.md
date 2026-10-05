@@ -69,6 +69,10 @@ operator JSON accepts `"toolMode": "typed"` (default) or `"legacy"`. The protect
 transport. Standard names map to `chio_read`, `chio_write`, `chio_edit` and
 `chio_list`. See [typed tools](TYPED-TOOLS.md).
 
+**Breaking change.** In 0.2.0, `chioExtension(executor)` without a registry throws;
+0.1.0 registered `chio_execute`. Pass `createToolRegistry(tools, "legacy")` for that
+public surface.
+
 **Evidence.** [Task 1 record](superpowers/evidence/2026-10-04-task1-typed-host.md):
 actual Pi 1.0.2 dispatcher and callable inventories, strict original arguments,
 relay declaration, choice and history refusal before egress, and signed gateway

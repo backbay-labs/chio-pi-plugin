@@ -619,3 +619,73 @@ does not qualify ordinary Docker defaults, another installation or native P5.
 No provider, native kernel or credential was used. Eight `chio-pi-task6-probe`
 tags leaked by earlier Task 6 runs and one Task 6 scratch directory beside the
 worktree remain; they predate this fix and were left in place.
+
+## Final review fold-in
+
+The fresh final review of `ead477e..7c174ad` found no new Critical or Important
+issue and asked for four small items before final verification. All four were
+fixed with a regression. The two remaining final-review minors (the window
+between guest spawn and `recordGuest`, and quarantined job trees not surfaced in
+results or doctor) stay follow-ups.
+
+- **Closed proxy and retained identity.** `src/parent-gateway.ts` looked for the
+  closed flag before the prior parent mapping, so while closing, a re-sent
+  logical request with an existing reservation was answered `not_dispatched`
+  for an operation that may have completed. The closed check now follows
+  `mappings.find`: a retained identity is always resolved from its original,
+  and only a request with no reservation is refused as not dispatched. The
+  response socket is already closed at that point, so the regression observes
+  the decision: the queued re-send now reads its retained original during
+  close and nothing new is reserved or forwarded.
+- **Patch reserve after the request envelope.** The input bound charges every
+  call the fixed 6,576-byte request envelope, but configuration still required
+  only `maxPatchBytes + 8192 <= maxInputBytes`. With `maxPatchBytes` 65,536 and
+  `maxInputBytes` 73,728 the configuration validated, yet a full-size patch in
+  32 changes (67,743 argument bytes) received `input_bound`. Configuration now
+  requires `maxPatchBytes + 8192 + 6576 <= maxInputBytes`;
+  `docs/CODING-RESOURCE.md` states it.
+- **Old or setuid bubblewrap.** `--disable-userns` needs a non-setuid bubblewrap
+  0.8.0 or later. An older one rejected the option at launch, and the recipe was
+  recorded as a completed `success: false` test result. While preparing
+  `test_recipe`, before any intent or job, the Linux backend now checks the
+  setuid bit of `/usr/bin/bwrap` and its `--version` output and refuses with the
+  existing `unsupported_sandbox` code. The change is contained in
+  `prepareRecipeSandbox` and a pure `assertBubblewrapSupport` check.
+- **Public breaking change.** `README.md` and the crosswalk's row 1 section now
+  state that `chioExtension(executor)` without a registry throws in 0.2.0, where
+  0.1.0 registered `chio_execute`, and name `createToolRegistry(tools, "legacy")`
+  for that surface.
+
+### RED and GREEN
+
+Homebrew Node v25.5.0 (npm 11.8.0), macOS arm64, unchanged `7c174ad` source
+with the new tests:
+
+- `node --test --test-name-pattern "proxy closes" test/continuation.test.mjs`:
+  failed; the queued re-send looked up no original (`[]`).
+- `node --test --test-name-pattern "full-size patch" test/coding-resource.test.mjs`:
+  failed; `init` accepted the configuration one byte short of the new reserve
+  (exit 0). A separate probe with `maxInputBytes` 73,728 showed the 32-change
+  full-size patch refused with `input_bound`.
+- `node --test --test-name-pattern "setuid bubblewrap" test/coding-resource.test.mjs`:
+  failed; no `assertBubblewrapSupport` check existed.
+- Pinned Linux image
+  `sha256:6d5bbc54ae9fd29177042755c41667006b708874c7ed6d489d543e931e33fe23`
+  (Node 22.23.1, arm64), disposable `docker run --rm --privileged --network none`,
+  worktree read-only at `/input`: inside the container only, `/usr/bin/bwrap`
+  was replaced by a script reporting `bubblewrap 0.7.0` and rejecting
+  `--disable-userns` as 0.7.0 does. A `test_recipe` call completed as a ledgered
+  test result with `success: false`, `exitCode: 1` and stderr
+  `bwrap: Unknown option --disable-userns`.
+
+GREEN after the fixes, same Node:
+
+- `npm run typecheck`: clean.
+- `node --test test/continuation.test.mjs`: 94 tests, 94 passed.
+- `node --test test/coding-resource.test.mjs test/tool-registry.test.mjs
+  test/host-contract.test.mjs`: 109 tests, 109 passed, including the two new
+  coding-resource tests.
+- Pinned Linux image, same container form, three scenarios: the 0.7.0
+  substitute and the real bubblewrap 0.8.0 with mode 4755 each returned the
+  `unsupported_sandbox` refusal with no job directory; the unchanged real
+  bubblewrap 0.8.0 ran the recipe successfully (`exitCode: 0`).

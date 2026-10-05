@@ -149,9 +149,18 @@ In the release workflow, the build job runs the same consumer qualification afte
 its tag-build prerequisite check and before provenance generation and the separate
 publication job, whose gates are unchanged. In both workflows the consumer
 evidence upload fails only when qualification succeeded but left no evidence; an
-earlier failure uploads any partial evidence without a second failing step. Local candidate results are in the
-[Task 7 release record](superpowers/evidence/2026-10-04-task7-release.md) in the
-source repository.
+earlier failure uploads any partial evidence without a second failing step.
+
+The local candidate of record is packed from the final reviewed commit of the
+roadmap branch. Its archive SHA-256, source commit, builder provenance and
+consumer lockfile digests are in the
+[Task 8 final verification record](superpowers/evidence/2026-10-05-task8-final-review-fixes.md#final-verification)
+and under `evidence/2026-10-05/release-candidate-0.2.0-final/` in the source
+repository. This guide ships in the archive, so it does not repeat the hash;
+naming it here would change the archive it names. The pre-review candidate
+`0701bfc7...` from `2059150`, recorded in the
+[Task 7 release record](superpowers/evidence/2026-10-04-task7-release.md), is
+superseded.
 
 ## Hosted qualification and publication
 

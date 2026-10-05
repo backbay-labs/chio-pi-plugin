@@ -233,6 +233,10 @@ do not establish the launcher's OS boundary on their own. The
 [roadmap crosswalk](docs/ROADMAP-IMPLEMENTATION.md#shipped-entrypoints) lists a
 runnable check for every shipped entrypoint.
 
+Breaking change in 0.2.0: `chioExtension(executor)` without a registry now throws.
+In 0.1.0 it registered the single `chio_execute` tool; pass
+`createToolRegistry(tools, "legacy")` for that surface or a typed registry.
+
 Deterministic stock-Pi dispatcher and recovery tests run through `npm test`.
 Real host/kernel observations, independent resource checks and preserved failures
 live in the [evidence records](docs/FINAL-QUALIFICATION.md). Source checks and
