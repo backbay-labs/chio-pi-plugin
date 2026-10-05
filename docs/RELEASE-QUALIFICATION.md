@@ -1,18 +1,20 @@
 # Release qualification
 
-This lane builds `@chio/pi-plugin` from one immutable source commit. A passing workflow
+This lane builds `@chio-protocol/pi-plugin` from one immutable source commit. A passing workflow
 qualifies its source checks and installable package. It does not establish
 real-host I01-I08 acceptance, a compatible public kernel, or six-host completion.
 
 ## Current boundary
 
-- Package version: `0.2.0` candidate. The frozen `0.1.0` archive and its
+- Package version: `0.2.0` candidate. The frozen `0.1.0` archive, named
+  `@chio/pi-plugin` (published name `@chio-protocol/pi-plugin` from 0.2.0), and its
   hashes remain the scope of [FINAL-QUALIFICATION.md](FINAL-QUALIFICATION.md).
   Existing local candidate tarball hashes do not identify newly rebuilt
   archives, including metadata-only rebuilds.
 - Public repository identity: `backbay-labs/chio-pi-plugin`.
 - Workflow: `.github/workflows/release.yml`.
-- Registry package: `@chio/pi-plugin`; GitHub environment: `npm`.
+- Registry package: `@chio-protocol/pi-plugin`; GitHub environment: `npm`.
+  The [publishing guide](PUBLISHING.md) covers the one-time npm bootstrap.
 - Release tags: `v<package.json version>`, reachable from `main`.
 - Manual `workflow_dispatch` always builds, tests, packs, qualifies the base
   and Durable cold consumers, and generates provenance. It never publishes to npm or
@@ -52,23 +54,32 @@ consumer command performs the manual steps below for both consumers, with
 separate empty caches and an isolated home and Pi profile for each. It runs
 every check in [candidate 0.2.0](#candidate-020) and refuses existing work or
 evidence directories. The equivalent manual base consumer, from a new directory
-beside a copy of the tarball, is:
+holding a copy of the tarball, is:
 
 ```sh
-npm install --ignore-scripts --install-strategy=nested --save-exact --no-audit --no-fund \
-  --cache /absolute/new-empty-cache @earendil-works/pi-coding-agent@1.0.2
-npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund \
-  --cache /absolute/new-empty-cache ../package.tgz
-./node_modules/.bin/chio-pi --help
-./node_modules/.bin/chio-coding-resource --help
+export npm_config_cache=/absolute/new-empty-cache
+mkdir -p chio-pi && cd chio-pi && npm init -y >/dev/null
+npm install ../package.tgz @earendil-works/pi-coding-agent@1.0.2
+npx --no -- chio-pi --help
+npx --no -- chio-coding-resource --help
 ```
 
-The Durable consumer adds `@earendil-works/pi-durable@1.0.2` to the first
-command. Pi installs its exact public host peer first, then the plugin with the
-verified nested strategy. Executing installed help catches missing peer
-transitive dependencies even when npm exits successfully. Registry access is
-required for the host and the public TypeBox and Ajv dependencies; Chio
-dependencies are bundled.
+This is the [README](../README.md#build-and-install) command with the archive in
+place of the registry name: npm's default install strategy and lifecycle scripts,
+with no ordering, save or script flags. The Durable consumer adds
+`@earendil-works/pi-durable@1.0.2` to the same command. `npm init -y` gives the
+empty directory its own `package.json`, since npm otherwise installs into a parent
+that has a `package.json` or `node_modules`; the consumer command confirms that
+npm's prefix is the project directory. Help runs through the documented
+`npx --no --` form and must match the installed binary's own help, so npx can
+neither fall back to a registry package nor print its own usage instead.
+It then adds exact TypeScript tooling with
+`npm install --save-dev --save-exact typescript@7.0.2 @types/node@26.5.0` for the
+consumer typecheck. Executing installed help catches missing peer transitive
+dependencies even when npm exits successfully. Registry access is required for
+the host and the public TypeBox and Ajv dependencies; Chio dependencies are
+bundled. The peer-first, nested procedure recorded for earlier candidates is not
+needed with Pi 1.0.2.
 
 ## Candidate 0.2.0
 
@@ -128,9 +139,13 @@ that carries no provider or registry credentials:
 Both consumers check the archive members and exclusions, staged metadata,
 installed file hashes against the archive, export and binary containment,
 refusal of non-exported deep imports, and the exact peers. Every
-`node_modules/.bin` entry must be a symlink inside the installation, and each
-one's `--help`, plus `chio-pi doctor|status|inspect|recover --help`, must exit 0
-with output when run through that symlink. Typechecking runs twice. With
+`node_modules/.bin` entry must be a symlink inside the installation. Each
+executable that a direct consumer dependency declares (the two Chio binaries,
+`pi` and TypeScript's `tsc`) must exit 0 with output for `--help` when run through
+that symlink, as must `chio-pi doctor|status|inspect|recover --help`. npm's
+default strategy also hoists transitive executables; those are checked for
+containment only, and consumer provenance lists them with any packages that
+carry install scripts. Typechecking runs twice. With
 `skipLibCheck: false`, no diagnostic may fall in this package's declarations or
 the consumer file; upstream Pi diagnostics are recorded. The ordinary
 `skipLibCheck: true` consumer build must pass. The root declaration closure must
@@ -143,11 +158,12 @@ The command uses the Node running it and the npm installed beside that Node.
 Verify the minimum supported Node by running it with Node 22.19.0 itself.
 
 CI runs the same command with Node 22.19.0 and npm 11.8.0 after typecheck, build
-and tests, then performs only `npm publish --dry-run`. It retains the packed
+and tests, checks that the packed manifest names `@chio-protocol/pi-plugin`, then
+performs only `npm publish --dry-run`. It retains the packed
 candidate as `source-package` and the consumer evidence as `consumer-evidence`.
 In the release workflow, the build job runs the same consumer qualification after
 its tag-build prerequisite check and before provenance generation and the separate
-publication job, whose gates are unchanged. In both workflows the consumer
+publication job, whose existing gates are unchanged. In both workflows the consumer
 evidence upload fails only when qualification succeeded but left no evidence; an
 earlier failure uploads any partial evidence without a second failing step.
 
@@ -160,7 +176,9 @@ repository. This guide ships in the archive, so it does not repeat the hash;
 naming it here would change the archive it names. The pre-review candidate
 `0701bfc7...` from `2059150`, recorded in the
 [Task 7 release record](superpowers/evidence/2026-10-04-task7-release.md), is
-superseded.
+superseded. Both records predate the rename to `@chio-protocol/pi-plugin`, so
+their archives carry the earlier name. The rename changes the archive bytes; the
+published 0.2.0 is identified by the digest its release workflow run records.
 
 ## Hosted qualification and publication
 
@@ -172,21 +190,34 @@ superseded.
 3. Complete all applicable I01-I08 acceptance and the compatible kernel's
    release/security gates before approving production delivery. The original
    unsigned kernel 0.1.0 is not evidence for the new candidate.
-4. Configure the `npm` environment before tagging and preserve existing
-   repository protection rules. Verify exact commit, kernel compatibility and
-   acceptance records under the applicable release procedures. This workflow
-   does not require adding human reviewers or changing protection rules.
+4. Before tagging, give the `npm` environment required reviewers and a
+   deployment tag policy of `v*.*.*`, and add a tag ruleset that restricts who
+   can create, update or delete `v*` tags, as described in
+   [publishing](PUBLISHING.md#one-time-bootstrap). These are required: the
+   trusted publisher binds the workflow file and environment, not the Git ref,
+   and this workflow's own gates live in a file a tagged commit can change.
+   Preserve existing repository protection rules. Verify exact commit, kernel
+   compatibility and acceptance records under the applicable release procedures.
 5. An npm maintainer must register this package's Trusted Publisher with GitHub
    owner `backbay-labs`, repository `chio-pi-plugin`, workflow filename `release.yml`,
    and environment `npm`. Permit direct `npm publish` for this workflow. Do not
-   configure a stored `NPM_TOKEN` fallback or print authentication files.
+   configure a stored `NPM_TOKEN` fallback or print authentication files. npm
+   accepts a Trusted Publisher only for a package that already exists, so the
+   first version is published once by hand as described in [publishing](PUBLISHING.md).
 6. Only after those gates, create a new annotated version tag from reviewed
    `main`. A tag push can publish. The workflow rejects tag/version mismatch,
    a source commit outside `main`, and a mismatched `repository.url`.
 7. The publication job downloads the built bytes, verifies SLSA provenance and
-   checksums, signs the checksum index, verifies its exact GitHub workflow
-   identity, then publishes that same tarball with npm OIDC provenance. A
-   prerelease version uses npm's `next` dist-tag. Stable versions use `latest`.
+   checksums, checks that the archive manifest carries the bound package name and
+   version, signs the checksum index, verifies its exact GitHub workflow
+   identity, then publishes that same tarball with npm OIDC provenance. It
+   requires npm 11.5.1 and Node 22.14.0 or later, and refuses any
+   `NODE_AUTH_TOKEN` other than the placeholder `actions/setup-node` exports when
+   none is set. The build job records the archive SHA-256 right after packing;
+   the dry run, the SLSA subject record and the publication job must all match
+   it, so lifecycle scripts run during cold-consumer qualification cannot swap
+   the archive. A prerelease version uses npm's `next` dist-tag. Stable versions
+   use `latest`.
 8. Verify the public tarball and GitHub Release assets independently, install
    from the documented public path in a new profile, and repeat the supported
    useful-work and prevention/recovery smoke cases against the qualified kernel.
@@ -274,9 +305,10 @@ A tag build fails before publication unless the `npm` environment exists and the
 checks both conditions again when the configured environment permits the job. Missing API access,
 missing environment configuration, pending, skipped, cancelled or failed CI is a
 release failure. Configure the environment before creating a release tag; a
-workflow reference alone can otherwise create an environment implicitly. Existing
-protection rules remain enforced by GitHub; this workflow does not require adding
-reviewers or changing them.
+workflow reference alone can otherwise create an environment implicitly. GitHub,
+not this workflow, enforces the environment's required reviewers and tag policy
+and the release tag ruleset that [publishing](PUBLISHING.md) requires; a check in
+this file could be removed by the tagged commit it is meant to judge.
 
 These checks enforce this repository's source/package CI and configured environment boundary.
 They do not establish kernel security or any host acceptance gate. Release

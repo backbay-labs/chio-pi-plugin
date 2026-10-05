@@ -10,14 +10,20 @@ import {fileURLToPath} from "node:url";
 import {gunzipSync} from "node:zlib";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+/** The registry name this checkout builds; the archive's provenance must match it. */
+export const PACKAGE_NAME = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).name;
 const HELP = `Usage: node scripts/qualify-release.mjs --release DIR --work NEW_DIR --evidence NEW_DIR [--npm-cli NPM_CLI_JS]
 DIR holds exactly one packed .tgz with its .sha256 and .provenance.json from scripts/pack-release.mjs.
 Creates two fresh consumers (base: exact Pi, no Pi Durable; durable: exact Pi and exact Pi Durable), each
 with an empty npm cache, isolated HOME and Pi profile, and a credential-free environment allowlist. Each
-consumer installs the peers first, then the archive through a relative file: dependency, and is replayed
-with npm ci from its retained lockfile. Uses the Node running this script and the npm beside it unless
---npm-cli is given. Writes builder and consumer provenance as separate records. Refuses existing work or
-evidence directories. Exit 0 passed, 1 failed with evidence retained, 2 usage or precondition.
+consumer runs the documented install with the archive in place of the registry name: npm init -y, then
+npm install ../ARCHIVE @earendil-works/pi-coding-agent@1.0.2 (the durable consumer adds
+@earendil-works/pi-durable@1.0.2) with default npm install strategy and lifecycle scripts, then
+npx --no -- BIN --help for both binaries. It then adds exact TypeScript tooling for the consumer
+typecheck and is replayed with npm ci from its retained lockfile.
+Uses the Node running this script and the npm beside it unless --npm-cli is given. Writes builder and
+consumer provenance as separate records. Refuses existing work or evidence directories.
+Exit 0 passed, 1 failed with evidence retained, 2 usage or precondition.
 `;
 
 export const sha256 = bytes => createHash("sha256").update(bytes).digest("hex");
@@ -37,7 +43,7 @@ export function containsHostPath(text, path) {
  * graph location and artifact basename, then reject every remaining absolute
  * file resolution, including redacted paths that cannot match hostPaths. */
 export function normalizeConsumerGraph(text, artifactName) {
-  const graph = JSON.parse(text); const plugin = graph.dependencies?.["@chio/pi-plugin"];
+  const graph = JSON.parse(text); const plugin = graph.dependencies?.[PACKAGE_NAME];
   const absolute = value => typeof value === "string" && /^file:(?:[/\\]|[A-Za-z]:[/\\])/.test(value);
   let absoluteArtifactResolutions = 0;
   if (absolute(plugin?.resolved) && plugin.resolved.endsWith(`/${artifactName}`)) {
@@ -122,7 +128,7 @@ export function declarationSpecifiers(entry) {
  * artifact's exact npm integrity. An absent integrity is a failure. */
 export function consumerLockProblems(manifest, pluginLock, artifactName, integrity, version) {
   return [
-    ...(manifest.dependencies?.["@chio/pi-plugin"] === `file:../${artifactName}` ? [] : [`manifest dependency ${manifest.dependencies?.["@chio/pi-plugin"]}`]),
+    ...(manifest.dependencies?.[PACKAGE_NAME] === `file:../${artifactName}` ? [] : [`manifest dependency ${manifest.dependencies?.[PACKAGE_NAME]}`]),
     ...(pluginLock.resolved === `file:../${artifactName}` ? [] : [`lock resolved ${pluginLock.resolved}`]),
     ...(pluginLock.integrity === undefined ? ["lock integrity absent"] : pluginLock.integrity === integrity ? [] : ["lock integrity differs from artifact"]),
     ...(pluginLock.version === version ? [] : [`lock version ${pluginLock.version}`])];
@@ -171,6 +177,43 @@ export function binProblems(consumer) {
   return {names, problems};
 }
 
+/** Two npm ls graphs agree once each one's selected archive resolution is normalized. */
+export function sameGraph(a, b, artifactName) {
+  try {
+    const [left, right] = [a, b].map(text => normalizeConsumerGraph(text, artifactName));
+    return left.problems.length === 0 && right.problems.length === 0 && left.text === right.text;
+  } catch {return false;}
+}
+
+/** Executable names declared by the consumer manifest's direct dependencies. */
+export function directDependencyBins(consumer) {
+  const manifest = JSON.parse(readFileSync(join(consumer, "package.json"), "utf8"));
+  const names = Object.keys({...manifest.dependencies, ...manifest.devDependencies});
+  return [...new Set(names.flatMap(name => {
+    const bin = JSON.parse(readFileSync(join(consumer, "node_modules", ...name.split("/"), "package.json"), "utf8")).bin;
+    return typeof bin === "string" ? [name.split("/").at(-1)] : Object.keys(bin ?? {});
+  }))].sort();
+}
+
+/** The documented install: `npm init -y` so npm cannot select an ancestor project,
+ * then `npm install PACKAGE @earendil-works/pi-coding-agent@1.0.2` with the archive
+ * in place of the registry name and npm defaults (no strategy, script or save
+ * flags). Durable adds its exact peer to the same command. The typecheck tooling
+ * is a separate, later consumer step. */
+export function consumerInstallCommands(kind, artifactName, peers, tooling) {
+  const peerSpecs = [`@earendil-works/pi-coding-agent@${peers["@earendil-works/pi-coding-agent"]}`,
+    ...(kind === "durable" ? [`@earendil-works/pi-durable@${peers["@earendil-works/pi-durable"]}`] : [])];
+  return {init: ["init", "-y"], documented: ["install", `../${artifactName}`, ...peerSpecs],
+    registryEquivalent: `npm install ${[PACKAGE_NAME, ...peerSpecs].join(" ")}`, tooling: ["install", "--save-dev", "--save-exact", ...tooling]};
+}
+
+/** Documented help through npx. `--no` refuses to install a registry package when
+ * the local binary is missing; `--` stops npx from reading the binary name as the
+ * value of the option `--no` expands to, which would print npx's own help instead. */
+export function documentedHelpCommand(bin) {
+  return ["--no", "--", bin, "--help"];
+}
+
 function metadataSnapshot(directory, limit = 20000) {
   if (!existsSync(directory)) return {exists: false, entries: 0, digest: null};
   const rows = []; const stack = [directory];
@@ -207,22 +250,22 @@ import {mkdtemp, mkdir, readFile, writeFile} from "node:fs/promises";
 import {tmpdir, hostname} from "node:os";
 import {join} from "node:path";
 const report = {kind: ${JSON.stringify(kind)}};
-const root = await import("@chio/pi-plugin");
+const root = await import(${JSON.stringify(PACKAGE_NAME)});
 for (const name of ["chioExtension", "createChioPiSession", "createChioPiRuntime", "createToolRegistry", "runOperatorCommand", "summarizeGatewayStatus",
   "startParentGatewayProxy", "exportContinuation", "importContinuation", "recoverOriginalOperation", "createNativeEmbedding", "nativeFeatureAvailability",
   "explainNativeRecovery", "submitNativeChild", "openRunBudget", "prepareLinuxGuest", "createUnixRelay", "superviseGuest"]) assert.equal(typeof root[name], "function", name);
 const registry = root.createToolRegistry(${JSON.stringify(tools)});
 assert.match(registry.digest, /^[a-f0-9]{64}$/);
 report.registryTools = registry.tools.map(tool => tool.name);
-const coding = await import("@chio/pi-plugin/coding-resource");
+const coding = await import(${JSON.stringify(`${PACKAGE_NAME}/coding-resource`)});
 assert.equal(typeof coding.CodingResource, "function");
-await assert.rejects(import("@chio/pi-plugin/dist/operator.js"), error => error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
+await assert.rejects(import(${JSON.stringify(`${PACKAGE_NAME}/dist/operator.js`)}), error => error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
 report.rootAndCodingImports = true; report.deepImportRefused = true;
 if (report.kind === "base") {
-  await assert.rejects(import("@chio/pi-plugin/durable"), error => error.code === "ERR_MODULE_NOT_FOUND" && error.message.includes("@earendil-works/pi-durable"));
+  await assert.rejects(import(${JSON.stringify(`${PACKAGE_NAME}/durable`)}), error => error.code === "ERR_MODULE_NOT_FOUND" && error.message.includes("@earendil-works/pi-durable"));
   report.durableWithoutOptionalPeer = "ERR_MODULE_NOT_FOUND @earendil-works/pi-durable";
 } else {
-  const durable = await import("@chio/pi-plugin/durable");
+  const durable = await import(${JSON.stringify(`${PACKAGE_NAME}/durable`)});
   const {Harness, MemoryStorage, createRegistry} = await import("@earendil-works/pi-durable");
   const calls = []; const refuse = name => () => {calls.push(name); throw new Error("registration smoke must not call " + name);};
   const binding = {authorityDigest: "a".repeat(64), registryDigest: registry.digest};
@@ -254,13 +297,13 @@ process.stdout.write(JSON.stringify(report) + "\\n");
 
 function typecheckSource(kind) {
   const durable = kind === "durable" ? `
-import {createChioDurableTools, DURABLE_REQUEST_MEMO} from "@chio/pi-plugin/durable";
+import {createChioDurableTools, DURABLE_REQUEST_MEMO} from "${PACKAGE_NAME}/durable";
 type DurableAdapter = Awaited<ReturnType<typeof createChioDurableTools>>;
 export const durableMemo: string = DURABLE_REQUEST_MEMO;
 export type Recovery = DurableAdapter["bindRecovery"];
 ` : "";
-  return `import {createToolRegistry, runOperatorCommand, type ToolRegistry, type KernelRequest, type ContinuationBinding, type RunLimits} from "@chio/pi-plugin";
-import {CodingResource} from "@chio/pi-plugin/coding-resource";
+  return `import {createToolRegistry, runOperatorCommand, type ToolRegistry, type KernelRequest, type ContinuationBinding, type RunLimits} from "${PACKAGE_NAME}";
+import {CodingResource} from "${PACKAGE_NAME}/coding-resource";
 export const registry: ToolRegistry = createToolRegistry([{name: "read_file", description: "Read", inputSchema: {type: "object"}}]);
 export const operator: (args: string[]) => Promise<number> = runOperatorCommand;
 export const binding: ContinuationBinding = {authorityDigest: "a".repeat(64), registryDigest: registry.digest};
@@ -311,7 +354,6 @@ export async function main(argv = process.argv.slice(2)) {
 
   mkdirSync(options.work, {recursive: true, mode: 0o700}); const work = realpathSync(options.work);
   mkdirSync(options.evidence, {recursive: true});
-  copyFileSync(artifactPath, join(work, artifactName));
   const userPiProfile = join(homedir(), ".pi"); const profileBefore = metadataSnapshot(userPiProfile);
   const hostPaths = [...new Set([work, realpathSync(tmpdir()), tmpdir(), homedir(), root, dirname(process.execPath), realpathSync(options.release)])].filter(path => path.length > 1);
 
@@ -344,38 +386,59 @@ export async function main(argv = process.argv.slice(2)) {
     writeFileSync(join(work, `${log}.log`), `${result.stdout ?? ""}\n--- stderr ---\n${result.stderr ?? ""}`);
     return {status: result.status, signal: result.signal, stdout: result.stdout ?? "", stderr: result.stderr ?? "", ms: Date.now() - started};
   }
-  const npmArgs = ["--ignore-scripts", "--install-strategy=nested", "--no-audit", "--no-fund"];
   const summary = {schema: "chio.pi.cold-consumers.v1", artifact: artifactName, artifactSha256, sourceCommit: provenance.sourceCommit, sourceDirty: provenance.sourceDirty,
     node: nodeIdentity, npm: npmVersion, platform, consumers: []};
 
+  /** A new empty project directory named like the documented ~/chio-pi, beside
+   * its own copy of the archive so the dependency is always file:../ARCHIVE. */
+  function project(name) {
+    const parent = join(work, name); mkdirSync(parent); copyFileSync(artifactPath, join(parent, artifactName));
+    const directory = join(parent, "chio-pi"); mkdirSync(directory); return directory;
+  }
+  /** npm installs into the nearest ancestor holding package.json or node_modules
+   * when the current directory has neither. After `npm init -y` the project must
+   * hold its own manifest and npm must report it as the prefix (npm may redact
+   * UUID-like path segments). */
+  function ownPrefix(directory, env, log) {
+    const problems = existsSync(join(directory, "package.json")) ? [] : ["npm init -y wrote no package.json in the project"];
+    const result = run(directory, env, process.execPath, [npmCli, "prefix"], log);
+    const reported = result.status === 0 ? result.stdout.trim().split(sep) : []; const expected = directory.split(sep);
+    if (reported.length !== expected.length || reported.some((part, index) => part !== expected[index] && part !== "***")) problems.push(`npm prefix is not the new project directory (exit ${result.status})`);
+    return problems;
+  }
+
   for (const kind of ["base", "durable"]) {
-    const consumer = join(work, `consumer-${kind}`); mkdirSync(consumer);
+    const consumer = project(`consumer-${kind}`);
     const {env, dirs} = environment(`consumer-${kind}`);
-    writeFileSync(join(consumer, "package.json"), `${JSON.stringify({name: `chio-pi-consumer-${kind}`, version: "0.0.0", private: true, type: "module"}, null, 2)}\n`);
-    const peerSpecs = [`@earendil-works/pi-coding-agent@${peers["@earendil-works/pi-coding-agent"]}`, ...(kind === "durable" ? [`@earendil-works/pi-durable@${peers["@earendil-works/pi-durable"]}`] : [])];
-    const commands = [
-      ["install", ...npmArgs, "--save-exact", ...peerSpecs],
-      ["install", ...npmArgs, `../${artifactName}`],
-      ["install", ...npmArgs, "--save-exact", "--save-dev", ...tooling],
-    ];
-    const installs = commands.map((args, index) => ({command: `npm ${args.join(" ")}`, ...run(consumer, env, process.execPath, [npmCli, ...args], `consumer-${kind}-install-${index + 1}`)}));
-    const installed = installs.every(step => step.status === 0);
-    check(kind, "peer-first nested installation from an empty cache", installs.filter(step => step.status !== 0).map(step => `${step.command} exited ${step.status}`),
-      installs.map(step => ({command: step.command, ms: step.ms})));
+    const install = consumerInstallCommands(kind, artifactName, peers, tooling);
+    const npm = (args, log) => ({command: `npm ${args.join(" ")}`, ...run(consumer, env, process.execPath, [npmCli, ...args], log)});
+    const initialized = npm(install.init, `consumer-${kind}-init`);
+    const prefixProblems = initialized.status === 0 ? ownPrefix(consumer, env, `consumer-${kind}-prefix`) : [`${initialized.command} exited ${initialized.status}`];
+    check(kind, "npm init -y makes the empty project its own npm prefix", prefixProblems);
+    const installs = prefixProblems.length ? [] : [install.documented, install.tooling].map((args, index) => npm(args, `consumer-${kind}-install-${index + 1}`));
+    const [documented, tooled] = installs;
+    check(kind, "documented single-command installation from an empty cache", documented?.status === 0 ? [] : [`${documented?.command ?? "documented install"} exited ${documented?.status}`],
+      {command: documented?.command, registryEquivalent: install.registryEquivalent, ms: documented?.ms});
+    check(kind, "consumer typecheck tooling installation", tooled?.status === 0 ? [] : [`${tooled?.command ?? "tooling install"} exited ${tooled?.status}`], {command: tooled?.command, ms: tooled?.ms});
+    const installed = installs.length === 2 && installs.every(step => step.status === 0);
     const record = {schema: "chio.pi.consumer-provenance.v1", kind, artifact: artifactName, artifactSha256, sourceCommit: provenance.sourceCommit,
       builderProvenanceSha256: sha256(provenanceBytes), node: nodeIdentity, npm: npmVersion, platform,
-      environment: {keys: Object.keys(env).sort(), isolatedHome: true, isolatedPiProfile: true, emptyNpmCache: true, credentials: "none passed"},
-      installCommands: installs.map(step => step.command), dependency: `file:../${artifactName}`};
+      environment: {keys: Object.keys(env).sort(), isolatedHome: true, isolatedPiProfile: true, emptyNpmCache: true, emptyProjectDirectory: true, credentials: "none passed"},
+      documentedInstall: {init: initialized.command, command: `npm ${install.documented.join(" ")}`, registryEquivalent: install.registryEquivalent,
+        help: ["chio-pi", "chio-coding-resource"].map(bin => `npx ${documentedHelpCommand(bin).join(" ")}`)},
+      installCommands: [initialized, ...installs].map(step => step.command), dependency: `file:../${artifactName}`};
     if (installed) {
       const lockBytes = readFileSync(join(consumer, "package-lock.json")); const lock = JSON.parse(lockBytes);
       const manifest = JSON.parse(readFileSync(join(consumer, "package.json"), "utf8"));
-      const pluginLock = lock.packages?.["node_modules/@chio/pi-plugin"] ?? {};
+      const pluginLock = lock.packages?.[`node_modules/${PACKAGE_NAME}`] ?? {};
       check(kind, "relative artifact dependency and lock integrity", consumerLockProblems(manifest, pluginLock, artifactName, sha512(artifact), source.version),
         {lockIntegrityRecorded: pluginLock.integrity !== undefined});
       const ls = run(consumer, env, process.execPath, [npmCli, "ls", "--all", "--json"], `consumer-${kind}-ls`);
       let graph = {}; try {graph = JSON.parse(ls.stdout);} catch {}
       check(kind, "npm ls resolves the complete graph without problems", ls.status === 0 && !graph.problems ? [] : [`npm ls exited ${ls.status}`, ...(graph.problems ?? [])]);
-      const packageRoot = join(consumer, "node_modules", "@chio", "pi-plugin");
+      const packageRoot = join(consumer, "node_modules", ...PACKAGE_NAME.split("/"));
+      // Lifecycle scripts run as npm defaults; record which packages carry them.
+      record.installScripts = Object.entries(lock.packages ?? {}).filter(([path, entry]) => path && entry.hasInstallScript).map(([path, entry]) => `${path}@${entry.version}`).sort();
       check(kind, "staged metadata, containment and installed file fidelity", installedPackageProblems(packageRoot, expected));
       const pi = JSON.parse(readFileSync(join(consumer, "node_modules", "@earendil-works", "pi-coding-agent", "package.json"), "utf8"));
       const durableDirs = findPackageDirs(consumer, "@earendil-works/pi-durable");
@@ -385,16 +448,32 @@ export async function main(argv = process.argv.slice(2)) {
         ...(kind === "base" ? durableDirs.map(path => `Pi Durable present at ${relative(consumer, path)}`) : durableVersions.length === 1 && durableVersions[0] === peers["@earendil-works/pi-durable"] ? [] : [`Pi Durable ${durableVersions.join(",") || "absent"}`])],
         {pi: pi.version, piDurable: kind === "base" ? "absent" : durableVersions[0]});
       const bins = binProblems(consumer);
+      // Every .bin link must stay inside the installation. The default strategy also
+      // hoists transitive executables; only those the consumer's direct dependencies
+      // declare are run, since others have no --help contract.
+      const direct = directDependencyBins(consumer);
       const helps = [];
-      for (const name of bins.names) helps.push({bin: name, args: ["--help"]});
+      for (const name of bins.names.filter(name => direct.includes(name))) helps.push({bin: name, args: ["--help"]});
       for (const command of ["doctor", "status", "inspect", "recover"]) helps.push({bin: "chio-pi", args: [command, "--help"]});
       const helpResults = helps.map(({bin, args}) => {
         const result = run(consumer, env, join(consumer, "node_modules", ".bin", bin), args, `consumer-${kind}-help-${bin}-${args.join("-")}`);
         return {bin, args, status: result.status, stdoutSha256: sha256(result.stdout), firstLine: result.stdout.split("\n")[0].slice(0, 120)};
       });
-      const required = ["chio-pi", "chio-coding-resource", "pi"].filter(name => !bins.names.includes(name)).map(name => `missing .bin/${name}`);
-      check(kind, "npm executable symlinks run every help path", [...bins.problems, ...required,
-        ...helpResults.filter(item => item.status !== 0 || !item.firstLine).map(item => `${item.bin} ${item.args.join(" ")} exited ${item.status}`)], helpResults);
+      const required = [...new Set(["chio-pi", "chio-coding-resource", "pi", ...direct])].filter(name => !bins.names.includes(name)).map(name => `missing .bin/${name}`);
+      check(kind, "npm executable symlinks stay contained and direct dependency help paths run", [...bins.problems, ...required,
+        ...helpResults.filter(item => item.status !== 0 || !item.firstLine).map(item => `${item.bin} ${item.args.join(" ")} exited ${item.status}`)],
+        {help: helpResults, containedOnly: bins.names.filter(name => !direct.includes(name))});
+      // The documented npx form must run the installed binary itself: identical
+      // output to the .bin link, not npx's own help, and no registry install.
+      const npxCli = join(dirname(npmCli), "npx-cli.js");
+      const npxResults = ["chio-pi", "chio-coding-resource"].map(bin => {
+        const args = documentedHelpCommand(bin);
+        const result = existsSync(npxCli) ? run(consumer, env, process.execPath, [npxCli, ...args], `consumer-${kind}-npx-${bin}`) : {status: null, stdout: ""};
+        const linked = helpResults.find(item => item.bin === bin && item.args.length === 1);
+        return {command: `npx ${args.join(" ")}`, status: result.status, stdoutSha256: sha256(result.stdout), sameAsInstalledBinary: Boolean(linked) && sha256(result.stdout) === linked.stdoutSha256};
+      });
+      check(kind, "documented npx --no help runs the installed binaries", [...(existsSync(npxCli) ? [] : ["npx-cli.js beside the selected npm is missing"]),
+        ...npxResults.filter(item => item.status !== 0 || !item.sameAsInstalledBinary).map(item => `${item.command} exited ${item.status}${item.sameAsInstalledBinary ? "" : " without the installed binary's help"}`)], npxResults);
       writeFileSync(join(consumer, "smoke.mjs"), smokeSource(kind, tools));
       const smoke = run(consumer, env, process.execPath, ["smoke.mjs"], `consumer-${kind}-smoke`);
       let smokeReport; try {smokeReport = JSON.parse(smoke.stdout.trim().split("\n").at(-1));} catch {}
@@ -403,17 +482,18 @@ export async function main(argv = process.argv.slice(2)) {
       // Two runs: strict library checking must report nothing in this package's
       // declarations or the consumer file (upstream Pi declarations are recorded,
       // not excused silently); the ordinary skipLibCheck consumer build must pass.
-      writeFileSync(join(consumer, "consumer.ts"), typecheckSource(kind));
+      // .mts keeps the consumer an ES module without editing the documented manifest.
+      writeFileSync(join(consumer, "consumer.mts"), typecheckSource(kind));
       const tsconfig = skipLibCheck => ({compilerOptions: {target: "ES2023", module: "NodeNext", moduleResolution: "NodeNext", strict: true, noEmit: true,
-        types: ["node"], skipLibCheck}, files: ["consumer.ts"]});
+        types: ["node"], skipLibCheck}, files: ["consumer.mts"]});
       writeFileSync(join(consumer, "tsconfig.strict-lib.json"), `${JSON.stringify(tsconfig(false), null, 2)}\n`);
       writeFileSync(join(consumer, "tsconfig.json"), `${JSON.stringify(tsconfig(true), null, 2)}\n`);
       const tscBin = join(consumer, "node_modules", ".bin", "tsc");
       const strict = run(consumer, env, tscBin, ["-p", "tsconfig.strict-lib.json", "--pretty", "false"], `consumer-${kind}-tsc-strict-lib`);
       const diagnostics = strict.stdout.split("\n").filter(line => /error TS\d+/.test(line) && !/^\s/.test(line));
       const located = diagnostics.map(line => /^(.+?)\(\d+,\d+\): error (TS\d+)/.exec(line));
-      const ours = diagnostics.filter((line, index) => !located[index] || !located[index][1].startsWith("node_modules/") || located[index][1].startsWith("node_modules/@chio/pi-plugin/"));
-      const upstream = [...new Set(located.filter(Boolean).filter(match => !match[1].startsWith("node_modules/@chio/pi-plugin/")).map(match => `${match[2]} ${match[1].split("/").slice(0, match[1].startsWith("node_modules/@") ? 3 : 2).join("/")}`))].sort();
+      const ours = diagnostics.filter((line, index) => !located[index] || !located[index][1].startsWith("node_modules/") || located[index][1].startsWith(`node_modules/${PACKAGE_NAME}/`));
+      const upstream = [...new Set(located.filter(Boolean).filter(match => !match[1].startsWith(`node_modules/${PACKAGE_NAME}/`)).map(match => `${match[2]} ${match[1].split("/").slice(0, match[1].startsWith("node_modules/@") ? 3 : 2).join("/")}`))].sort();
       const tsc = run(consumer, env, tscBin, ["-p", "tsconfig.json", "--pretty", "false"], `consumer-${kind}-tsc`);
       check(kind, kind === "base" ? "typecheck root and coding declarations without Pi Durable" : "typecheck the Durable entrypoint", [
         ...ours.map(line => `strict library check: ${line.slice(0, 200)}`),
@@ -426,17 +506,19 @@ export async function main(argv = process.argv.slice(2)) {
         ...(durableSpecifiers.includes("@earendil-works/pi-durable") ? [] : ["durable declarations do not reference Pi Durable"])], {rootSpecifiers});
 
       // Replay the retained fixture: npm ci from the exact manifest and lockfile.
-      const replay = join(work, `replay-${kind}`); mkdirSync(replay);
+      const replay = project(`replay-${kind}`);
       const replayEnv = environment(`replay-${kind}`).env;
       copyFileSync(join(consumer, "package.json"), join(replay, "package.json")); copyFileSync(join(consumer, "package-lock.json"), join(replay, "package-lock.json"));
-      const ci = run(replay, replayEnv, process.execPath, [npmCli, "ci", ...npmArgs], `replay-${kind}-ci`);
+      const ci = run(replay, replayEnv, process.execPath, [npmCli, "ci"], `replay-${kind}-ci`);
       const replayLs = run(replay, replayEnv, process.execPath, [npmCli, "ls", "--all", "--json"], `replay-${kind}-ls`);
       const replayHelp = ci.status === 0 ? run(replay, replayEnv, join(replay, "node_modules", ".bin", "chio-pi"), ["--help"], `replay-${kind}-help`) : {status: null};
       check(kind, "retained lockfile replays with npm ci from an empty cache", [
         ...(ci.status === 0 ? [] : [`npm ci exited ${ci.status}`]),
         ...(ci.status === 0 && readFileSync(join(replay, "package-lock.json")).equals(lockBytes) ? [] : ["replayed lockfile changed"]),
-        ...(replayLs.status === 0 && replayLs.stdout === ls.stdout ? [] : ["replayed graph differs"]),
-        ...(replayHelp.status === 0 ? [] : ["replayed chio-pi --help failed"])], {npmCi: `npm ci ${npmArgs.join(" ")}`});
+        // Each project resolves its own sibling archive copy; compare graphs with that
+        // one absolute resolution normalized to the relative dependency both use.
+        ...(replayLs.status === 0 && sameGraph(replayLs.stdout, ls.stdout, artifactName) ? [] : ["replayed graph differs"]),
+        ...(replayHelp.status === 0 ? [] : ["replayed chio-pi --help failed"])], {npmCi: "npm ci"});
 
       const out = join(options.evidence, `consumer-${kind}`); mkdirSync(out);
       copyFileSync(join(consumer, "package.json"), join(out, "package.json")); copyFileSync(join(consumer, "package-lock.json"), join(out, "package-lock.json"));

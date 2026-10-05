@@ -13,7 +13,7 @@ defaults:
   run:
     shell: bash
 env:
-  PACKAGE_NAME: '@chio/pi-plugin'
+  PACKAGE_NAME: '@chio-protocol/pi-plugin'
   TZ: UTC
   LC_ALL: C
 jobs:
@@ -62,6 +62,11 @@ jobs:
         sha256sum --check ./*.sha256
         artifacts=(./*.tgz)
         test "${#artifacts[@]}" -eq 1
+        # The packed manifest must carry the registry identity this workflow names.
+        ARCHIVE_MANIFEST="$(tar -xzOf "${artifacts[0]}" package/package.json)" node --input-type=module <<'NODE'
+        const pkg = JSON.parse(process.env.ARCHIVE_MANIFEST);
+        if (pkg.name !== process.env.PACKAGE_NAME) throw new Error(`archive package ${pkg.name} is not ${process.env.PACKAGE_NAME}`);
+        NODE
         npm publish "$(realpath "${artifacts[0]}")" --dry-run --ignore-scripts --access public
     - name: Retain qualified package
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

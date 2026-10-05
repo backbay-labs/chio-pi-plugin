@@ -87,24 +87,61 @@ test("command refuses missing arguments and existing directories before any inst
 
 test("consumer lock must record the artifact's integrity, not merely omit it", () => {
   assert.equal(typeof qualify.consumerLockProblems, "function");
-  const manifest = {dependencies: {"@chio/pi-plugin": "file:../a.tgz"}};
+  assert.equal(qualify.PACKAGE_NAME, "@chio-protocol/pi-plugin");
+  const manifest = {dependencies: {"@chio-protocol/pi-plugin": "file:../a.tgz"}};
   const entry = {resolved: "file:../a.tgz", version: "0.2.0", integrity: "sha512-good"};
   assert.deepEqual(qualify.consumerLockProblems(manifest, entry, "a.tgz", "sha512-good", "0.2.0"), []);
   assert.deepEqual(qualify.consumerLockProblems(manifest, {...entry, integrity: undefined}, "a.tgz", "sha512-good", "0.2.0"), ["lock integrity absent"]);
   assert.deepEqual(qualify.consumerLockProblems(manifest, {...entry, integrity: "sha512-other"}, "a.tgz", "sha512-good", "0.2.0"), ["lock integrity differs from artifact"]);
   assert.deepEqual(qualify.consumerLockProblems({dependencies: {}}, {}, "a.tgz", "sha512-good", "0.2.0"),
     ["manifest dependency undefined", "lock resolved undefined", "lock integrity absent", "lock version undefined"]);
+  // The pre-0.2.0 registry name is not the archive this checkout builds.
+  assert.deepEqual(qualify.consumerLockProblems({dependencies: {"@chio/pi-plugin": "file:../a.tgz"}}, entry, "a.tgz", "sha512-good", "0.2.0"), ["manifest dependency undefined"]);
 });
 
 test("redacted UUID paths normalize only the selected archive and other absolute file URLs fail", () => {
-  const graph = {dependencies: {"@chio/pi-plugin": {resolved: "file:/private/tmp/session-***/chio-pi-plugin-0.2.0.tgz"}}};
-  const normalized = qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-pi-plugin-0.2.0.tgz");
+  const graph = {dependencies: {"@chio-protocol/pi-plugin": {resolved: "file:/private/tmp/session-***/chio-protocol-pi-plugin-0.2.0.tgz"}}};
+  const normalized = qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-protocol-pi-plugin-0.2.0.tgz");
   assert.deepEqual(normalized.problems, []); assert.equal(normalized.absoluteArtifactResolutions, 1);
-  assert.equal(JSON.parse(normalized.text).dependencies["@chio/pi-plugin"].resolved, "file:../chio-pi-plugin-0.2.0.tgz");
+  assert.equal(JSON.parse(normalized.text).dependencies["@chio-protocol/pi-plugin"].resolved, "file:../chio-protocol-pi-plugin-0.2.0.tgz");
   for (const resolved of ["file:/redacted/***/other.tgz", "file:///unknown/path.tgz", "file:C:\\redacted\\other.tgz"]) {
     graph.dependencies.other = {resolved};
-    assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-pi-plugin-0.2.0.tgz").problems.includes("graph retains an absolute file resolution"));
+    assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-protocol-pi-plugin-0.2.0.tgz").problems.includes("graph retains an absolute file resolution"));
   }
-  graph.dependencies["@chio/pi-plugin"].resolved = "file:/unknown/other.tgz";
-  assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-pi-plugin-0.2.0.tgz").problems.includes("selected archive lacks exactly one absolute graph resolution"));
+  graph.dependencies["@chio-protocol/pi-plugin"].resolved = "file:/unknown/other.tgz";
+  assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-protocol-pi-plugin-0.2.0.tgz").problems.includes("selected archive lacks exactly one absolute graph resolution"));
+});
+
+test("replayed graphs compare after normalizing each project's own archive copy", () => {
+  const graph = parent => JSON.stringify({name: "chio-pi", dependencies: {"@chio-protocol/pi-plugin": {version: "0.2.0", resolved: `file:/work/${parent}/a.tgz`}}});
+  assert.equal(qualify.sameGraph(graph("consumer-base"), graph("replay-base"), "a.tgz"), true);
+  assert.equal(qualify.sameGraph(graph("consumer-base"), graph("replay-base").replace("0.2.0", "0.2.1"), "a.tgz"), false);
+  assert.equal(qualify.sameGraph(graph("consumer-base"), "not json", "a.tgz"), false);
+});
+
+test("cold consumers run the documented single install command with npm defaults", () => {
+  const peers = {"@earendil-works/pi-coding-agent": "1.0.2", "@earendil-works/pi-durable": "1.0.2"};
+  const tooling = ["typescript@7.0.2", "@types/node@26.5.0"];
+  const base = qualify.consumerInstallCommands("base", "chio-protocol-pi-plugin-0.2.0.tgz", peers, tooling);
+  assert.deepEqual(base.documented, ["install", "../chio-protocol-pi-plugin-0.2.0.tgz", "@earendil-works/pi-coding-agent@1.0.2"]);
+  assert.equal(base.registryEquivalent, "npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2");
+  const durable = qualify.consumerInstallCommands("durable", "chio-protocol-pi-plugin-0.2.0.tgz", peers, tooling);
+  assert.deepEqual(durable.documented, ["install", "../chio-protocol-pi-plugin-0.2.0.tgz", "@earendil-works/pi-coding-agent@1.0.2", "@earendil-works/pi-durable@1.0.2"]);
+  assert.equal(durable.registryEquivalent, "npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2 @earendil-works/pi-durable@1.0.2");
+  for (const args of [base.documented, durable.documented]) assert.ok(args.every(arg => !arg.startsWith("-")), `no flags: ${args.join(" ")}`);
+  assert.deepEqual(base.tooling, ["install", "--save-dev", "--save-exact", ...tooling]);
+  // npm init -y first, so npm cannot select an ancestor package.json or node_modules.
+  assert.deepEqual(base.init, ["init", "-y"]); assert.deepEqual(durable.init, ["init", "-y"]);
+  // --no refuses registry installs; -- keeps npx from consuming the binary name.
+  assert.deepEqual(qualify.documentedHelpCommand("chio-pi"), ["--no", "--", "chio-pi", "--help"]);
+});
+
+test("help runs only executables that direct dependencies declare", async t => {
+  const dir = await scratch(t); const modules = join(dir, "node_modules");
+  for (const [name, bin] of [["@scope/direct", {one: "./one.js", two: "./two.js"}], ["single", "./cli.js"], ["dev", {dev: "./dev.js"}], ["hoisted", {hoisted: "./h.js"}]]) {
+    await mkdir(join(modules, ...name.split("/")), {recursive: true});
+    await writeFile(join(modules, ...name.split("/"), "package.json"), JSON.stringify({name, bin}));
+  }
+  await writeFile(join(dir, "package.json"), JSON.stringify({dependencies: {"@scope/direct": "1.0.0", single: "1.0.0"}, devDependencies: {dev: "1.0.0"}}));
+  assert.deepEqual(qualify.directDependencyBins(dir), ["dev", "one", "single", "two"]);
 });
