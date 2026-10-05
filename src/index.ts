@@ -1,5 +1,5 @@
 export { chioExtension, CHIO_TOOL_NAME, type KernelExecutor, type KernelRequest, type KernelResult } from "./extension.js";
-export { createChioPiSession, type ChioPiOptions } from "./session.js";
+export { createChioPiSession, createChioPiRuntime, type ChioPiOptions } from "./session.js";
 export { bridgeExecutor, type McpExecutionClient } from "./bridge-executor.js";
 export { readPreparedConfig, configuredExecutor, type PreparedPiConfig } from "./configured.js";
 export { createToolRegistry, type ChioToolSpec, type ToolRegistry, type ToolMode } from "./tool-registry.js";
@@ -11,3 +11,8 @@ export { createNativeOriginalOperationPort, recoverOriginalOperation, exportCont
   type OriginalOperationPort, type NativeOriginalOperationPort, type OriginalOperation, type OriginalInventory,
   type ContinuationEnvelope, type NativeDeliveryTransport } from "./continuation.js";
 export { type ContinuationBinding, type HostCommitReference } from "./parent-mappings.js";
+
+export { createNativeEmbedding, nativeFeatureAvailability, releaseGovernedModel, nativeKnowledge, executeNativeRemedy, prepareNativeContinuation, verifyExplanationView, renderExplanation, explainNativeRecovery, type NativeEmbedding, type NativeBinding, type NativeCustody, type NativePorts, type NativeKnowledgePort, type NativeRecoveryCommand, type NativeModelPort, type NativeChildPort, type NativeSessionPort, type NativeEmbeddingOptions, type NativeExplanationPort, type ExplanationAuthority, type FrozenModelRequest } from "./governance.js";
+export { submitNativeChild, reconcileNativeChild, cancelNativeChild, waitNativeChild } from "./delegation.js";
+export { preflightNativeSession, mediatedSessionOperation, type SessionGovernance } from "./pi-governance.js";
+export { startModelRelay, readCodexAuthority, type ModelAuthority, type GovernedRelayReference } from "./model-relay.js";

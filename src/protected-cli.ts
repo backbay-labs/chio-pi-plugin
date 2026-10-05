@@ -13,6 +13,7 @@ import { createHostDeliveryObserver } from "./host-delivery.js";
 import { canonicalJson, registryForConfig } from "./tool-registry.js";
 import { readCodexAuthority, startModelRelay, type ModelAuthority } from "./model-relay.js";
 import { buildSandboxPolicy, isWithin, requireSessionCredential } from "./sandbox.js";
+import { requireNativeGovernance } from "./governance.js";
 import { runOperatorCommand } from "./operator-cli.js";
 
 async function main() {
@@ -22,7 +23,7 @@ async function main() {
     return;
   }
   if (args.length === 1 && args[0] === "--help") {
-    process.stdout.write("Usage: chio-pi --config /absolute/delegated.json --profile /absolute/profile --cwd /absolute/disposable-workspace --provider openai|openai-codex --model gpt-4.1-mini|gpt-5.5 --prompt 'task' [--codex-auth /absolute/private/codex/auth.json] [--resume /absolute/profile/sessions/session.jsonl]\nProtected candidate requires macOS, an installed package, and delegated retained-session credentials. Codex subscription mode requires --codex-auth; API mode requires operator OPENAI_API_KEY.\nTrusted diagnostics and recovery: chio-pi doctor|status|inspect|recover --help. Operator commands launch no model and require no provider credentials.\n");
+    process.stdout.write("Usage: chio-pi --config /absolute/delegated.json --profile /absolute/profile --cwd /absolute/disposable-workspace --provider openai|openai-codex --model gpt-4.1-mini|gpt-5.5 --prompt 'task' [--codex-auth /absolute/private/codex/auth.json] [--resume /absolute/profile/sessions/session.jsonl]\nRequired native governance is unavailable in the default CLI. A trusted programmatic embedding is required before provider egress. Protected candidate requires macOS, an installed package, and delegated retained-session credentials. Codex subscription mode requires --codex-auth; API mode requires operator OPENAI_API_KEY.\nTrusted diagnostics and recovery: chio-pi doctor|status|inspect|recover --help. Operator commands launch no model and require no provider credentials.\n");
     return;
   }
   if (process.platform !== "darwin") throw new Error("Protected candidate currently requires macOS sandbox-exec");
@@ -37,6 +38,9 @@ async function main() {
   const subscription = values.get("--provider") === "openai-codex" && values.get("--model") === "gpt-5.5";
   if (!subscription && (values.get("--provider") !== "openai" || values.get("--model") !== "gpt-4.1-mini")) throw new Error("Model relay supports openai/gpt-4.1-mini or openai-codex/gpt-5.5");
   if (subscription !== values.has("--codex-auth")) throw new Error("--codex-auth is required only for openai-codex");
+  // No compatible trusted host facade is shipped with the frozen bridge.
+  // Prepared JSON cannot activate missing governance or choose a native sink.
+  await requireNativeGovernance();
   if (!subscription && !process.env.OPENAI_API_KEY) throw new Error("Operator OPENAI_API_KEY required");
   const authPath = subscription ? await realpath(values.get("--codex-auth")!) : undefined;
   const authority: ModelAuthority = authPath ? await readCodexAuthority(authPath) : {provider: "openai", apiKey: process.env.OPENAI_API_KEY!};

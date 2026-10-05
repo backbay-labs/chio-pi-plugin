@@ -22,6 +22,7 @@ export async function readPreparedConfig(path: string): Promise<PreparedPiConfig
   if (!stat.isFile() || stat.isSymbolicLink() || stat.mode & 0o077 || stat.size > 1024 * 1024) throw new Error("Operator config must be a private regular file no larger than 1 MiB");
   const config = JSON.parse(await readFile(path, "utf8")) as PreparedPiConfig;
   if (!config.execution?.sessionId || !config.sessionId || !Array.isArray(config.tools) || !config.tools.length || config.execution.fetchImpl !== undefined) throw new Error("Prepared retained kernel session and explicit tools required");
+  if (["nativeEmbedding", "nativePorts", "nativeModule", "nativeExecutable", "nativeVerifier", "nativeSink"].some(key => Object.hasOwn(config, key))) throw new Error("Trusted programmatic native composition cannot be selected by prepared JSON");
   const registry = registryForConfig(config);
   return frozenJson({...config, toolMode: registry.mode});
 }

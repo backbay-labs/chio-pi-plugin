@@ -1,5 +1,6 @@
 import {
   createAgentSession,
+  createAgentSessionRuntime,
   DefaultResourceLoader,
   ModelRuntime,
   SessionManager,
@@ -7,6 +8,9 @@ import {
   VERSION,
   type ExtensionFactory,
 } from "@earendil-works/pi-coding-agent";
+import { selectGovernedRelay } from "./model-relay.js";
+import { relayCredentials } from "./model-credentials.js";
+import { installNativeSessionGates, preflightNativeSession, restrictBoundaryDrafts, type SessionGovernance } from "./pi-governance.js";
 import { chioExtension, type KernelExecutor } from "./extension.js";
 import { canonicalJson, createToolRegistry, registryInventory, resolveRegistryCall, type ChioToolSpec, type ToolMode, type ToolRegistry } from "./tool-registry.js";
 import { join } from "node:path";
@@ -29,6 +33,8 @@ export interface ChioPiOptions {
   toolInventory?: readonly ChioToolSpec[];
   toolMode?: ToolMode;
   registry?: ToolRegistry;
+  governance?: SessionGovernance;
+  sessionTarget?: {kind: "new" | "resume"; path?: string; sessionsDir?: string};
 }
 
 function selectedRegistry(options: ChioPiOptions): ToolRegistry {
@@ -41,16 +47,25 @@ function selectedRegistry(options: ChioPiOptions): ToolRegistry {
  * context files, prompt templates, themes, or skills can introduce executable
  * code. Explicit tool allowlisting also filters later tool activation. */
 export async function createChioPiSession(options: ChioPiOptions) {
+  options = Object.freeze({...options, ...(options.governance ? {governance: Object.freeze({...options.governance})} : {})});
   const executor = options.trustedGatewayTransport ? options.executor : options.executor ? withUncertaintyInterlock(options.executor, join(options.agentDir, "chio")) : undefined;
   const registry = selectedRegistry(options);
-  return createRestrictedSession({...options, registry}, chioExtension(executor, registry));
+  return createRestrictedSession({...options, registry}, pi => {chioExtension(executor, registry)(pi); installNativeSessionGates(pi, options.governance);});
 }
 
 /** Also used to test that extension omission or load failure cannot reactivate
  * built-ins. Not exported from the package entry point. */
 export async function createRestrictedSession(options: ChioPiOptions, extension?: ExtensionFactory) {
   if (VERSION !== "1.0.2") throw new Error("Pi host version differs from the pinned 1.0.2 contract");
+  await preflightNativeSession(options.governance, options.sessionTarget ?? {kind: "new"});
+  if (options.governance?.required && options.sessionManager && !runtimeManagers.has(options.sessionManager)) throw new Error("Governed initial SessionManager must be opened after native preflight");
   const registry = selectedRegistry(options);
+  const selectedRelay = options.governance?.required ? selectGovernedRelay(options.governance.relayReference, options.governance.embedding, options.provider, options.model, registry) : undefined;
+  const modelRuntime = selectedRelay ? await ModelRuntime.create({credentials: relayCredentials(options.provider, selectedRelay.token), modelsPath: null, modelsStorePath: join(options.agentDir, "models-cache.json"), allowModelNetwork: false, refreshOnCreate: false}) : options.modelRuntime;
+  const modelBaseUrl = selectedRelay?.baseUrl ?? options.modelBaseUrl;
+  const manager = options.sessionManager ?? (options.sessionTarget?.kind === "resume"
+    ? SessionManager.open(options.sessionTarget.path!, options.sessionTarget.sessionsDir, options.cwd)
+    : options.sessionTarget?.sessionsDir ? SessionManager.create(options.cwd, options.sessionTarget.sessionsDir) : SessionManager.inMemory(options.cwd));
   const settingsManager = SettingsManager.inMemory({
     defaultTools: [],
     packages: [],
@@ -83,19 +98,29 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
   await resourceLoader.reload();
   const diagnostics = resourceLoader.getExtensions().errors;
   if (diagnostics.length) throw new Error(`Chio Pi extension failed to load: ${diagnostics.map(item => item.error).join("; ")}`);
-  const model = options.modelRuntime.getModel(options.provider, options.model);
+  const model = modelRuntime.getModel(options.provider, options.model);
   if (!model) throw new Error(`Model unavailable: ${options.provider}/${options.model}`);
   const result = await createAgentSession({
     cwd: options.cwd,
     agentDir: options.agentDir,
-    modelRuntime: options.modelRuntime,
-    model: options.modelBaseUrl ? { ...model, baseUrl: options.modelBaseUrl } : model,
+    modelRuntime,
+    model: modelBaseUrl ? { ...model, baseUrl: modelBaseUrl } : model,
     noTools: "all",
     tools: registry.tools.map(tool => tool.name),
     resourceLoader,
     settingsManager,
-    sessionManager: options.sessionManager ?? SessionManager.inMemory(options.cwd),
+    sessionManager: manager,
   });
+  if (selectedRelay) {
+    const stream = result.session.agent.streamFunction;
+    if (!stream) {result.session.dispose(); throw new Error("Pinned Pi SDK stream function unavailable");}
+    // Public setModel can restore a catalog URL. Pin all ordinary and stock
+    // summary calls at the trusted SDK stream seam before provider execution.
+    result.session.agent.streamFunction = (selected, context, streamOptions) => {
+      if (selected.provider !== options.provider || selected.id !== options.model || selected.api !== model.api) throw new Error("Model differs from the pinned governed provider profile");
+      return stream({...selected, baseUrl: selectedRelay.baseUrl}, context, streamOptions);
+    };
+  }
   // The profile has one durable in-flight interlock. Ask the stock host to
   // serialize model-emitted sibling calls instead of creating false conflicts.
   result.session.agent.toolExecution = "sequential";
@@ -120,5 +145,29 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
     result.session.dispose();
     throw new Error("Unexpected native declaration or callable tool in protected profile");
   }
-  return result;
+  restrictBoundaryDrafts(result.session, options.governance);
+  return {...result, services: {cwd: options.cwd, agentDir: options.agentDir, modelRuntime, resourceLoader, settingsManager, diagnostics: []}, diagnostics: []};
+}
+
+const runtimeManagers = new WeakSet<SessionManager>();
+/** Public Pi runtime factory repeats custody checks for every replacement.
+ * Initial preflight precedes opening/restoring the initial manager. */
+export async function createChioPiRuntime(options: ChioPiOptions) {
+  options = Object.freeze({...options, registry: selectedRegistry(options), ...(options.governance ? {governance: Object.freeze({...options.governance})} : {})});
+  if (options.sessionManager) throw new Error("Use a governed session target instead of a preopened manager");
+  await preflightNativeSession(options.governance, options.sessionTarget ?? {kind: "new"});
+  const manager = options.sessionTarget?.kind === "resume"
+    ? SessionManager.open(options.sessionTarget.path!, options.sessionTarget.sessionsDir, options.cwd)
+    : options.sessionTarget?.sessionsDir ? SessionManager.create(options.cwd, options.sessionTarget.sessionsDir) : SessionManager.inMemory(options.cwd);
+  const runtime = await createAgentSessionRuntime(async target => {
+    await preflightNativeSession(options.governance, {kind: "runtime_replacement", path: target.sessionManager.getSessionFile() ?? "in_memory"});
+    runtimeManagers.add(target.sessionManager);
+    return createChioPiSession({...options, cwd: target.cwd, agentDir: target.agentDir, sessionManager: target.sessionManager});
+  }, {cwd: options.cwd, agentDir: options.agentDir, sessionManager: manager});
+  const nativeImport = runtime.importFromJsonl.bind(runtime);
+  runtime.importFromJsonl = async (source, cwdOverride) => {
+    await preflightNativeSession(options.governance, {kind: "import_source", path: source});
+    return nativeImport(source, cwdOverride);
+  };
+  return runtime;
 }

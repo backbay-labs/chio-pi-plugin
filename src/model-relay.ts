@@ -1,8 +1,19 @@
+import { finishGovernedModelDelivery, releaseGovernedModel, type NativeEmbedding } from "./governance.js";
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
 import { zstdDecompressSync } from "node:zlib";
 import { lstat, readFile } from "node:fs/promises";
 import { canonicalJson, registryInventory, resolveRegistryCall, type ToolRegistry } from "./tool-registry.js";
+
+declare const relayBrand: unique symbol;
+export interface GovernedRelayReference {readonly [relayBrand]: true}
+const governedRelays = new WeakMap<GovernedRelayReference, {embedding: NativeEmbedding; provider: string; model: string; registryDigest: string; baseUrl: string; token: string; closed: boolean}>();
+/** Trusted SDK composition checks ownership, not a lookalike loopback URL. */
+export function selectGovernedRelay(reference: GovernedRelayReference | undefined, embedding: NativeEmbedding | undefined, provider: string, model: string, registry: ToolRegistry) {
+  const selected = reference && governedRelays.get(reference);
+  if (!selected || selected.closed || selected.embedding !== embedding || selected.provider !== provider || selected.model !== model || selected.registryDigest !== registry.digest) throw new Error("Trusted governed model relay unavailable or ownership mismatch");
+  return {baseUrl: selected.baseUrl, token: selected.token};
+}
 
 export type ModelAuthority = { provider: "openai"; apiKey: string } | { provider: "openai-codex"; accessToken: string; accountId: string };
 
@@ -107,7 +118,9 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
 
 /** Operator-owned model transport. It exposes only the selected provider's
  * synchronous function-calling response route, never arbitrary proxying. */
-export async function startModelRelay(authority: ModelAuthority, model: string, onToolResults?: (outcomes: unknown[]) => Promise<void>, registry?: ToolRegistry) {
+export async function startModelRelay(authority: ModelAuthority, model: string, onToolResults?: (outcomes: unknown[]) => Promise<void>, registry?: ToolRegistry, governance?: {required: boolean; embedding?: NativeEmbedding}) {
+  authority = Object.freeze({...authority});
+  governance = governance ? Object.freeze({...governance}) : undefined;
   if (!registry) throw new Error("An explicit pinned tool registry is required");
   registryInventory(registry);
   const nonce = randomBytes(32).toString("hex");
@@ -150,12 +163,17 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
         headers["OpenAI-Beta"] = "responses=experimental";
         headers.originator = "pi";
       } else headers.authorization = `Bearer ${authority.apiKey}`;
-      const upstream = await fetch(authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", {
+      const finalJson = JSON.stringify(body);
+      const upstream = governance?.required ? await releaseGovernedModel(governance.embedding, finalJson, {provider: authority.provider, model, route: authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", accountId: authority.provider === "openai-codex" ? authority.accountId : null}, controller.signal) : await fetch(authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", {
         method: "POST", redirect: "error", signal: controller.signal,
-        headers, body: JSON.stringify(body),
+        headers, body: finalJson,
       });
       response.writeHead(upstream.status, { "content-type": upstream.headers.get("content-type") ?? "application/json" });
       if (upstream.body) for await (const data of upstream.body) response.write(data);
+      if (governance?.required) {
+        if (controller.signal.aborted) throw new Error("Original model delivery uncertain");
+        finishGovernedModelDelivery(upstream);
+      }
       response.end();
     } catch {
       if (!response.headersSent) response.writeHead(502);
@@ -166,5 +184,9 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("Model relay failed to bind");
   port = address.port;
-  return { port, token, async close() { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); } };
+  const governanceReference = governance?.required && governance.embedding ? Object.freeze({}) as GovernedRelayReference : undefined;
+  if (governanceReference) governedRelays.set(governanceReference, {embedding: governance!.embedding!, provider: authority.provider, model, registryDigest: registry.digest, baseUrl: `http://127.0.0.1:${port}/v1`, token, closed: false});
+  return { port, token, governanceReference, async close() {
+    if (governanceReference) governedRelays.get(governanceReference)!.closed = true;
+    server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); } };
 }
