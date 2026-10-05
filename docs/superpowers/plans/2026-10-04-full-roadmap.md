@@ -460,3 +460,31 @@ recorded macOS results use Node 25.5.0. See
 [the task record](../evidence/2026-10-04-task6-limits-linux.md). This closes
 component and measured local Task 6 evidence; native service, P5, actual x64,
 ordinary Docker and live provider acceptance remain open.
+
+
+## Task 7 review closure
+
+Task 7 ran as two reviewed parts. Workflow fixture: `70a228a` and `da102b6`;
+review found that the independent observer could not count a duplicate
+content-addressed publication and that stopped workflows crashed the
+qualification command, fixed in `193ea5e` and `e3c72fe`. A scoped re-review at
+`e3c72fe` found both addressed. With Homebrew Node 25.5.0 the full suite passed
+386 of 386 and `scripts/qualify-roadmap.mjs --profile component` passed 23 of 23
+independent checks; the pinned Linux image passed the workflow file 5 of 5.
+Scripted executor and signed bridge fixture evidence remains labeled as adapter
+and host evidence, not native kernel qualification. See
+[the workflow record](../evidence/2026-10-04-task7-workflow.md).
+
+Release surface: `ced0f96`, `14b94d9`, `1e611c5`, `2059150` and `9bd5f22`. Cold
+consumers exposed two shipped defects, both fixed with regressions that fail on
+the old code: the installed `chio-coding-resource` binary did nothing through
+npm executable symlinks, and the macOS recipe policy emitted an unfiltered
+metadata rule for runtimes with no non-system dylib closure, so a confined recipe
+could stat any path. That rule, not a missing closure, explains the earlier
+Node 26.7.0 confinement failures. The task review approved `9bd5f22` with no
+critical or important findings. The full suite passed 394 of 394 on Node 25.5.0;
+both cold consumers passed on Node 25.5.0 with npm 11.8.0 and on Node 22.19.0 with
+npm 10.9.3 and 11.8.0. The candidate recorded there was built from `2059150`
+before review; Task 8 rebuilds the candidate on the final reviewed commit. See
+[the release record](../evidence/2026-10-04-task7-release.md) and
+[the roadmap crosswalk](../../ROADMAP-IMPLEMENTATION.md).
