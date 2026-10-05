@@ -121,6 +121,36 @@ retained session, is on this host and can be proved dead. Alive, foreign-host,
 unverifiable and changed locks are refused. Every operation journal and original
 fence remains in place. This action does not reconcile an unknown effect.
 
+## Recover a stale parent run-limits owner lock
+
+The protected launcher's model accounting lives in
+`<native-journal>/pi-run-limits/<sha256-of-absolute-profile>/`. `run.json` is the
+accounting record. `owner.json` exists while a launcher owns it and names the
+owner's host identity, PID and, once the guest is spawned, `guestProcessGroup`.
+A launch recovers a lock automatically only when the owner is on this host, its PID
+is gone and its recorded guest process group is gone. Otherwise it refuses with
+"Run budget has an active owner lock", "Run owner belongs to another host or PID
+namespace", "Run owner's guest process group ... still exists or is unverifiable"
+or "Run owner recovery lock unavailable". After a reboot, a hostname change (macOS
+can change it dynamically) or a container restart that reuses PIDs, the recorded
+identity proves nothing and the lock stays until an operator acts:
+
+1. On every host that can reach this journal, confirm that no `chio-pi` launcher
+   and no `sandbox-exec` or `bwrap` guest for this profile is running, for example
+   `ps -A -o pid,pgid,stat,command | grep -F -- /absolute/profile`. If `owner.json`
+   names a `guestProcessGroup`, confirm no executing member remains:
+   `ps -A -o pid,pgid,stat,command | awk -v g=GROUP '$2 == g'`. Stop a surviving
+   guest of this profile first. After a reboot the number can belong to an
+   unrelated process; never signal a group you have not identified.
+2. Move `owner.json` out of the accounting directory into a private operator
+   location for inspection. If an empty `owner-recovery` directory remains from an
+   interrupted recovery, remove it with `rmdir`.
+3. Never edit, delete or recreate `run.json`. Its counts and absolute deadline
+   must survive.
+4. Launch again. The launcher takes a new lock and resumes the existing record.
+
+This procedure never reconciles a native operation; use `chio-pi recover` for that.
+
 ## Boundaries and unavailable contracts
 
 Private configuration, journal, input and output paths must be owned by the

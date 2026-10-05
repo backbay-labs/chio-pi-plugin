@@ -19,3 +19,29 @@ test('bound active relay connections and disconnected sockets clean up',async()=
  for(let i=0;i<3;i++){const c=connect(join(dir,'g.sock'));c.on('error',()=>{});clients.push(c);await new Promise(r=>setTimeout(r,20));}assert.ok(parent.activeConnections<=2);assert.ok(clients[2].destroyed);clients.forEach(c=>c.destroy());await new Promise(r=>setTimeout(r,30));assert.equal(parent.activeConnections,0);
  }finally{clients.forEach(c=>c.destroy());await parent.close();await close(service);await rm(dir,{recursive:true,force:true});}
 });
+
+// Task 8 area C (C-M1): ordinary backpressure pauses; it never disconnects.
+async function transfer(bounds,bytes,consumer){
+ const dir=await realpath(await mkdtemp(join(tmpdir(),'chio-ur-')));const payload=Buffer.alloc(bytes,0x5a);
+ const service=netServer(s=>{s.on('error',()=>{});s.end(payload);});await listen(service);
+ const parent=await relay.createUnixRelay(join(dir,'g.sock'),service.address().port,bounds);
+ try{return await new Promise((resolve,reject)=>{let received=0;const client=connect(join(dir,'g.sock'));client.on('error',reject);
+  client.on('data',chunk=>{received+=chunk.length;consumer?.(client);});client.on('close',()=>resolve(received));});}
+ finally{await parent.close();await close(service);await rm(dir,{recursive:true,force:true});}
+}
+const stutter=client=>{if(!client.isPaused()){client.pause();setTimeout(()=>client.resume(),5);}};
+test('C-M1: a read larger than a small queue bound pauses instead of disconnecting',{timeout:60000},async()=>{
+ assert.equal(await transfer({maxConnections:2,maxQueuedBytes:4096},1024*1024,stutter),1024*1024);
+});
+test('C-M1: a stuttering consumer receives every byte of large transfers at the default bound',{timeout:120000},async()=>{
+ const sizes=await Promise.all(Array.from({length:4},()=>transfer(undefined,4*1024*1024,stutter)));
+ assert.deepEqual(sizes,Array(4).fill(4*1024*1024));
+});
+test('C-M1: relay idle timeout derives from the provider timeout',{timeout:30000},async()=>{
+ assert.equal(typeof relay.relayBounds,'function');
+ assert.equal(relay.relayBounds(120000).idleTimeoutMs,130000);assert.equal(relay.relayBounds(1000).idleTimeoutMs,120000);assert.equal(relay.relayBounds(2147483647).idleTimeoutMs,2147483647);
+ const dir=await realpath(await mkdtemp(join(tmpdir(),'chio-ur-')));const service=netServer(s=>s.on('error',()=>{}));await listen(service);
+ const parent=await relay.createUnixRelay(join(dir,'g.sock'),service.address().port,{maxConnections:2,maxQueuedBytes:4096,idleTimeoutMs:200});
+ try{const client=connect(join(dir,'g.sock'));client.on('error',()=>{});const started=Date.now();await new Promise(r=>client.once('close',r));const elapsed=Date.now()-started;assert.ok(elapsed>=150&&elapsed<5000,String(elapsed));}
+ finally{await parent.close();await close(service);await rm(dir,{recursive:true,force:true});}
+});

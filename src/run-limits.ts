@@ -33,12 +33,15 @@ interface RecordState {digest:string;schema:"chio.pi.run-limits.v1"; identity:st
 export interface RunBudget {
   readonly identity:string; readonly binding:Readonly<RunBinding>; readonly profile: ReturnType<typeof providerProfile>; readonly limits:Readonly<RunLimits>;
   readonly deadline:number; readonly remainingRequests:number; readonly remainingOutputTokens:number|null; readonly hardOutputTokenLimit:number|null;
-  reserveRequest(body:Record<string,unknown>):Promise<void>; close():Promise<void>;
+  reserveRequest(body:Record<string,unknown>):Promise<void>;
+  /** Record the spawned guest's isolated process group in the owner lock. */
+  recordGuest(processGroup:number):Promise<void>; close():Promise<void>;
 }
 /** One trusted parent owns this private state for its lifetime. A lost owner can
- * be recovered only when the recorded local PID provably no longer exists.
- * PID reuse conservatively refuses; this lock is never a native journal fence. */
-async function acquire(directory:string):Promise<()=>Promise<void>> {
+ * be recovered only when the recorded local PID and its recorded guest process
+ * group provably no longer exist. PID or group reuse conservatively refuses;
+ * this lock is never a native journal fence. */
+async function acquire(directory:string):Promise<{release:()=>Promise<void>;recordGuest:(processGroup:number)=>Promise<void>}> {
   const boot=process.platform==="linux" ? (await readFile("/proc/sys/kernel/random/boot_id","utf8")).trim()
     : process.platform==="darwin" ? execFileSync("/usr/sbin/sysctl",["-n","kern.bootsessionuuid"],{encoding:"utf8"}).trim() : "";
   if(!/^[a-f0-9-]{36}$/i.test(boot))throw new Error("Run owner host identity unavailable");
@@ -48,23 +51,41 @@ async function acquire(directory:string):Promise<()=>Promise<void>> {
   try {await create();}
   catch (error) {
     if ((error as NodeJS.ErrnoException).code!=="EEXIST") throw error;
-    const owner=await readPrivateJson(path) as {schema?:unknown;pid?:unknown;nonce?:unknown;host?:unknown};
+    const owner=await readPrivateJson(path) as {schema?:unknown;pid?:unknown;nonce?:unknown;host?:unknown;guestProcessGroup?:unknown};
     if (owner.host!==host)throw new Error("Run owner belongs to another host or PID namespace");
-    if (owner.schema!=="chio.pi.run-owner.v1" || !Number.isSafeInteger(owner.pid) || Number(owner.pid)<1 || typeof owner.nonce!=="string") throw new Error("Invalid run owner lock");
+    if (owner.schema!=="chio.pi.run-owner.v1" || !Number.isSafeInteger(owner.pid) || Number(owner.pid)<1 || typeof owner.nonce!=="string"
+      || owner.guestProcessGroup!==undefined && (!Number.isSafeInteger(owner.guestProcessGroup) || Number(owner.guestProcessGroup)<2)) throw new Error("Invalid run owner lock");
     try {process.kill(Number(owner.pid),0); throw new Error("Run budget has an active owner lock");}
     catch (check) {if ((check as NodeJS.ErrnoException).code!=="ESRCH") throw check;}
+    // A parent killed without cleanup can leave its detached guest running with
+    // profile write access. Only proven group absence admits a second owner.
+    const guestGone=(group:unknown)=>{
+      if(group===undefined) return;
+      try {process.kill(-Number(group),0);}
+      catch (check) {if((check as NodeJS.ErrnoException).code==="ESRCH") return;}
+      throw new Error(`Run owner's guest process group ${group} still exists or is unverifiable; stop it before recovery`);
+    };
+    guestGone(owner.guestProcessGroup);
     const recovery=join(directory,"owner-recovery");
     try {await mkdir(recovery,{mode:0o700});}
     catch {throw new Error("Run owner recovery lock unavailable");}
     try {
-      const current=await readPrivateJson(path) as {nonce?:unknown;pid?:unknown;host?:unknown};
-      if(current.host!==host || current.nonce!==owner.nonce || current.pid!==owner.pid)throw new Error("Run owner lock changed during recovery");
+      const current=await readPrivateJson(path) as {nonce?:unknown;pid?:unknown;host?:unknown;guestProcessGroup?:unknown};
+      if(current.host!==host || current.nonce!==owner.nonce || current.pid!==owner.pid || current.guestProcessGroup!==owner.guestProcessGroup)throw new Error("Run owner lock changed during recovery");
       try {process.kill(Number(current.pid),0);throw new Error("Run owner lock is active");}
       catch (check) {if((check as NodeJS.ErrnoException).code!=="ESRCH")throw check;}
+      guestGone(current.guestProcessGroup);
       await unlink(path);await syncDirectory(directory);await create();
     } finally {await rmdir(recovery);await syncDirectory(directory);}
   }
-  return async()=>{const current=await readPrivateJson(path) as {nonce?:unknown;host?:unknown}; if(current.nonce!==nonce) throw new Error("Run owner lock changed"); await unlink(path); await syncDirectory(directory);};
+  const owned=async()=>{const current=await readPrivateJson(path) as Record<string,unknown>; if(current.nonce!==nonce) throw new Error("Run owner lock changed"); return current;};
+  return {
+    release:async()=>{await owned(); await unlink(path); await syncDirectory(directory);},
+    recordGuest:async(processGroup:number)=>{
+      if(!Number.isSafeInteger(processGroup) || processGroup<2) throw new Error("Invalid guest process group");
+      await writePrivateJson(path,{...await owned(),guestProcessGroup:processGroup},true);
+    },
+  };
 }
 export async function openRunBudget(directory:string, options:{binding:RunBinding;limits:RunLimits;provider:FixedProvider;model:string;create?:boolean}):Promise<RunBudget> {
   normalizedPath(directory);
@@ -76,7 +97,7 @@ export async function openRunBudget(directory:string, options:{binding:RunBindin
   const seal=(value:Omit<RecordState,"digest">):RecordState=>({...value,digest:sha256(canonicalJson(value))});
   if(options.create) {try {await mkdir(directory,{mode:0o700});} catch(e) {if((e as NodeJS.ErrnoException).code!=="EEXIST") throw e;}}
   const canonical=await ownedDirectory(directory); if(canonical!==directory) throw new Error("Run state path contains a symlink");
-  const release=await acquire(directory); const path=join(directory,"run.json");
+  const {release,recordGuest}=await acquire(directory); const path=join(directory,"run.json");
   let state:RecordState; let closed=false, failed=false; let serial=Promise.resolve();
   const read=async()=>{
     const value=await readPrivateJson(path,8192) as RecordState;
@@ -121,6 +142,7 @@ export async function openRunBudget(directory:string, options:{binding:RunBindin
       });
       serial=operation.catch(()=>{}); return operation;
     },
+    async recordGuest(processGroup:number){if(closed) throw new Error("Run budget closed"); await recordGuest(processGroup);},
     async close(){await serial; if(!closed){closed=true; await release();}},
   });
 }

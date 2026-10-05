@@ -5,6 +5,7 @@ import {createHash} from "node:crypto";
 import {isWithin} from "./sandbox.js";
 import {normalizedPath,ownedDirectory} from "./private-state.js";
 import {validateRelaySocket} from "./unix-relay.js";
+import {GUEST_SECRET_FD,credentialName,encodeGuestSecrets} from "./guest-secrets.js";
 
 export interface LinuxRuntimeFile {path:string;mountPath:string;sha256:string}
 export interface LinuxRuntime {schema:"chio.pi.linux-runtime.v1";architecture:"arm64"|"x64";node:string;nodeSha256:string;runtimeFiles:LinuxRuntimeFile[]}
@@ -31,7 +32,9 @@ async function pinnedFile(path:string,hash:string,executable=false){
   const file=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
   try{const before=await file.stat();if(before.ino!==stat.ino || before.dev!==stat.dev)throw new Error("Runtime pin changed");const bytes=await file.readFile();const after=await file.stat();if(bytes.length!==stat.size || after.size!==stat.size || after.mtimeMs!==stat.mtimeMs || after.ctimeMs!==stat.ctimeMs || createHash('sha256').update(bytes).digest('hex')!==hash)throw new Error("Operator-selected runtime pin changed");}finally{await file.close();}
 }
-export interface LinuxGuestOptions {runtime:LinuxRuntime;installation:string;profile:string;cwd:string;gatewaySocket:string;modelSocket:string;gatewayPort:number;modelPort:number;bootstrap:string;argv:string[];environment:Record<string,string>}
+/** `environment` is public: it becomes bubblewrap arguments. Bearer `secrets`
+ * are returned as a payload for the caller to write to inherited FD4. */
+export interface LinuxGuestOptions {runtime:LinuxRuntime;installation:string;profile:string;cwd:string;gatewaySocket:string;modelSocket:string;gatewayPort:number;modelPort:number;bootstrap:string;argv:string[];environment:Record<string,string>;secrets?:Record<string,string>}
 export async function prepareLinuxGuest(options:LinuxGuestOptions) {
   if(process.platform!=="linux")throw new Error("Whole-Pi bubblewrap requires Linux");
   const launcher="/usr/bin/bwrap";const launcherStat=await lstat(launcher);
@@ -62,14 +65,20 @@ export async function prepareLinuxGuest(options:LinuxGuestOptions) {
   args.push("--ro-bind",r.node,r.node,"--ro-bind",options.installation,options.installation,"--bind",options.profile,options.profile,"--tmpfs",options.cwd,"--chmod","0700","/run/relays");
   for(const f of runtimeFiles)args.push("--ro-bind",f.path,f.mountPath);
   args.push("--ro-bind",options.gatewaySocket,"/run/relays/gateway.sock","--ro-bind",options.modelSocket,"/run/relays/model.sock");
-  for(const [key,value] of Object.entries(options.environment)){if(!/^[A-Z][A-Z0-9_]*$/.test(key)||value.includes('\0'))throw new Error("Invalid minimal guest environment");args.push("--setenv",key,value);}
+  // Bubblewrap arguments are world-readable in /proc for the guest's lifetime.
+  for(const [key,value] of Object.entries(options.environment)){if(!/^[A-Z][A-Z0-9_]*$/.test(key)||value.includes('\0'))throw new Error("Invalid minimal guest environment");if(credentialName(key))throw new Error("Guest secret or credential must not be a bubblewrap argument");args.push("--setenv",key,value);}
+  const secrets=options.secrets===undefined?undefined:encodeGuestSecrets(options.secrets);
+  if(secrets)args.push("--setenv","CHIO_PI_SECRET_FD",String(GUEST_SECRET_FD));
   args.push("--setenv","CHIO_PI_GATEWAY_SOCKET","/run/relays/gateway.sock","--setenv","CHIO_PI_MODEL_SOCKET","/run/relays/model.sock","--setenv","CHIO_PI_GATEWAY_PORT",String(options.gatewayPort),"--setenv","CHIO_PI_MODEL_PORT",String(options.modelPort),"--chdir",options.cwd,"--seccomp","3","--",r.node,options.bootstrap,...options.argv);
-  return {launcher,args,seccomp:wholeGuestFilter(r.architecture),profile:"chio.pi.linux-whole-guest.v1",architecture:r.architecture};
+  return {launcher,args,seccomp:wholeGuestFilter(r.architecture),profile:"chio.pi.linux-whole-guest.v1",architecture:r.architecture,secrets,secretFd:GUEST_SECRET_FD};
 }
 /** Distinct from the socket-denying recipe filter. Installed only at bwrap's
  * final FD3 stage, after it creates namespaces and activates loopback. */
 export function wholeGuestFilter(architecture:"arm64"|"x64"=process.arch as "arm64"|"x64"):Buffer {
-  const profiles={arm64:{arch:0xc00000b7,clone:220,socket:198,socketpair:199,denied:[97,268,40,39,41,425]},x64:{arch:0xc000003e,clone:56,socket:41,socketpair:53,denied:[57,58,272,308,165,166,155,425]}};
+  // Denied besides process creation: unshare, setns, mount, umount2, pivot_root,
+  // io_uring_setup, then ptrace, process_vm_readv/writev and pidfd_getfd.
+  // bubblewrap's PID 1 runs without this filter; the guest must not drive it.
+  const profiles={arm64:{arch:0xc00000b7,clone:220,socket:198,socketpair:199,denied:[97,268,40,39,41,425,117,270,271,438]},x64:{arch:0xc000003e,clone:56,socket:41,socketpair:53,denied:[57,58,272,308,165,166,155,425,101,310,311,438]}};
   const p=profiles[architecture];if(!p)throw new Error("Whole guest seccomp architecture unsupported");
   const ins:[number,number,number,number][]=[];const labels=new Map<string,number>();const jumps:{index:number;yes:string;no:string}[]=[];
   const load=(offset:number)=>ins.push([0x20,0,0,offset]),ret=(value:number)=>ins.push([0x06,0,0,value]);

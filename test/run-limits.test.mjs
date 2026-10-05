@@ -65,3 +65,48 @@ test('absolute deadline and counters are integrity bound, valid JSON edits canno
 test('foreign host owner is never removed using a local dead PID observation',()=>fixture(async path=>{
  const opts={binding,limits,provider:'openai',model:'gpt-4.1-mini'};const b=await limitsModule.openRunBudget(path,{...opts,create:true});await b.close();await writeFile(join(path,'owner.json'),JSON.stringify({schema:'chio.pi.run-owner.v1',pid:2147483647,nonce:'foreign',host:'other-host'}),{mode:0o600});await assert.rejects(limitsModule.openRunBudget(path,opts),/host|owner|lock/);
 }));
+
+// Task 8 area C (C-I2): a dead owner's recorded guest process group must be gone
+// before a second launch can own the same profile accounting.
+const {spawn} = await import('node:child_process');
+const {readFile: readText} = await import('node:fs/promises');
+const pause = ms => new Promise(r => setTimeout(r, ms));
+const groupGone = async pgid => {for (let i = 0; i < 200; i++) {try {process.kill(-pgid, 0);} catch (error) {if (error.code === 'ESRCH') return true;} await pause(25);} return false;};
+const exited = child => child.exitCode !== null || child.signalCode !== null ? Promise.resolve() : new Promise(r => child.once('exit', r));
+test('C-I2: stale owner recovery refuses while the recorded guest process group still exists', {timeout: 30000}, () => fixture(async path => {
+ const opts = {binding, limits, provider:'openai', model:'gpt-4.1-mini'};
+ const b = await limitsModule.openRunBudget(path, {...opts, create:true}); const owner = JSON.parse(await readText(join(path, 'owner.json'), 'utf8')); await b.close();
+ const guest = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], {detached:true, stdio:'ignore'});
+ try {
+  const stale = JSON.stringify({...owner, pid:2147483647, nonce:'lost-owner', guestProcessGroup:guest.pid});
+  await writeFile(join(path, 'owner.json'), stale, {mode:0o600});
+  await assert.rejects(limitsModule.openRunBudget(path, opts), /guest process group/);
+  assert.equal(await readText(join(path, 'owner.json'), 'utf8'), stale);
+ } finally {try {process.kill(-guest.pid, 'SIGKILL');} catch {} await exited(guest);}
+ assert.equal(await groupGone(guest.pid), true);
+ const recovered = await limitsModule.openRunBudget(path, opts); assert.equal(recovered.remainingRequests, 2); await recovered.close();
+}));
+
+test('C-I2: a real guest surviving its SIGKILLed parent blocks owner recovery until it is gone', {timeout: 30000}, () => fixture(async path => {
+ const opts = {binding, limits:{...limits, wallMs:60000}, provider:'openai', model:'gpt-4.1-mini'};
+ const first = await limitsModule.openRunBudget(path, {...opts, create:true}); await first.reserveRequest({}); await first.close();
+ const parentScript = join(path, '..', 'parent.mjs');
+ await writeFile(parentScript, `import {spawn} from 'node:child_process';
+import {openRunBudget} from ${JSON.stringify(new URL('../dist/run-limits.js', import.meta.url).href)};
+import {superviseGuest} from ${JSON.stringify(new URL('../dist/guest-termination.js', import.meta.url).href)};
+const budget = await openRunBudget(process.argv[2], JSON.parse(process.argv[3]));
+const child = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], {detached:true, stdio:'ignore'});
+const supervised = superviseGuest(child, {deadline:budget.deadline, killGraceMs:100, processGroup:true});
+await budget.recordGuest(child.pid); console.log(child.pid); await supervised;`);
+ const parent = spawn(process.execPath, [parentScript, path, JSON.stringify(opts)], {stdio:['ignore', 'pipe', 'inherit']});
+ const guest = await new Promise((resolve, reject) => {parent.stdout.once('data', x => resolve(Number(x.toString().trim()))); parent.once('exit', code => reject(new Error(`parent exited ${code}`)));});
+ try {
+  assert.equal(JSON.parse(await readText(join(path, 'owner.json'), 'utf8')).guestProcessGroup, guest);
+  parent.kill('SIGKILL'); await exited(parent);
+  process.kill(-guest, 0);
+  await assert.rejects(limitsModule.openRunBudget(path, opts), /guest process group/);
+ } finally {try {process.kill(-guest, 'SIGKILL');} catch {}}
+ assert.equal(await groupGone(guest), true);
+ const attempts = await Promise.allSettled(Array.from({length:3}, () => limitsModule.openRunBudget(path, opts)));
+ const owners = attempts.filter(x => x.status === 'fulfilled'); assert.equal(owners.length, 1); assert.equal(owners[0].value.remainingRequests, 1); await owners[0].value.close();
+}));

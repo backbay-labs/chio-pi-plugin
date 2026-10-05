@@ -88,8 +88,8 @@ test("protected launch refuses guest-controlled profile links before any parent 
       await budget.reserveRequest({}); await budget.close();
       return profile;
     };
-    const launch = (profile, cwd) => promisify(execFile)(process.execPath, [cli, "--config", f.configPath, "--profile", profile, "--cwd", cwd, "--provider", "openai", "--model", "gpt-4.1-mini", "--prompt", "synthetic task", "--limits", limitsPath,
-      ...(process.platform === "linux" ? ["--linux-runtime", runtimePath] : [])], {env: {PATH: process.env.PATH, OPENAI_API_KEY: "synthetic-placeholder-not-a-credential"}, timeout: 60000})
+    const launch = (profile, cwd, options = {}) => promisify(execFile)(process.execPath, [cli, "--config", f.configPath, "--profile", profile, "--cwd", cwd, "--provider", "openai", "--model", "gpt-4.1-mini", "--prompt", "synthetic task", "--limits", options.limits ?? limitsPath,
+      ...(process.platform === "linux" ? ["--linux-runtime", options.runtime ?? runtimePath] : [])], {env: {PATH: process.env.PATH, OPENAI_API_KEY: "synthetic-placeholder-not-a-credential", ...options.env}, timeout: 60000})
       .then(result => ({code: 0, ...result}), error => ({code: error.code, stdout: error.stdout, stderr: error.stderr}));
     const cases = {
       // The reviewed reproduction: a confined guest leaves this link behind.
@@ -135,6 +135,73 @@ test("protected launch refuses guest-controlled profile links before any parent 
       assert.equal(result.code, 1, result.stderr);
       assert.match(result.stderr, /^Chio Pi protected launch refused: /);
       assert.match(result.stderr, selected.refusal);
+    });
+    // Task 8 area C (C-M5): operator pins must not be guest-writable files.
+    const pinCases = {"limits inside the guest profile": "profile", "limits inside the disposable workspace": "cwd", ...(process.platform === "linux" ? {"runtime pins inside the guest profile": "runtime"} : {})};
+    for (const [name, where] of Object.entries(pinCases)) await t.test(`C-M5: ${name}`, async () => {
+      const base = join(f.directory, `pin-${where}`); await mkdir(base, {mode: 0o700});
+      const profile = await resumed(join(base, "profile")), cwd = join(base, "cwd"); await mkdir(cwd, {mode: 0o700});
+      const pin = join(where === "cwd" ? cwd : profile, where === "runtime" ? "runtime.json" : "limits.json");
+      await writeFile(pin, where === "runtime" ? "{}" : JSON.stringify(limits), {mode: 0o600});
+      const marker = await readFile(join(profile, ".chio-pi-profile.json"), "utf8");
+      const result = await launch(profile, cwd, where === "runtime" ? {runtime: pin} : {limits: pin});
+      assert.doesNotMatch(result.stdout, /chio_protected_runtime/, "no guest launch");
+      assert.equal(result.code, 1, result.stderr);
+      assert.match(result.stderr, /Run limits and Linux runtime pins must remain outside guest paths/);
+      assert.equal(await readFile(join(profile, ".chio-pi-profile.json"), "utf8"), marker);
+      assert.equal(await absent(join(profile, "gateway-transport.json")), true);
+    });
+    // Task 8 area C (C-M4): the ownership marker follows the run record and is
+    // published atomically; a guest-controlled marker is read bounded.
+    const reached = result => process.platform === "darwin" ? /chio_protected_runtime/.test(result.stdout) : /Actual architecture-pinned Linux runtime manifest required/.test(result.stderr);
+    const budgetPath = profile => join(budgetRoot, privateState.sha256(profile), "run.json");
+    await t.test("C-M4: an early refusal on an empty profile leaves it launchable", async () => {
+      const base = join(f.directory, "early-refusal"); await mkdir(base, {mode: 0o700});
+      const profile = join(base, "profile"); await mkdir(profile, {mode: 0o700});
+      const refused = await launch(profile, join(profile, "work"));
+      assert.match(refused.stderr, /Disposable workspace cannot overlap guest profile state/);
+      assert.deepEqual(await readdir(profile), [], "no marker without its run record");
+      const result = await launch(profile, join(base, "cwd"));
+      assert.equal(reached(result), true, result.stderr);
+      const marker = await lstat(join(profile, ".chio-pi-profile.json"));
+      assert.equal(marker.isFile(), true); assert.equal(marker.nlink, 1); assert.equal(marker.mode & 0o777, 0o600);
+      assert.equal(JSON.parse(await readFile(join(profile, ".chio-pi-profile.json"), "utf8")).schema, "chio.pi.profile.v2");
+      assert.deepEqual(await leftovers(profile), []);
+    });
+    await t.test("C-M4: a guest that empties its profile resumes the original accounting", async () => {
+      const base = join(f.directory, "emptied"); await mkdir(base, {mode: 0o700});
+      const profile = join(base, "profile"); await mkdir(profile, {mode: 0o700});
+      assert.equal(reached(await launch(profile, join(base, "cwd"))), true);
+      const record = await readFile(budgetPath(profile), "utf8");
+      for (const name of await readdir(profile)) await rm(join(profile, name), {recursive: true, force: true});
+      const result = await launch(profile, join(base, "cwd"));
+      assert.doesNotMatch(result.stderr, /EEXIST/);
+      assert.equal(reached(result), true, result.stderr);
+      assert.equal(await readFile(budgetPath(profile), "utf8"), record, "accounting retained, never recreated");
+      if (process.platform === "darwin") assert.equal(JSON.parse(result.stdout.split("\n")[0]).deadline, JSON.parse(record).deadline);
+      assert.equal((await lstat(join(profile, ".chio-pi-profile.json"))).nlink, 1);
+    });
+    for (const [name, plant] of [
+      ["oversized marker", async marker => {const value = JSON.parse(await readFile(marker, "utf8")); await writeFile(marker, JSON.stringify(value) + " ".repeat(2 * 1024 * 1024), {mode: 0o600});}],
+      ["hardlinked marker", async (marker, base) => link(marker, join(base, "outside-marker-link"))],
+    ]) await t.test(`C-M4: ${name} is refused by a bounded private read`, async () => {
+      const base = join(f.directory, name.replaceAll(" ", "-")); await mkdir(base, {mode: 0o700});
+      const profile = await resumed(join(base, "profile")); await plant(join(profile, ".chio-pi-profile.json"), base);
+      const result = await launch(profile, join(base, "cwd"));
+      assert.equal(result.code, 1, result.stderr);
+      assert.match(result.stderr, /Existing profile lacks a private Chio ownership marker/);
+      assert.doesNotMatch(result.stdout, /chio_protected_runtime/);
+    });
+    // Task 8 area C (C-M7): the parent's control directory does not outlive it.
+    await t.test("C-M7: the parent control directory is removed after launch", async () => {
+      const base = join(f.directory, "control"); await mkdir(base, {mode: 0o700});
+      const temporary = join(base, "t"); await mkdir(temporary, {mode: 0o700});
+      const profile = await resumed(join(base, "profile"));
+      const result = await launch(profile, join(base, "cwd"), {env: {TMPDIR: temporary}});
+      assert.equal(reached(result), true, result.stderr);
+      assert.deepEqual(await readdir(temporary), []);
+      // The removed policy file's exact text stays in the runtime record.
+      if (process.platform === "darwin") {const line = JSON.parse(result.stdout.split("\n")[0]); assert.equal(privateState.sha256(line.policy), line.policySha256);}
     });
     await t.test("clean resumed profile still publishes atomically", async () => {
       const base = join(f.directory, "clean"); await mkdir(base, {mode: 0o700});

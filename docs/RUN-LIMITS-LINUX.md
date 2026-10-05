@@ -8,8 +8,15 @@ absolute profile identity, governance selection, versioned fixed provider profil
 all operator limits and the original absolute deadline. An integrity digest detects
 corruption of the retained counters and deadline. Counts and the absolute deadline survive restart.
 
-A new dedicated, empty profile explicitly creates its record once. Existing
-profiles require the original record, including launches without `--resume`.
+A new dedicated, empty profile explicitly creates its record once. The profile's
+ownership marker is published only after that record exists, through a private
+temporary file, file fsync, exclusive link and directory fsync, so a refusal or
+crash between the two never leaves a marker without its record. An empty profile
+whose record already exists (an interrupted first launch, or a guest that emptied
+its profile) resumes that record with its counts and deadline; it is never
+recreated or reset. Existing profiles require the original record, including
+launches without `--resume`. The launcher reads an existing marker as guest
+output: private, single-link, bounded and without following links.
 Missing, corrupt, differently bound or concurrently owned state refuses launch.
 Do not delete accounting to make a resume work. Diagnose or recover the original
 operation through `chio-pi doctor|status|inspect|recover`; these commands start no
@@ -18,9 +25,14 @@ without accounting require a separately prepared new run, not an implicit upgrad
 
 The owner lock binds the hostname, boot identity and parent PID namespace before
 considering a dead PID. Foreign-host or foreign-namespace ownership refuses.
-The owner lock refuses a live PID. A recorded dead local PID permits exclusive
-recovery of the same state. PID reuse conservatively refuses. An interrupted owner
-recovery can leave its lock for operator inspection; it cannot authorize a reset.
+The owner lock refuses a live PID. After spawning the guest, the parent records the
+guest's isolated process group in the lock. A recorded dead local PID permits
+exclusive recovery of the same state only when its recorded guest process group no
+longer exists, so a second launch never runs beside a surviving guest. PID or group
+reuse conservatively refuses. An interrupted owner recovery can leave its lock for
+operator inspection; it cannot authorize a reset. A lock that cannot be recovered
+automatically, for example after a reboot or a hostname change, follows the manual
+procedure in [OPERATOR.md](OPERATOR.md#recover-a-stale-parent-run-limits-owner-lock).
 All records require private current-user directories and regular, single-link,
 private files, bounded NOFOLLOW reads, exclusive ownership, atomic publication,
 file fsync and directory fsync. Storage failure fences provider submission.
@@ -80,6 +92,8 @@ and its original fence survive interruption.
 
 Use an installed package and exact Pi 1.0.2 dependency tree, a dedicated private
 profile, and a disposable cwd outside source, operator configuration and journal.
+The `--limits` and `--linux-runtime` files must be outside the profile, the
+disposable cwd and the installed tree; a guest-writable pin refuses before launch.
 Linux additionally requires `--linux-runtime /absolute/private/runtime.json`.
 The manifest contains the independently selected real Node executable and exact
 runtime files, with SHA-256 hashes and explicit loader aliases:
@@ -116,25 +130,43 @@ selected runtime read-only, constructs private proc/dev/tmp and a disposable cwd
 and mounts only two individual parent-owned Unix socket leaves. The private profile
 is writable. The installed/runtime closures refuse sockets, special files and
 escaping symlinks. A guest can create links in its profile, so on Linux and macOS
-the launcher refuses, before any parent write, a linked profile root, profile links
-that escape it, special files, a link or multiply linked file at the published
-transport name, and a workspace inside the profile. The transport configuration is
-published through an exclusive temporary file and atomic rename. Treat a refused
-profile as untrusted guest output; do not repair it by following its links. The native gateway, provider credentials, prepared operator
+the launcher refuses, before any parent write into the profile, a linked profile
+root, profile links that escape it, special files, a link or multiply linked file
+at the published transport name, and a workspace inside the profile. The transport
+configuration is published through an exclusive temporary file and atomic rename.
+Treat a refused profile as untrusted guest output; do not repair it by following
+its links. The native gateway, provider credentials, prepared operator
 configuration, journal and protected resource source are absent.
+
+Bubblewrap arguments, including `--setenv` values, are world-readable in `/proc`
+for the guest's lifetime. The guest environment therefore carries no secret: the
+model relay bearer reaches the guest only on inherited descriptor 4, which the
+bootstrap reads to end of file (bounded) and closes before it loads the Pi CLI.
+Credential-like names are refused as bubblewrap environment. The gateway proxy
+bearer stays in the private transport file. The launcher's runtime record reports
+`seccompSha256` for the BPF program and a `profileSha256` covering the complete
+bubblewrap argument vector together with that BPF hash. Its private control
+directory (relay sockets, BPF file or macOS policy file) is removed after the
+guest exits; the macOS record carries the exact policy text.
 
 The sockets lead only to the parent gateway proxy and the fixed model relay.
 The guest loopback servers use the services' expected ports, preserving exact HTTP
 Host and MCP session bytes. No guest selector supplies destinations or arbitrary
 sockets. Parent service route/method/Host/authentication checks also refuse CONNECT
-and alternate routes. Relays bound connections and queued bytes, use backpressure,
-clean both directions on disconnect and pin private socket ownership/type/link/
-identity. Socket paths exceeding 100 bytes refuse rather than truncate.
+and alternate routes. Relays bound connections and queued bytes and pause a source
+whenever its peer's queue reaches the bound, so ordinary backpressure never
+disconnects. A side that ends cleanly closes only after its peer has flushed every
+queued byte. Both directions are cleaned on disconnect, and relays pin private
+socket ownership/type/link/identity. The relay idle timeout is the larger of
+120,000 ms and the provider timeout plus 10,000 ms. Socket paths exceeding 100
+bytes refuse rather than truncate.
 
 `chio.pi.linux-whole-guest.v1` uses a separate architecture-pinned seccomp program,
 installed from FD3 at bubblewrap's final exec stage. It permits qualified Unix and
 IPv4 TCP stream sockets and Node threads. It denies process creation, later namespace
-changes, namespace clone flags, io_uring setup and x32 syscall variants. `clone3`
+changes, namespace clone flags, io_uring setup, `ptrace`, `process_vm_readv`,
+`process_vm_writev`, `pidfd_getfd` and x32 syscall variants. Bubblewrap's own PID 1
+runs without this filter, so the guest must not be able to drive it. `clone3`
 returns ENOSYS for libc's qualified thread fallback. Both local relays and Pi SDK
 start in one Node bootstrap. The coding-resource recipe has its own socket-denying
 filter ([CODING-RESOURCE.md](CODING-RESOURCE.md#recipe-and-publication-confinement));
@@ -142,10 +174,16 @@ recipe qualification does not qualify this guest boundary.
 
 Parent supervision waits for actual observed exit, sends a graceful signal and
 escalates to group SIGKILL after its bounded interval if exit is still absent.
-`ChildProcess.killed` is not evidence. Any remaining isolated group is cleaned after
-wrapper exit. Bubblewrap's die-with-parent/PID namespace can settle the guest when
-the wrapper exits gracefully. Signals never remove native operations, fences,
-original mappings or conservative model reservations.
+SIGINT, SIGTERM, SIGHUP, SIGQUIT and the wall deadline all start this sequence. A
+parent that exits while the guest runs, including by an uncaught exception, sends
+group SIGKILL from its exit hook. `ChildProcess.killed` is not evidence. Any
+remaining isolated group is cleaned after wrapper exit. On Linux, bubblewrap's
+die-with-parent and PID namespace settle the guest even when the parent is killed.
+On macOS, as a best effort for a parent killed by SIGKILL, the guest's stdin is a
+lifeline held only by the parent: when it closes, the guest stops as on SIGTERM and
+exits after the graceful-kill interval. The recorded guest process group still
+blocks stale-owner recovery until the group is gone. Signals never remove native
+operations, fences, original mappings or conservative model reservations.
 
 ## Reproduce measured Linux acceptance
 
@@ -170,11 +208,19 @@ Only task-owned disposable `--rm` outer containers are used. Acceptance requires
 `--privileged --network none` in this measured Colima VM to permit inner user
 namespaces. It starts private synthetic services, imports actual Pi 1.0.2, runs
 both positive routes and a native SDK session, checks forbidden reads/writes,
-network/Unix routes, namespaces and process creation, and independently observes
-requests and `/proc` survivors. No actual provider or native kernel is called.
+network/Unix routes, namespaces, process creation and the cross-process syscalls,
+and independently observes requests and `/proc` survivors. The SDK session receives
+its model bearer on descriptor 4 while an observer samples every process command
+line and environment for it. The runner also starts the installed `chio-pi`
+launcher's Linux branch against a scripted kernel fixture with an unreachable
+provider, and checks its runtime record, one authenticated reservation, the
+released owner lock and the removed control directory. No actual provider or
+native kernel is called. Guest launches use generous walls so a heavily loaded
+VM does not time out Pi's import; the termination cases keep short deadlines.
 
 Measured: Linux arm64 6.8.0-64-generic, Node 22.23.1, bubblewrap 0.8.0-2+deb12u1,
 libc 2.36-9+deb12u14 and libstdc++ 12.2.0-14+deb12u1. Actual Linux x64 runtime,
 ordinary Docker defaults, another installation and native coding/P5 acceptance
 remain open. Compiled x64/x32 BPF component checks are separate from real x64 runtime
-acceptance. Exact results are in the Task 6 evidence record.
+acceptance. Exact results are in the Task 6 evidence record and, for the Task 8
+filter, relay secret and launcher changes, the Task 8 final review fixes record.

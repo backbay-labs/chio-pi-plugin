@@ -3,8 +3,15 @@ import {lstat,chmod,unlink} from "node:fs/promises";
 import {dirname} from "node:path";
 import {normalizedPath,ownedDirectory} from "./private-state.js";
 
-export interface RelayBounds {maxConnections:number;maxQueuedBytes:number}
-const defaults:Readonly<RelayBounds>=Object.freeze({maxConnections:16,maxQueuedBytes:65536});
+export interface RelayBounds {maxConnections:number;maxQueuedBytes:number;idleTimeoutMs?:number}
+export const DEFAULT_RELAY_BOUNDS:Readonly<Required<RelayBounds>>=Object.freeze({maxConnections:16,maxQueuedBytes:65536,idleTimeoutMs:120000});
+const defaults=DEFAULT_RELAY_BOUNDS;
+/** A relayed connection stays open at least as long as one provider request
+ * may legitimately be silent, plus a margin for the relay's own response. */
+export function relayBounds(providerTimeoutMs:number):Required<RelayBounds> {
+  if(!Number.isSafeInteger(providerTimeoutMs) || providerTimeoutMs<1) throw new Error("Invalid provider timeout for relay bounds");
+  return {...defaults,idleTimeoutMs:Math.min(2147483647,Math.max(defaults.idleTimeoutMs,providerTimeoutMs+10000))};
+}
 export async function validateRelaySocket(path:string) {
   await socketParent(path);
   const stat=await lstat(path);
@@ -20,21 +27,31 @@ async function socketParent(path:string) {
 }
 function fixedPort(port:number) {if(!Number.isSafeInteger(port) || port<1 || port>65535) throw new Error("Invalid fixed relay port");}
 async function start(address:string|number, destination:()=>Socket|Promise<Socket>,bounds:RelayBounds,cleanup?:()=>Promise<void>) {
-  if(!Number.isSafeInteger(bounds.maxConnections) || bounds.maxConnections<1 || bounds.maxConnections>64 || !Number.isSafeInteger(bounds.maxQueuedBytes) || bounds.maxQueuedBytes<1024 || bounds.maxQueuedBytes>1024*1024) throw new Error("Invalid relay queue bounds");
+  const idle=bounds.idleTimeoutMs ?? defaults.idleTimeoutMs;
+  if(!Number.isSafeInteger(bounds.maxConnections) || bounds.maxConnections<1 || bounds.maxConnections>64 || !Number.isSafeInteger(bounds.maxQueuedBytes) || bounds.maxQueuedBytes<1024 || bounds.maxQueuedBytes>1024*1024
+    || !Number.isSafeInteger(idle) || idle<1 || idle>2147483647) throw new Error("Invalid relay queue bounds");
   const sockets=new Set<Socket>();let active=0;
   const server=createServer({allowHalfOpen:false},async incoming=>{
     if(active>=bounds.maxConnections){incoming.destroy();return;}active++;
     incoming.pause();sockets.add(incoming);let outgoing:Socket|undefined;let ended=false;
     const stop=()=>{if(ended)return;ended=true;active--;sockets.delete(incoming);if(outgoing)sockets.delete(outgoing);incoming.destroy();outgoing?.destroy();};
-    incoming.on("error",stop);incoming.on("close",stop);incoming.setTimeout(120000,stop);
+    // A side that ended cleanly closes only after its peer has flushed every
+    // queued byte; the peer's idle timeout still bounds that wait.
+    const drained=new Set<Socket>();
+    const closed=(source:Socket,peer:()=>Socket|undefined)=>()=>{const target=peer();if(!drained.has(source) || !target || target.writableFinished){stop();return;}target.once("finish",stop);};
+    incoming.on("error",stop);incoming.on("close",closed(incoming,()=>outgoing));incoming.setTimeout(idle,stop);
     try {outgoing=await destination();}catch{stop();return;}
-    if(ended){outgoing.destroy();return;}sockets.add(outgoing);outgoing.on("error",stop);outgoing.on("close",stop);outgoing.setTimeout(120000,stop);
-    // Pause before writes grow the userspace queue. A single accepted chunk
-    // cannot exceed this bound and both directions share disconnect cleanup.
+    if(ended){outgoing.destroy();return;}sockets.add(outgoing);outgoing.on("error",stop);outgoing.on("close",closed(outgoing,()=>incoming));outgoing.setTimeout(idle,stop);
+    // The queue bound, not the stream default, is the pause threshold. One read
+    // may overshoot it; the source then stays paused until that write flushes,
+    // so a queue holds less than the bound plus one read. A queue already over
+    // the bound means pausing failed, and only then does the relay disconnect.
     const bridge=(source:Socket,target:Socket)=>{source.on("data",chunk=>{
-      if(chunk.length+target.writableLength>bounds.maxQueuedBytes){stop();return;}
-      if(!target.write(chunk)){source.pause();target.once("drain",()=>{if(!ended)source.resume();});}
-    });source.on("end",()=>target.end());};
+      if(target.writableLength>bounds.maxQueuedBytes){stop();return;}
+      const full=target.writableLength+chunk.length>=bounds.maxQueuedBytes;
+      if(full)source.pause();
+      target.write(chunk,error=>{if(full && !error && !ended)source.resume();});
+    });source.on("end",()=>{drained.add(source);target.end();});};
     bridge(incoming,outgoing);bridge(outgoing,incoming);incoming.resume();
   });
   await new Promise<void>((resolve,reject)=>{server.once("error",reject);if(typeof address==="string")server.listen(address,resolve);else server.listen(address,"127.0.0.1",resolve);});

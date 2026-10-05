@@ -8,8 +8,12 @@ import { configuredExecutor, readPreparedConfig } from "./configured.js";
 import { createChioPiSession } from "./session.js";
 import { gatewayExecutor, readTransportConfig } from "./http-executor.js";
 import { terminalState } from "./terminal.js";
+import { exitWithParent } from "./guest-termination.js";
 
 export async function runGuestMain() {
+  // The macOS protected parent passes a stdin lifeline; Linux uses die-with-parent.
+  const lifeline = process.env.CHIO_PI_PARENT_LIFELINE_GRACE_MS;
+  if (lifeline !== undefined) exitWithParent(process.stdin, Number(lifeline));
   const args = process.argv.slice(2);
   if (args.length === 1 && args[0] === "--help") {
     process.stdout.write("Usage: chio-pi --config /absolute/prepared.json --profile /absolute/profile --cwd /absolute/disposable-workspace --provider openai --model gpt-4.1-mini --prompt 'task' [--resume /absolute/profile/sessions/session.jsonl]\n");
