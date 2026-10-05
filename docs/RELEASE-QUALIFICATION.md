@@ -14,6 +14,7 @@ real-host I01-I08 acceptance, a compatible public kernel, or six-host completion
 - Public repository identity: `backbay-labs/chio-pi-plugin`.
 - Workflow: `.github/workflows/release.yml`.
 - Registry package: `@chio-protocol/pi-plugin`; GitHub environment: `npm`.
+  The [publishing guide](PUBLISHING.md) covers the one-time npm bootstrap.
 - Release tags: `v<package.json version>`, reachable from `main`.
 - Manual `workflow_dispatch` always builds, tests, packs, qualifies the base
   and Durable cold consumers, and generates provenance. It never publishes to npm or
@@ -192,7 +193,9 @@ published 0.2.0 is identified by the digest its release workflow run records.
 5. An npm maintainer must register this package's Trusted Publisher with GitHub
    owner `backbay-labs`, repository `chio-pi-plugin`, workflow filename `release.yml`,
    and environment `npm`. Permit direct `npm publish` for this workflow. Do not
-   configure a stored `NPM_TOKEN` fallback or print authentication files.
+   configure a stored `NPM_TOKEN` fallback or print authentication files. npm
+   accepts a Trusted Publisher only for a package that already exists, so the
+   first version is published once by hand as described in [publishing](PUBLISHING.md).
 6. Only after those gates, create a new annotated version tag from reviewed
    `main`. A tag push can publish. The workflow rejects tag/version mismatch,
    a source commit outside `main`, and a mismatched `repository.url`.

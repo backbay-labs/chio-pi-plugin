@@ -137,7 +137,8 @@ npm run pack:release -- /absolute/new-candidate-directory
 ```
 
 [Release qualification](docs/RELEASE-QUALIFICATION.md#candidate-020) covers the
-cold-consumer checks for a new candidate.
+cold-consumer checks for a new candidate, and [publishing](docs/PUBLISHING.md)
+the npm release path.
 
 ---
 
