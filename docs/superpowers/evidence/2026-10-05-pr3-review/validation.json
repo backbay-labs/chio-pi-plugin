@@ -1,0 +1,69 @@
+{
+  "schema": "chio.pi.pr-review-validation.v1",
+  "reviewedBase": "0658112131019571123c5b171d48c472faa22032",
+  "fixedSource": "bd60344904cb0dda8a2367a5f09ef6c1de3b366f",
+  "findings": {
+    "P0": 0,
+    "P1": 1,
+    "P2": 6
+  },
+  "checks": {
+    "macOSNode25Suite": {
+      "pass": 483,
+      "skip": 2,
+      "fail": 0,
+      "note": "Last ACK-close refinement checked separately in the full Durable suite."
+    },
+    "macOSNode25FinalDurable": {
+      "pass": 35,
+      "skip": 0,
+      "fail": 0
+    },
+    "macOSNode22_19_0FinalSuite": {
+      "pass": 481,
+      "skip": 5,
+      "fail": 0
+    },
+    "hostedLinuxNode22_19_0": {
+      "pass": 464,
+      "skip": 20,
+      "fail": 0,
+      "url": "https://github.com/backbay-labs/chio-pi-plugin/actions/runs/37348474330"
+    },
+    "coldConsumers": "base and Durable passed on macOS and hosted Linux; lockfile replay and UUID path normalization passed",
+    "localRebuild": "identical archive bytes",
+    "linuxConfinedRerun": "inconclusive: basic recipe failed after 68.5 seconds; later successful case took 27.7 seconds; run stopped, no renewed confined guest or workflow qualification"
+  },
+  "archive": {
+    "macOS": "2a45a37ccc7d44001ad78743624783935038f762d9718da4c560b727672215d6",
+    "hostedLinux": "8e0a0bb67b193c909b732124718266cce745cf5c898e9b114a8438cb944a5c7b",
+    "identicalUncompressedTarSha256": "d30413304b6f4a367b24fc5e98566398ed34bb965466b004e11f23cdf130d6fe",
+    "note": "Different Node builder compression output; uncompressed tar payloads are byte-identical."
+  },
+  "localLogDigests": {
+    "chio-pr3-baseline-test.log": "881cbc699e72047eb981ab8ce7fd737c82285730fd89e5cb95b1007efcd99c85",
+    "chio-pr3-regressions-before.log": "65973d5208bd1f25a4909dc8a0af3f84fc94024f440539df43c93a15a70e7dba",
+    "chio-pr3-lifecycle-before.log": "150bc7c0bbd1fa71751527e6f3fc4cb29b349fa6e8c647c6b2a42d0d68b3ce90",
+    "chio-pr3-full-final.log": "148b118039e50048ff276740bd59897a07d9b28086c172f560a235e8257008d3",
+    "chio-pr3-durable-final.log": "85895414a3a7fbd646cb70ee4f633568cac57af837820c49e9396738760364e9",
+    "chio-pr3-node22-verified.log": "f06376e0803f5dcde8c3e92aca9cd0a6162a95f5632249121c9ac1e1ca1ccbbb",
+    "chio-pr3-consumer.log": "63dd9d2fd9b6e73e7e7eb4afd307cc1ef5bdbf9be91710ff08e175285368f23c",
+    "chio-pr3-ci-success.log": "b51a7dffc06b68e277edc8b64998d9902048aec8892a6c028add06fe8252bbb8",
+    "chio-pr3-linux-copy.log": "47231e0207fce90c9c0bd8de99fa72a563095e39fcd9b84231be945abec1f940",
+    "chio-pr3-pack-rebuild.log": "d2b271843f4278d936265e991ff589f2db2823f4afc5c2c6a835f7480b6bcc6d"
+  },
+  "consumerEvidenceDigests": {
+    "builder/archive-manifest.json": "b5df1eac33536d9009caeef644d4f7e227c8c66f59d5c92619a9495d3bcc94fe",
+    "builder/chio-pi-plugin-0.2.0.tgz.sha256": "bd702c5896d46177814799a8172ecce024e228df2d5c2702f0a112ce231b7cd2",
+    "builder/provenance.json": "2db1027651a30fd3cbe03cdc63d614d3af0e2ae449a6943ba9745092ab4c2771",
+    "consumer-base/consumer-provenance.json": "8c21b15d1e04e1a60349b4f492255f9ec6d4b575679e1152dd1ce77005c6310a",
+    "consumer-base/package-lock.json": "b79c231778467eab382ce59fceb60db1e317556e28dc48ee0b0b6beafa6a314b",
+    "consumer-base/package.json": "019f116cf6fc18fc3743727ecb9caf50de670202b80954e07957ebd445808099",
+    "consumer-base/resolved-graph.json": "339ec9af80932215cea66084bda0b0c0893240ed9bdbdd56b353413b8c2c2d3c",
+    "consumer-durable/consumer-provenance.json": "f933dc0482c984b091b8d9574536e7b7df81fbfc7c6666cfe0cbc35854633aed",
+    "consumer-durable/package-lock.json": "257a7d505c8de2274b7a008d20f94b5e17817ebeea28c6c2ef4280411c68a857",
+    "consumer-durable/package.json": "8529a1c8c67f8dbd66f5611740ba5ba4b0491597eeab0281263f87b691366470",
+    "consumer-durable/resolved-graph.json": "4705a3382d3a8f2cff3981af7084f3176470286341d35bd2081392881c2d85de",
+    "summary.json": "f1cc78d91235b55bf01fee0e575c6cdf146d0d893b6c5afa6695e8a96ac0384a"
+  }
+}
