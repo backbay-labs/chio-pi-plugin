@@ -28,7 +28,7 @@ pinned runtime manifest as described in [run limits and Linux](RUN-LIMITS-LINUX.
 Install the plugin and its exact Pi peer with one command, in a new directory:
 
 ```sh
-mkdir ~/chio-pi && cd ~/chio-pi && npm init -y >/dev/null
+mkdir -p ~/chio-pi && cd ~/chio-pi && npm init -y >/dev/null
 npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2
 npx --no -- chio-pi --help
 npx --no -- chio-coding-resource --help
@@ -62,7 +62,7 @@ cd chio-pi-plugin
 npm ci --ignore-scripts
 npm run pack:release
 (cd artifacts && shasum -a 256 -c chio-protocol-pi-plugin-0.2.0.tgz.sha256)
-mkdir ../chio-pi && cd ../chio-pi && npm init -y >/dev/null
+mkdir -p ../chio-pi-from-source && cd ../chio-pi-from-source && npm init -y >/dev/null
 npm install ../chio-pi-plugin/artifacts/chio-protocol-pi-plugin-0.2.0.tgz \
   @earendil-works/pi-coding-agent@1.0.2
 npx --no -- chio-pi --help

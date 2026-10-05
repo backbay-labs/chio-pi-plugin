@@ -53,12 +53,12 @@ The filename `package.tgz` above is a placeholder for the emitted tarball. The
 consumer command performs the manual steps below for both consumers, with
 separate empty caches and an isolated home and Pi profile for each. It runs
 every check in [candidate 0.2.0](#candidate-020) and refuses existing work or
-evidence directories. The equivalent manual base consumer, from a new empty
-directory `chio-pi` beside a copy of the tarball, is:
+evidence directories. The equivalent manual base consumer, from a new directory
+holding a copy of the tarball, is:
 
 ```sh
 export npm_config_cache=/absolute/new-empty-cache
-npm init -y >/dev/null
+mkdir -p chio-pi && cd chio-pi && npm init -y >/dev/null
 npm install ../package.tgz @earendil-works/pi-coding-agent@1.0.2
 npx --no -- chio-pi --help
 npx --no -- chio-coding-resource --help
@@ -190,10 +190,14 @@ published 0.2.0 is identified by the digest its release workflow run records.
 3. Complete all applicable I01-I08 acceptance and the compatible kernel's
    release/security gates before approving production delivery. The original
    unsigned kernel 0.1.0 is not evidence for the new candidate.
-4. Configure the `npm` environment before tagging and preserve existing
-   repository protection rules. Verify exact commit, kernel compatibility and
-   acceptance records under the applicable release procedures. This workflow
-   does not require adding human reviewers or changing protection rules.
+4. Before tagging, give the `npm` environment required reviewers and a
+   deployment tag policy of `v*.*.*`, and add a tag ruleset that restricts who
+   can create, update or delete `v*` tags, as described in
+   [publishing](PUBLISHING.md#one-time-bootstrap). These are required: the
+   trusted publisher binds the workflow file and environment, not the Git ref,
+   and this workflow's own gates live in a file a tagged commit can change.
+   Preserve existing repository protection rules. Verify exact commit, kernel
+   compatibility and acceptance records under the applicable release procedures.
 5. An npm maintainer must register this package's Trusted Publisher with GitHub
    owner `backbay-labs`, repository `chio-pi-plugin`, workflow filename `release.yml`,
    and environment `npm`. Permit direct `npm publish` for this workflow. Do not
@@ -207,8 +211,13 @@ published 0.2.0 is identified by the digest its release workflow run records.
    checksums, checks that the archive manifest carries the bound package name and
    version, signs the checksum index, verifies its exact GitHub workflow
    identity, then publishes that same tarball with npm OIDC provenance. It
-   requires npm 11.5.1 and Node 22.14.0 or later and uses no `NODE_AUTH_TOKEN`. A
-   prerelease version uses npm's `next` dist-tag. Stable versions use `latest`.
+   requires npm 11.5.1 and Node 22.14.0 or later, and refuses any
+   `NODE_AUTH_TOKEN` other than the placeholder `actions/setup-node` exports when
+   none is set. The build job records the archive SHA-256 right after packing;
+   the dry run, the SLSA subject record and the publication job must all match
+   it, so lifecycle scripts run during cold-consumer qualification cannot swap
+   the archive. A prerelease version uses npm's `next` dist-tag. Stable versions
+   use `latest`.
 8. Verify the public tarball and GitHub Release assets independently, install
    from the documented public path in a new profile, and repeat the supported
    useful-work and prevention/recovery smoke cases against the qualified kernel.
@@ -296,9 +305,10 @@ A tag build fails before publication unless the `npm` environment exists and the
 checks both conditions again when the configured environment permits the job. Missing API access,
 missing environment configuration, pending, skipped, cancelled or failed CI is a
 release failure. Configure the environment before creating a release tag; a
-workflow reference alone can otherwise create an environment implicitly. Existing
-protection rules remain enforced by GitHub; this workflow does not require adding
-reviewers or changing them.
+workflow reference alone can otherwise create an environment implicitly. GitHub,
+not this workflow, enforces the environment's required reviewers and tag policy
+and the release tag ruleset that [publishing](PUBLISHING.md) requires; a check in
+this file could be removed by the tagged commit it is meant to judge.
 
 These checks enforce this repository's source/package CI and configured environment boundary.
 They do not establish kernel security or any host acceptance gate. Release

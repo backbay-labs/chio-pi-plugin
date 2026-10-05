@@ -49,7 +49,7 @@ Requires Node.js 22.19 or newer and npm, on macOS or Linux. Install the plugin
 and its exact Pi peer into a new directory:
 
 ```sh
-mkdir ~/chio-pi && cd ~/chio-pi && npm init -y >/dev/null
+mkdir -p ~/chio-pi && cd ~/chio-pi && npm init -y >/dev/null
 npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2
 npx --no -- chio-pi --help
 ```
