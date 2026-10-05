@@ -20,7 +20,12 @@ test("protected operator parser defaults to execution-only and closes governance
 });
 
 test("execution-only default launch progresses to existing credential or platform checks",async()=>{
- for(const extra of [[],["--governance","execution-only"]])await assert.rejects(run(extra),error=>process.platform==="darwin"?/Operator OPENAI_API_KEY required/.test(error.stderr):/requires macOS sandbox-exec/.test(error.stderr));
+ const expected=process.platform==="darwin"
+  ? /Operator OPENAI_API_KEY required/
+  : process.platform==="linux"
+   ? /Protected Linux candidate requires --linux-runtime pins/
+   : /Protected candidate requires macOS sandbox-exec or Linux bubblewrap/;
+ for(const extra of [[],["--governance","execution-only"]])await assert.rejects(run(extra),error=>expected.test(error.stderr));
 });
 
 test("required and invalid CLI governance refuse before credential or path access",async()=>{

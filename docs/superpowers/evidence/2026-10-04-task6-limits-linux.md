@@ -160,3 +160,39 @@ No selected service, provider or journal credential is mounted or printed. This
 closes implementation/component/measured local Task 6 evidence, subject to root's
 independent specification and quality reviews. Native service/P5 qualification and
 release/PR acceptance are not implied.
+
+## Specification review correction
+
+The independent review of `c879b4e` found one obsolete stock-host test
+expectation: the execution-only default launch test expected the macOS-only
+platform refusal on every non-Darwin host. Supported Linux instead correctly
+refuses missing operator-selected `--linux-runtime` pins before credential access.
+Only that test and this evidence file changed. Production behavior is unchanged.
+
+The expectation now distinguishes Darwin's missing API credential, Linux's
+missing runtime pins, and the explicit unsupported-platform refusal. Both default
+and explicit `--governance execution-only` invocations retain those expectations.
+
+Fresh verification used the same pinned runtime image recorded above, with
+`docker run --rm --network none`, a read-only worktree mount at `/input`, and
+`--workdir /input`. No privileged container or guest namespace setup was needed
+for this CLI refusal regression. Commands inside that container:
+
+```sh
+node --test --test-name-pattern='execution-only default' test/governance-cli.test.mjs
+node --test test/run-limits.test.mjs test/model-limits.test.mjs test/unix-relay.test.mjs test/linux-sandbox.test.mjs test/guest-termination.test.mjs test/governance-cli.test.mjs
+```
+
+The focused Linux command first reproduced RED (0 pass, 1 fail, missing runtime
+pins reported), then passed GREEN (1 pass, 0 fail). The six Linux suites passed
+41 tests, with zero failures, cancellations or skips. On the Darwin host,
+`node --test test/governance-cli.test.mjs` passed all 7 tests, including missing
+API credential refusal. A separate credential-free subprocess probe overrode
+`process.platform` to `freebsd` with a Node data-URL preload and checked both
+default and explicit execution-only launches: 2 assertions passed for
+`Protected candidate requires macOS sandbox-exec or Linux bubblewrap`. This is
+branch verification through a simulated platform value, not an actual FreeBSD
+runtime qualification. `git diff --check` also passed.
+
+The earlier full 372-test and measured Linux guest acceptance records remain
+separate evidence. They were not rerun for this test-only expectation correction.
