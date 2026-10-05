@@ -327,13 +327,13 @@ assert.equal(publicationEffects, 1);
 
 ## Task 8: Independent review, fix, final review, fix, open PR
 
-- [ ] Dispatch a whole-range security/spec/quality review against origin/main.
+- [x] Dispatch a whole-range security/spec/quality review against origin/main.
   Fix all valid findings and run focused regressions for each change.
-- [ ] Dispatch a fresh final reviewer, fix remaining findings and run fresh
+- [x] Dispatch a fresh final reviewer, fix remaining findings and run fresh
   typecheck, all tests, package and clean-consumer checks on the final commit.
-- [ ] Verify clean worktree, preserved primary checkout, conventional commits,
+- [x] Verify clean worktree, preserved primary checkout, conventional commits,
   no credentials, no em dashes in new prose, and full twelve-row coverage.
-- [ ] Push `feat/pi-full-roadmap-20261004`, open a PR against main with exact
+- [x] Push `feat/pi-full-roadmap-20261004`, open a PR against main with exact
   behavior, verification and native qualification prerequisites. Verify PR head
   SHA and report hosted checks separately from local evidence. Do not merge.
 
@@ -488,3 +488,39 @@ npm 10.9.3 and 11.8.0. The candidate recorded there was built from `2059150`
 before review; Task 8 rebuilds the candidate on the final reviewed commit. See
 [the release record](../evidence/2026-10-04-task7-release.md) and
 [the roadmap crosswalk](../../ROADMAP-IMPLEMENTATION.md).
+
+
+## Task 8 review closure
+
+Whole-range review against `origin/main` ran as four parallel area reviews of
+`ead477e` (host and relay, continuation and Durable, coding resource, launch and
+Linux). They found one critical and nine important defects, each reproduced or
+traced to exact lines. Critical: one undelivered Durable intent (a two-call
+round, an approval resume, or an interruption) permanently disabled the whole
+Durable store. Important: a rejected model tool call made the relay refuse every
+later request; Durable flush cost grew with all history; recipe cleanup failures,
+hot SQLite journals, over-bound results and large ledgers could fence or strand
+the coding resource; edits dropped a UTF-8 BOM; the Linux model relay bearer was
+visible in bubblewrap argv; and a macOS guest could outlive a killed launcher
+while stale-lock recovery admitted a second launch.
+
+Four sequential area fixers landed `934ba93` through `7c174ad` with regressions
+that failed before each fix. A fresh final reviewer found every critical,
+important and assigned minor finding addressed, judged eight declared design
+choices acceptable, and found no new critical or important breakage. Its four
+fold-in minors landed in `b5d9ee9`, `88917ea`, `aa2cb95` and `c5b94a5`, and a
+scoped re-review found them addressed. Deferred minors are listed as follow-ups
+in the pull request.
+
+Final verification on `c5b94a5` and `220809e`: Homebrew Node 25.5.0 typecheck
+and 466 tests passed with 2 Linux-only skips; official Node 22.19.0 passed 463
+with 5 reasoned skips. Linux suites passed in the pinned image, including the
+whole-guest qualification, although the heavily loaded local Docker VM required
+reruns and the roadmap workflow file timed out there both before and after the
+final fixes. The 0.2.0 candidate (`ca4bb45f7a33...`) was rebuilt from `c5b94a5`,
+byte-identical on every rebuild, and both cold consumers passed on Node 22.19.0
+with npm 11.8.0 and Node 25.5.0 with npm 11.8.0. The earlier pre-review candidate
+is recorded as superseded. See
+[the final review record](../evidence/2026-10-05-task8-final-review-fixes.md).
+Native service, P4 and P5, actual x64 runtime, ordinary Docker defaults, live
+provider and native coding-workflow acceptance remain open prerequisites.
