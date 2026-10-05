@@ -1,5 +1,7 @@
 import {isAbsolute, dirname, normalize, join} from "node:path";
-import {realpath} from "node:fs/promises";
+import {execFile} from "node:child_process";
+import {realpath, stat} from "node:fs/promises";
+import {promisify} from "node:util";
 import {runtimeLibraries} from "../sandbox.js";
 import {sha256, type Recipe} from "./config.js";
 import {regularFile} from "./paths.js";
@@ -35,6 +37,13 @@ export async function prepareRecipeSandbox(recipe: Recipe): Promise<RecipeSandbo
   }
   if (process.platform === "linux") {
     await pinned("unsupported_sandbox", "Linux bubblewrap is unavailable or unsafe", () => regularFile("/usr/bin/bwrap", {executable: true}));
+    // Probe before any intent or job: an old or setuid bubblewrap would reject
+    // --disable-userns at launch and surface as a recorded failing test.
+    await pinned("unsupported_sandbox", "Linux bubblewrap version is unavailable", async () => {
+      const {mode} = await stat("/usr/bin/bwrap");
+      const {stdout} = await promisify(execFile)("/usr/bin/bwrap", ["--version"], {env: {}, encoding: "utf8", timeout: 5000, maxBuffer: 4096});
+      assertBubblewrapSupport(mode, stdout);
+    });
     const explicit: {path: string; mountPath: string}[] = [];
     for (const file of recipe.runtimeFiles) {
       if (sha256(await pinnedFile(file.path, {runtime: true, maxBytes: 256 * 1024 * 1024}, "Operator-pinned runtime library is unavailable or unsafe")) !== file.sha256) throw new ToolRefusal("recipe_pin", "Operator-pinned runtime library hash changed");
@@ -46,6 +55,12 @@ export async function prepareRecipeSandbox(recipe: Recipe): Promise<RecipeSandbo
     return {backend: "bubblewrap", launcher: "/usr/bin/bwrap", runtimeFiles: explicit, seccomp: linuxRecipeFilter()};
   }
   throw new ToolRefusal("unsupported_sandbox", "No qualified local recipe sandbox backend on this platform");
+}
+/** Exported for regression tests; not part of the package exports.
+ * `--disable-userns` needs a non-setuid bubblewrap 0.8.0 or later. */
+export function assertBubblewrapSupport(mode: number, version: string): void {
+  const match = /^bubblewrap (\d+)\.(\d+)\.(\d+)\s*$/.exec(version);
+  if ((mode & 0o4000) !== 0 || !match || Number(match[1]) === 0 && Number(match[2]) < 8) throw new ToolRefusal("unsupported_sandbox", "Linux recipes require a non-setuid bubblewrap 0.8.0 or later for --disable-userns");
 }
 /** Exported for policy regression tests; not part of the package exports. */
 export function seatbeltPolicy(executable: string, libraries: string[], aliases: string[], source: string, job: string): string {

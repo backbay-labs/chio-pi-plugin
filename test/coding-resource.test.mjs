@@ -8,7 +8,7 @@ import {fileURLToPath} from "node:url";
 import test from "node:test";
 import {canonicalJson} from "../dist/tool-registry.js";
 import * as codingConfig from "../dist/coding-resource/config.js";
-import {bubblewrapArguments} from "../dist/coding-resource/recipe-sandbox.js";
+import {assertBubblewrapSupport, bubblewrapArguments} from "../dist/coding-resource/recipe-sandbox.js";
 import {caller, cli, command, data, fixture, hash, initialized, meta, patch, stdio} from "./helpers/coding-fixture.mjs";
 import {compiledRecipeFilter, evaluateClassicBpf} from "./helpers/coding-seccomp.mjs";
 
@@ -274,6 +274,13 @@ test("B-M4 compiled recipe filters deny io_uring and nested namespaces on both a
   const args = bubblewrapArguments({executable: "/usr/bin/node", argv: [], timeoutMs: 1, outputBytes: 1, graceMs: 1}, {backend: "bubblewrap", launcher: "/usr/bin/bwrap", runtimeFiles: []}, "/source-generation", "/job-directory");
   assert.ok(args.includes("--disable-userns"), "bubblewrap must also block nested user namespaces");
   assert.ok(args.indexOf("--unshare-user") < args.indexOf("--disable-userns"), "--disable-userns requires the sandbox user namespace");
+});
+test("final review: an old or setuid bubblewrap is an unsupported_sandbox refusal, not a recorded failing test", () => {
+  // --disable-userns needs a non-setuid bubblewrap 0.8.0 or later. The probe runs
+  // while preparing test_recipe, before any intent or job exists.
+  for (const version of ["bubblewrap 0.8.0\n", "bubblewrap 0.9.0\n", "bubblewrap 0.11.1\n", "bubblewrap 1.0.0\n"]) assert.doesNotThrow(() => assertBubblewrapSupport(0o100755, version), version);
+  for (const [mode, version] of [[0o104755, "bubblewrap 0.8.0\n"], [0o104755, "bubblewrap 0.11.1\n"], [0o100755, "bubblewrap 0.7.0\n"], [0o100755, "bubblewrap 0.4.1\n"], [0o100755, ""], [0o100755, "bwrap 0.8.0\n"], [0o100755, "bubblewrap 0.8\n"]])
+    assert.throws(() => assertBubblewrapSupport(mode, version), error => error.code === "unsupported_sandbox" && /non-setuid bubblewrap 0\.8\.0/.test(error.message), `${mode.toString(8)} ${JSON.stringify(version)}`);
 });
 test("read many preserves ordered partial truth and bounded literal search returns digests", async t => {
   const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());

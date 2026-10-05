@@ -112,7 +112,8 @@ accept `mountPath` aliases. The illustrative JSON above abbreviates this list.
 Missing, extra, changed or mismatched dependencies refuse before any recipe job
 is created. A missing, replaced or permission-changed executable or runtime file
 is a `recipe_pin` refusal, and a missing or unsafe `sandbox-exec` or
-`/usr/bin/bwrap` is `unsupported_sandbox`. Admitted proven no-effect refusals remain durable terminal outcomes
+`/usr/bin/bwrap` is `unsupported_sandbox`, as is a setuid bubblewrap or one whose
+`--version` is older than 0.8.0. Admitted proven no-effect refusals remain durable terminal outcomes
 and replay exactly, even if the dependency is later repaired. The selected system
 OS runtime trees remain a separately measured boundary; they are not claimed to
 be individually hash-pinned.
@@ -361,8 +362,9 @@ and a trusted architecture-selected seccomp filter denying processes, sockets,
 links, `unshare` and `io_uring_setup`/`io_uring_enter`/`io_uring_register` while
 allowing Node threads. io_uring operations would otherwise reach link and socket
 operations without the per-syscall rules. `--disable-userns` needs a non-setuid
-bubblewrap 0.8.0 or later; an older or setuid bubblewrap fails every recipe
-closed rather than running it without that option. The x64 filter refuses the
+bubblewrap 0.8.0 or later. Before any intent or job, `test_recipe` checks the
+setuid bit and `/usr/bin/bwrap --version` and refuses an older or setuid
+bubblewrap with `unsupported_sandbox` rather than running without that option. The x64 filter refuses the
 x32 syscall-number bit before matching native syscall numbers, because the two
 ABIs share their audit architecture. See
 [seccomp(2)](https://man7.org/linux/man-pages/man2/seccomp.2.html).
