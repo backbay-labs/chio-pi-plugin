@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import {pathToFileURL} from "node:url";
+import {realpath} from "node:fs/promises";
+import {fileURLToPath} from "node:url";
 import {initializeCodingResource, inspectCodingResource, openCodingResource, recoverCodingOwnerLock} from "./coding-resource/participant.js";
 import {serveCodingResource} from "./coding-resource/stdio.js";
 
@@ -28,4 +29,7 @@ export async function runCodingResourceCommand(args: string[]): Promise<number> 
     process.stdout.write(JSON.stringify(view) + "\n"); return 0;
   } catch (error) {process.stderr.write((error instanceof Error ? error.message : "Resource command failed") + "\n"); return 1;}
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) process.exitCode = await runCodingResourceCommand(process.argv.slice(2));
+// npm installs binaries as symlinks; compare real paths so the installed
+// executable runs its command instead of exiting silently.
+if (process.argv[1] && await realpath(process.argv[1]).catch(() => undefined) === await realpath(fileURLToPath(import.meta.url)))
+  process.exitCode = await runCodingResourceCommand(process.argv.slice(2));

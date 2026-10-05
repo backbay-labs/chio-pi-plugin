@@ -46,7 +46,7 @@ async function chmodTree(path) {
 }
 export async function command(args, options = {}) {
   return await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [cli, ...args], {stdio: ["ignore", "pipe", "pipe"], env: {PATH: dirname(process.execPath), LANG: "C", ...options.env}});
+    const child = spawn(process.execPath, [options.entry ?? cli, ...args], {stdio: ["ignore", "pipe", "pipe"], env: {PATH: dirname(process.execPath), LANG: "C", ...options.env}});
     let stdout = ""; let stderr = ""; let timedOut = false;
     const timer = options.timeoutMs ? setTimeout(() => {timedOut = true; child.kill("SIGKILL");}, options.timeoutMs) : undefined;
     child.stdout.on("data", value => stdout += value); child.stderr.on("data", value => stderr += value);

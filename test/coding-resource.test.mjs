@@ -1,11 +1,22 @@
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
-import {chmod, link, readFile, readdir, symlink, unlink, writeFile} from "node:fs/promises";
+import {chmod, link, mkdtemp, readFile, readdir, rm, symlink, unlink, writeFile} from "node:fs/promises";
+import {tmpdir} from "node:os";
 import {join} from "node:path";
 import test from "node:test";
 import {canonicalJson} from "../dist/tool-registry.js";
 import {caller, cli, command, data, fixture, hash, initialized, meta, patch, stdio} from "./helpers/coding-fixture.mjs";
 import {compiledRecipeFilter, evaluateClassicBpf} from "./helpers/coding-seccomp.mjs";
+
+test("an npm-style executable symlink runs resource commands", async t => {
+  const f = await initialized(); t.after(() => f.close());
+  const directory = await mkdtemp(join(tmpdir(), "chio-coding-bin-")); t.after(() => rm(directory, {recursive: true, force: true}));
+  const alias = join(directory, "chio-coding-resource"); await symlink(cli, alias);
+  const help = await command(["--help"], {entry: alias});
+  assert.equal(help.code, 0); assert.match(help.stdout, /^chio-coding-resource init\|serve\|inspect\|export\|recover-lock/);
+  const inspection = await command(["inspect", "--config", f.configPath], {entry: alias});
+  assert.equal(inspection.code, 0, inspection.stderr); assert.ok(JSON.parse(inspection.stdout), "symlinked inspect must produce the read-only view");
+});
 
 test("coding resource requires explicit private import before serving", async t => {
   const f = await fixture(); t.after(() => f.close());
