@@ -69,7 +69,11 @@ export async function createChioPiSession(options: ChioPiOptions) {
 export async function createRestrictedSession(options: ChioPiOptions, extension?: ExtensionFactory) {
   options = snapshotSessionOptions(options);
   if (VERSION !== "1.0.2") throw new Error("Pi host version differs from the pinned 1.0.2 contract");
-  await preflightNativeSession(options.governance, options.sessionTarget ?? {kind: "new"});
+  // The public runtime factory preflights each manager for its exact target
+  // immediately before this call. Consume that check once; never re-check a
+  // stale startup target for a replacement session.
+  const preflighted = options.sessionManager !== undefined && factoryPreflighted.delete(options.sessionManager);
+  if (!preflighted) await preflightNativeSession(options.governance, options.sessionTarget ?? {kind: "new"});
   if (options.governance?.required && options.sessionManager && !runtimeManagers.has(options.sessionManager)) throw new Error("Governed initial SessionManager must be opened after native preflight");
   const registry = selectedRegistry(options);
   const selectedRelay = options.governance?.required ? selectGovernedRelay(options.governance.relayReference, options.governance.embedding, options.provider, options.model, registry) : undefined;
@@ -162,6 +166,7 @@ export async function createRestrictedSession(options: ChioPiOptions, extension?
 }
 
 const runtimeManagers = new WeakSet<SessionManager>();
+const factoryPreflighted = new WeakSet<SessionManager>();
 /** Public Pi runtime factory repeats custody checks for every replacement.
  * Initial preflight precedes opening/restoring the initial manager. */
 export async function createChioPiRuntime(options: ChioPiOptions) {
@@ -171,10 +176,14 @@ export async function createChioPiRuntime(options: ChioPiOptions) {
   const manager = options.sessionTarget?.kind === "resume"
     ? SessionManager.open(options.sessionTarget.path!, options.sessionTarget.sessionsDir, options.cwd)
     : options.sessionTarget?.sessionsDir ? SessionManager.create(options.cwd, options.sessionTarget.sessionsDir) : SessionManager.inMemory(options.cwd);
+  // The startup target was checked above. Replacements carry only their own.
+  const {sessionTarget: _startupTarget, ...replacement} = options;
   const runtime = await createAgentSessionRuntime(async target => {
     await preflightNativeSession(options.governance, {kind: "runtime_replacement", path: target.sessionManager.getSessionFile() ?? "in_memory"});
     runtimeManagers.add(target.sessionManager);
-    return createChioPiSession({...options, cwd: target.cwd, agentDir: target.agentDir, sessionManager: target.sessionManager});
+    factoryPreflighted.add(target.sessionManager);
+    try {return await createChioPiSession({...replacement, cwd: target.cwd, agentDir: target.agentDir, sessionManager: target.sessionManager});}
+    finally {factoryPreflighted.delete(target.sessionManager);}
   }, {cwd: options.cwd, agentDir: options.agentDir, sessionManager: manager});
   const nativeImport = runtime.importFromJsonl.bind(runtime);
   runtime.importFromJsonl = async (source, cwdOverride) => {

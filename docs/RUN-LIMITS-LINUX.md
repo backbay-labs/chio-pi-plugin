@@ -68,10 +68,11 @@ The default CLI `--governance execution-only` remains available. Explicit
 `required` refuses before credentials when the native host facade is unavailable.
 SDK hosts can pass a durable `RunBudget` as the sixth argument to
 `startModelRelay`; its registry, fixed profile and governance selection must match.
-For required SDK governance, the native embedding's independently selected
-`providerProfile` and `limitsIdentity` must equal the budget's versioned profile
-and durable identity. Normalization and reservations precede immutable JSON
-freezing; native committed release still owns the provider effect. No adapter
+Required SDK governance must pass one: the relay refuses to start without it.
+The native embedding's independently selected `providerProfile` and
+`limitsIdentity` must equal the budget's versioned profile and durable identity.
+Normalization and reservations precede immutable JSON freezing; native committed
+release still owns the provider effect. No adapter
 fetch follows a native authorization precheck. Native post-dispatch uncertainty
 and its original fence survive interruption.
 

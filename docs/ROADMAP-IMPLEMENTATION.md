@@ -219,7 +219,8 @@ is experimental. The research comparison with ordinary Pi Durable was not run.
 
 **Shipped.** Root exports `createNativeEmbedding`, `nativeFeatureAvailability`,
 `releaseGovernedModel`, `nativeKnowledge`, `preflightNativeSession`,
-`mediatedSessionOperation` and `startModelRelay` with `{required: true, embedding}`.
+`mediatedSessionOperation` and `startModelRelay` with `{required: true, embedding}`
+and a required durable run budget.
 `chio-pi --governance required` refuses before credentials, sessions, services or
 provider bytes when native governance is unavailable, with no fallback. See
 [native compatibility](NATIVE-COMPATIBILITY.md).

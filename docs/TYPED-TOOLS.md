@@ -2,9 +2,11 @@
 
 The adapter pins the current native host to Pi coding-agent and pi-ai 1.0.2.
 `createToolRegistry(operatorTools)` selects typed mode. Prepared operator JSON
-uses optional `"toolMode": "typed"`, which is also the default. The installed
-protected launcher passes one registry to its model relay and private guest
-transport. Neither endpoint discovers additional tools.
+uses optional `"toolMode": "typed"`, which is also the default.
+`chioExtension(executor, registry)` requires that pinned registry; omitting it
+throws instead of registering no tools. The installed protected launcher passes
+one registry to its model relay and private guest transport. Neither endpoint
+discovers additional tools.
 
 The standard filesystem names map to `chio_read`, `chio_write`, `chio_edit`, and
 `chio_list`. Other names get deterministic `chio_` aliases. Normalization
@@ -44,9 +46,12 @@ match the exact original private operation, reason and receipt, and pass public
 receipt verification against the retained caller, resource, request and arguments.
 Denials never ACK or clear their retained fence. Approval adds only
 the bridge's exact `chio_resume` contract and retains the original tool and
-arguments. The parent-only journal stores `pi-host.binding`, binding Pi
-version, registry digest and retained authority independently of guest-writable
-profile metadata. Incompatible frozen profiles are refused without migration.
+arguments. That contract needs the protected launcher's gateway journal, so the
+direct prepared-config executor (`configuredExecutor`) refuses an approval
+configuration instead of declaring a resume it cannot perform. The parent-only
+journal stores `pi-host.binding`, binding Pi version, registry digest and
+retained authority independently of guest-writable profile metadata.
+Incompatible frozen profiles are refused without migration.
 
 The unprotected programmatic comparison seam retains its previous uncertainty
 interlock: it can ACK after durable local result retention, before native

@@ -139,6 +139,9 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
   if (budget && budget.profile.identity !== profile.identity) throw new Error("Model relay budget profile mismatch");
   authority = Object.freeze({...authority});
   governance = governance ? Object.freeze({...governance}) : undefined;
+  // Native release must receive the limits and profile identities actually
+  // enforced here, so a required relay never starts without both.
+  if (governance?.required && (!governance.embedding || !budget)) throw new Error("Required governance needs its trusted native embedding and durable run budget");
   if (!registry) throw new Error("An explicit pinned tool registry is required");
   registryInventory(registry);
   if (budget && (budget.binding.registryDigest !== registry.digest || budget.binding.governanceProfile !== (governance?.required ? "required" : "execution-only"))) throw new Error("Model relay budget registry or governance binding mismatch");
@@ -188,7 +191,7 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
       if (remaining <= 0 || controller.signal.aborted) throw new Error("Model deadline reached");
       timeout = setTimeout(() => controller.abort(), Math.min(limits.providerTimeoutMs, remaining));
       const finalJson = JSON.stringify(body);
-      const upstreamOperation = governance?.required ? releaseGovernedModel(governance.embedding, finalJson, {provider: authority.provider, model, route: authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", accountId: authority.provider === "openai-codex" ? authority.accountId : null, ...(budget ? {profileIdentity: profile.identity, limitsIdentity: budget.identity} : {})}, controller.signal) : fetch(authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", {
+      const upstreamOperation = governance?.required ? releaseGovernedModel(governance.embedding, finalJson, {provider: authority.provider, model, route: authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", accountId: authority.provider === "openai-codex" ? authority.accountId : null, profileIdentity: profile.identity, limitsIdentity: budget!.identity}, controller.signal) : fetch(authority.provider === "openai-codex" ? "https://chatgpt.com/backend-api/codex/responses" : "https://api.openai.com/v1/responses", {
         method: "POST", redirect: "error", signal: controller.signal,
         headers, body: finalJson,
       });

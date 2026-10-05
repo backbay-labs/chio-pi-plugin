@@ -126,3 +126,24 @@ for (const fault of ["signature", "caller", "resource", "request", "allow"]) tes
     assert.equal(gatewayStatus(f.config).fenced, true);
   } finally {await f.close();}
 });
+
+test("A1-M1: one failed delivery confirmation does not fail every later request", async () => {
+  const journalDir = await mkdtemp(join(tmpdir(), "chio-confirmation-chain-"));
+  try {
+    const answers = [{acknowledged: false}, new Error("transient ACK transport failure"), {acknowledged: true}, {acknowledged: true}];
+    const acknowledged = [];
+    const transport = {async acknowledgeReceivedOutcome(outcome) {
+      const answer = answers.shift();
+      if (answer instanceof Error) throw answer;
+      if (answer.acknowledged) acknowledged.push(outcome.requestId);
+      return answer;
+    }};
+    const observe = plugin.createHostDeliveryObserver({sessionId: "host-session", execution, tools, journalDir}, transport);
+    const outcome = requestId => ({state: "completed", evidence: "verified", requestId, result: {content: []}});
+    await assert.rejects(observe([outcome("first")]), /unconfirmed/);
+    await assert.rejects(observe([outcome("first")]), /transient/);
+    await observe([outcome("first")]);
+    await observe([outcome("first"), outcome("second")]);
+    assert.deepEqual(acknowledged, ["first", "second"]);
+  } finally {await rm(journalDir, {recursive: true, force: true});}
+});

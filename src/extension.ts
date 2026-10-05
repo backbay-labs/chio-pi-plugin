@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { TSchema } from "typebox";
-import { CHIO_TOOL_NAME, createToolRegistry, resolveRegistryCall, type ToolRegistry } from "./tool-registry.js";
+import { CHIO_TOOL_NAME, registryInventory, resolveRegistryCall, type ToolRegistry } from "./tool-registry.js";
 
 /** Resource execution belongs to the kernel. This interface is an in-process
  * adapter seam, not a new network protocol or an evidence verifier. */
@@ -30,8 +30,11 @@ export interface KernelResult {
 export { CHIO_TOOL_NAME };
 
 /** Native Pi extension. Use createChioPiSession for the protected profile.
- * Loading this factory into an unrestricted Pi session does not isolate it. */
-export function chioExtension(executor: KernelExecutor | undefined, registry: ToolRegistry = createToolRegistry([])) {
+ * Loading this factory into an unrestricted Pi session does not isolate it.
+ * The pinned registry is required: an omitted one would register no tools. */
+export function chioExtension(executor: KernelExecutor | undefined, registry: ToolRegistry) {
+  if (!registry) throw new Error("An explicit pinned tool registry is required");
+  registryInventory(registry);
   return (pi: ExtensionAPI): void => {
     const aliases = new Set(registry.tools.map(tool => tool.name));
     // Nested partial delivery has no compatible gateway acknowledgement contract.

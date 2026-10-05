@@ -53,7 +53,7 @@ export function createHostDeliveryObserver(config: PreparedPiConfig & {journalDi
   const confirmed = new Set<string>();
   let confirmations = Promise.resolve();
   return async outcomes => {
-    confirmations = confirmations.then(async () => {
+    const current = confirmations.then(async () => {
       for (const outcome of outcomes) {
         if (!object(outcome)) continue;
         if (outcome.state === "denied") {await verifyRetainedDenial(config, registry, outcome); continue;}
@@ -66,6 +66,9 @@ export function createHostDeliveryObserver(config: PreparedPiConfig & {journalDi
         confirmed.add(identity);
       }
     });
-    await confirmations;
+    // Serialize confirmations without making one failure permanent: this
+    // request still fails, and a later request re-checks its own outcomes.
+    confirmations = current.catch(() => {});
+    await current;
   };
 }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, open, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
@@ -90,4 +91,48 @@ test("parent host metadata coexists with bundled gateway startup, status, close 
     assert.deepEqual(gatewayStatus(original).operations, []);
     gateway.close(); gateway = undefined;
   } finally {gateway?.close(); await rm(journalDir, {recursive: true, force: true});}
+});
+
+/** Interrupt the first write whose bytes match, as a crash between creating and
+ * filling a binding would. A partial binding must never become the record. */
+async function interruptWrite(matches, operation) {
+  const probe = await open(fileURLToPath(import.meta.url), "r");
+  const prototype = Object.getPrototypeOf(probe); await probe.close();
+  const original = prototype.writeFile; let interrupted = 0;
+  prototype.writeFile = function (data, ...rest) {
+    if (!interrupted && matches(String(data))) {interrupted++; return Promise.reject(new Error("simulated crash during binding write"));}
+    return original.call(this, data, ...rest);
+  };
+  try {await assert.rejects(operation(), /simulated crash/);} finally {prototype.writeFile = original;}
+  assert.equal(interrupted, 1);
+}
+
+test("A1-M4: an interrupted binding write never leaves an empty binding that refuses later launches", async () => {
+  const profile = await mkdtemp(join(tmpdir(), "chio-config-atomic-"));
+  const journal = await mkdtemp(join(tmpdir(), "chio-parent-atomic-"));
+  try {
+    const original = config(); const registry = createToolRegistry(original.tools);
+    await interruptWrite(data => /^[a-f0-9]{64}$/.test(data), () => configuredExecutor(original, profile));
+    assert.deepEqual(await readdir(join(profile, "chio")), []);
+    const controlled = await configuredExecutor(original, profile);
+    assert.match(await readFile(join(profile, "chio/authority.binding"), "utf8"), /^[a-f0-9]{64}$/);
+    await controlled.close();
+    await interruptWrite(data => data.includes("chio.pi.host-binding.v1"), () => configured.pinHostRegistry(original, registry, journal));
+    assert.deepEqual(await readdir(journal), []);
+    await configured.pinHostRegistry(original, registry, journal);
+    assert.equal(JSON.parse(await readFile(join(journal, "pi-host.binding"), "utf8")).registryDigest, registry.digest);
+    assert.deepEqual(await readdir(journal), ["pi-host.binding"]);
+    assert.deepEqual(await readdir(join(profile, "chio")), ["authority.binding"]);
+  } finally {await rm(profile, {recursive: true, force: true}); await rm(journal, {recursive: true, force: true});}
+});
+
+test("A1-M5: the direct prepared-config executor refuses approval it cannot resume", async () => {
+  const profile = await mkdtemp(join(tmpdir(), "chio-config-approval-"));
+  try {
+    const approval = {requiredTools: ["read_text_file"], purpose: "operator review", ttlSeconds: 60};
+    await assert.rejects(configuredExecutor({...config(), approval}, profile), /approval.*protected launcher/i);
+    await assert.rejects(readdir(join(profile, "chio")), {code: "ENOENT"});
+    const controlled = await configuredExecutor(config(), profile);
+    await controlled.close();
+  } finally {await rm(profile, {recursive: true, force: true});}
 });

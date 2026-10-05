@@ -4,6 +4,10 @@ import {createHash, generateKeyPairSync, sign} from "node:crypto";
 import * as plugin from "../dist/index.js";
 import {startModelRelay} from "../dist/model-relay.js";
 import {createToolRegistry, canonicalJson} from "../dist/tool-registry.js";
+import {openRunBudget, DEFAULT_RUN_LIMITS} from "../dist/run-limits.js";
+import {mkdtemp, realpath, rm} from "node:fs/promises";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
 
 export const binding = Object.freeze({authorityDomain:"domain", tenant:"tenant", process:"process", runtime:"runtime", lineage:"lineage", isolationEpoch:"epoch", policy:"policy", contracts:"contracts", installGeneration:"generation"});
 export function fixture(overrides = {}) {
@@ -13,27 +17,39 @@ export function fixture(overrides = {}) {
 }
 const body = {model:"gpt-4.1-mini", store:false, stream:true, input:[{role:"user",content:"secret"}]};
 async function send(relay) {return fetch(`http://127.0.0.1:${relay.port}/v1/responses`,{method:"POST",headers:{authorization:`Bearer ${relay.token}`},body:JSON.stringify(body)});}
+const pinnedRegistry = createToolRegistry([]);
+/** Complete trusted composition: the embedding pins the provider profile and
+ * limits identities of the durable run budget that the relay enforces. */
+async function governedRelay(f, {prepare} = {}) {
+ const dir=await realpath(await mkdtemp(join(tmpdir(),"chio-governed-relay-")));
+ const budget=await openRunBudget(join(dir,"budget"),{binding:{authorityDigest:"a".repeat(64),registryDigest:pinnedRegistry.digest,profileIdentity:"fixture",governanceProfile:"required"},limits:{...DEFAULT_RUN_LIMITS},provider:"openai",model:body.model,create:true});
+ try {
+  const embedding=plugin.createNativeEmbedding({...f.options,providerProfile:budget.profile.identity,limitsIdentity:budget.identity});
+  await prepare?.(embedding);
+  const governance={required:true,embedding};
+  const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,pinnedRegistry,governance,budget);
+  return {port:relay.port,token:relay.token,embedding,governance,async close(){await relay.close();await budget.close();await rm(dir,{recursive:true,force:true});}};
+ } catch (error) {await budget.close();await rm(dir,{recursive:true,force:true});throw error;}
+}
 
 test("required native release absent gives zero provider bytes", async () => {
  const original=globalThis.fetch; let outbound=0;
  globalThis.fetch=(url,init)=>String(url).startsWith("http://127.0.0.1:")?original(url,init):(outbound++,Promise.resolve(new Response("leak")));
- const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true});
- try {assert.equal((await send(relay)).status,502); assert.equal(outbound,0);} finally {await relay.close();globalThis.fetch=original;}
+ try {await assert.rejects(startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true}).then(async relay=>{await relay.close();return relay;}),/native embedding/); assert.equal(outbound,0);} finally {globalThis.fetch=original;}
 });
 
 test("trusted embedding freezes normalized final bytes and independently selects sink", async () => {
  assert.equal(typeof plugin.createNativeEmbedding,"function","native composition missing");
- const f=fixture(); const embedding=plugin.createNativeEmbedding(f.options);
+ const f=fixture(); const relay=await governedRelay(f); const {embedding}=relay;
  assert.deepEqual(Object.keys(embedding),[]); assert.equal(JSON.stringify(embedding),"{}");
- const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true,embedding});
  try {assert.equal((await send(relay)).status,200); const r=f.deliveries[0]; assert.ok(Object.isFrozen(r)); assert.equal(r.utf8Size,Buffer.byteLength(r.json));assert.equal(r.digest,createHash("sha256").update(r.json).digest("hex"));assert.equal(JSON.parse(r.json).parallel_tool_calls,false);assert.equal(r.accountId,null);assert.equal(r.history.length,1);} finally {await relay.close();}
 });
 
 test("expired or mismatched current native authority never invokes release", async () => {
  assert.equal(typeof plugin.createNativeEmbedding,"function","native composition missing");
  for (const status of [{binding,expiresAt:0},{binding:{...binding,tenant:"other"},expiresAt:Date.now()+10000}]) {
- const f=fixture({async currentInstallation(){return status;}});const embedding=plugin.createNativeEmbedding(f.options);
- const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true,embedding});
+ const f=fixture({async currentInstallation(){return status;}});
+ const relay=await governedRelay(f);
  try {assert.equal((await send(relay)).status,502);assert.equal(f.deliveries.length,0);} finally {await relay.close();}
  }
 });
@@ -43,7 +59,7 @@ test("native release throws or loses commit ACK without independent relay fetch"
  for (const failure of ["throws","lost-ack"]) {
  let sinkBytes=0;const f=fixture({model:{async releaseFrozenRequest(){if(failure==="throws")throw Error("native failure");return {state:"proven_undispatched"};}}});
  const original=globalThis.fetch; globalThis.fetch=(url,init)=>String(url).startsWith("http://127.0.0.1:")?original(url,init):(sinkBytes++,Promise.resolve(new Response("leak")));
- const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true,embedding:plugin.createNativeEmbedding(f.options)});
+ const relay=await governedRelay(f);
  try {assert.equal((await send(relay)).status,502);assert.equal(sinkBytes,0);} finally {await relay.close();globalThis.fetch=original;}
  }
 });
@@ -51,7 +67,7 @@ test("native release throws or loses commit ACK without independent relay fetch"
 test("postsubmit uncertainty fences replacement requests", async () => {
  assert.equal(typeof plugin.createNativeEmbedding,"function","native composition missing");let calls=0;
  const f=fixture({model:{async releaseFrozenRequest(){calls++;return {state:"unresolved"};}}});
- const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true,embedding:plugin.createNativeEmbedding(f.options)});
+ const relay=await governedRelay(f);
  try {assert.equal((await send(relay)).status,502);assert.equal((await send(relay)).status,502);assert.equal(calls,1);} finally {await relay.close();}
 });
 
@@ -78,13 +94,13 @@ test("native knowledge keeps opaque custody and refuses cross-process adoption a
 });
 
 test("required native account-specific contracts refuse unknown API account mapping",async()=>{
- const f=fixture();f.ports.model.accountSpecific=true;const e=plugin.createNativeEmbedding(f.options);const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true,embedding:e});
+ const f=fixture();f.ports.model.accountSpecific=true;const relay=await governedRelay(f);
  try{assert.equal((await send(relay)).status,502);assert.equal(f.deliveries.length,0);}finally{await relay.close();}
 });
 
 test("native ports on class instances survive composition without callback substitution",async()=>{
  class Model{async releaseFrozenRequest(request){return {state:"completed",response:new Response(request.json)};}}
- const f=fixture({model:new Model()});const e=plugin.createNativeEmbedding(f.options);const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true,embedding:e});
+ const f=fixture({model:new Model()});const relay=await governedRelay(f);
  try{assert.equal((await send(relay)).status,200);}finally{await relay.close();}
 });
 
@@ -102,14 +118,13 @@ test("explicit required CLI refuses native governance before profile or credenti
 
 test("response loss after provider submission preserves original fence",async()=>{
  let submissions=0;const f=fixture({model:{async releaseFrozenRequest(){submissions++;return {state:"completed",response:new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode("partial"));c.error(Error("postsubmit response loss"));}}))};}}});
- const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true,embedding:plugin.createNativeEmbedding(f.options)});
+ const relay=await governedRelay(f);
  try {await (await send(relay)).text().catch(()=>{});await (await send(relay)).text().catch(()=>{});assert.equal(submissions,1);}finally{await relay.close();}
 });
 
 test("retained adopted artifacts join complete model history without permit serialization",async()=>{
- const knowledge={async reserve(){return {};},async adoptLegacy(){return {};}};const f=fixture({knowledge});const e=plugin.createNativeEmbedding(f.options);
- const reservation=await plugin.nativeKnowledge(e,"reserve",{exact:{requestId:"adopt-original"}});await plugin.nativeKnowledge(e,"adoptLegacy",{reference:reservation,exact:{schema:"native-classified-content"}});
- const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true,embedding:e});
+ const knowledge={async reserve(){return {};},async adoptLegacy(){return {};}};const f=fixture({knowledge});
+ const relay=await governedRelay(f,{async prepare(e){const reservation=await plugin.nativeKnowledge(e,"reserve",{exact:{requestId:"adopt-original"}});await plugin.nativeKnowledge(e,"adoptLegacy",{reference:reservation,exact:{schema:"native-classified-content"}});}});
  try {await (await send(relay)).text();assert.equal(f.deliveries[0].history.length,2);}finally{await relay.close();}
 });
 
@@ -123,8 +138,8 @@ test("P2 native explanation port is advisory only and checks independently pinne
 });
 
 test("concurrent native account lookup cannot create sibling replacement submissions",async()=>{
- let submissions=0;const f=fixture({model:{async resolveApiAccount(){await new Promise(r=>setTimeout(r,20));return "native-account";},async releaseFrozenRequest(){submissions++;return {state:"unresolved"};}}});const e=plugin.createNativeEmbedding(f.options);
- const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),{required:true,embedding:e});try{await Promise.all([send(relay),send(relay)]);assert.equal(submissions,1);}finally{await relay.close();}
+ let submissions=0;const f=fixture({model:{async resolveApiAccount(){await new Promise(r=>setTimeout(r,20));return "native-account";},async releaseFrozenRequest(){submissions++;return {state:"unresolved"};}}});
+ const relay=await governedRelay(f);try{await Promise.all([send(relay),send(relay)]);assert.equal(submissions,1);}finally{await relay.close();}
 });
 
 test("native feature availability requires callable installed methods and current checks",async()=>{
@@ -147,9 +162,9 @@ test("denied recovery selects opaque native semantic custody before linked conti
 });
 
 test("caller mutation cannot disable required governance after relay installation",async()=>{
- const original=globalThis.fetch;let remote=0;globalThis.fetch=(url,init)=>String(url).startsWith("http://127.0.0.1:")?original(url,init):(remote++,Promise.resolve(new Response("leak")));
- const governance={required:true};const relay=await startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,createToolRegistry([]),governance);governance.required=false;
- try{assert.equal((await send(relay)).status,502);assert.equal(remote,0);}finally{await relay.close();globalThis.fetch=original;}
+ const original=globalThis.fetch;let remote=0;let releases=0;globalThis.fetch=(url,init)=>String(url).startsWith("http://127.0.0.1:")?original(url,init):(remote++,Promise.resolve(new Response("leak")));
+ const relay=await governedRelay(fixture({model:{async releaseFrozenRequest(){releases++;return {state:"refused"};}}}));relay.governance.required=false;delete relay.governance.embedding;
+ try{assert.equal((await send(relay)).status,502);assert.equal(remote,0);assert.equal(releases,1);}finally{await relay.close();globalThis.fetch=original;}
 });
 
 test("P2 rendering refuses unverified DTOs",()=>{
@@ -161,4 +176,17 @@ test("native P2 explanation uses current time despite stale fixture time",async(
  const body={schema:"chio.recovery.explanation-view.v1",version:1,planner_version:"chio.recovery.planner.v1",trust_domain:"domain",issuer:"issuer",recipient:"recipient",report_ref:"report",issued_at_unix_ms:past,expires_at_unix_ms:past+1000,projection:{summary:"no_disclosable_advice",candidates:[]}};
  const signed={body,authority_key:key,algorithm:"ed25519",signature:sign(null,Buffer.from("chio:recovery-explanation-view:v1\0"+canonicalJson(body)),privateKey).toString("hex")};const f=fixture({explanation:{async explain(){return signed;}}});f.options.explanationAuthority={authorityKey:key,trustDomain:"domain",issuer:"issuer",recipient:"recipient",now:past};
  await assert.rejects(plugin.explainNativeRecovery(plugin.createNativeEmbedding(f.options),"workflow"),/validity mismatch/);
+});
+
+test("A1-M3: required relay refuses incomplete native composition before listening", async () => {
+ const {mkdtemp,realpath,rm}=await import("node:fs/promises");const {tmpdir}=await import("node:os");const {join}=await import("node:path");const {openRunBudget,DEFAULT_RUN_LIMITS}=await import("../dist/run-limits.js");
+ const original=globalThis.fetch;let outbound=0;globalThis.fetch=(url,init)=>String(url).startsWith("http://127.0.0.1:")?original(url,init):(outbound++,Promise.resolve(new Response("leak")));
+ const registry=createToolRegistry([]);const dir=await realpath(await mkdtemp(join(tmpdir(),"chio-incomplete-governance-")));
+ const budget=await openRunBudget(join(dir,"budget"),{binding:{authorityDigest:"a".repeat(64),registryDigest:registry.digest,profileIdentity:"fixture",governanceProfile:"required"},limits:{...DEFAULT_RUN_LIMITS},provider:"openai",model:body.model,create:true});
+ const f=fixture();const embedding=plugin.createNativeEmbedding({...f.options,providerProfile:budget.profile.identity,limitsIdentity:budget.identity});
+ try{
+  for(const [governance,selected] of [[{required:true},undefined],[{required:true},budget],[{required:true,embedding},undefined]])
+   await assert.rejects(startModelRelay({provider:"openai",apiKey:"fixture"},body.model,undefined,registry,governance,selected).then(async relay=>{await relay.close();return relay;}),/native embedding and durable run budget/);
+  assert.equal(outbound,0);assert.equal(f.deliveries.length,0);
+ }finally{await budget.close();await rm(dir,{recursive:true,force:true});globalThis.fetch=original;}
 });

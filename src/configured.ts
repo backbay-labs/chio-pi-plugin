@@ -1,6 +1,7 @@
 import { createMcpExecutionClient, verifyCompletedOutcome, verifyBoundReceipt, type ExecutionOutcome as BridgeOutcome, type McpExecutionOptions } from "@chio/bridge";
-import { createHash } from "node:crypto";
-import { lstat, mkdir, open, readFile, unlink } from "node:fs/promises";
+import { createHash, randomBytes } from "node:crypto";
+import { constants } from "node:fs";
+import { link, lstat, mkdir, open, readFile, unlink } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { bridgeExecutor } from "./bridge-executor.js";
 import { recoverPendingAcknowledgement } from "./uncertainty.js";
@@ -44,6 +45,20 @@ export function preparedAuthorityDigest(config: PreparedPiConfig, registry: Tool
   })).digest("hex");
 }
 
+/** Exclusive atomic publication: the final name appears only with complete,
+ * flushed bytes, so an interrupted launch cannot leave an empty binding. An
+ * existing name refuses with EEXIST. At most a private temporary remains. */
+async function publishExclusive(directory: string, name: string, text: string): Promise<void> {
+  const temporary = join(directory, `.chio-${randomBytes(16).toString("hex")}.tmp`);
+  try {
+    const file = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+    try {await file.writeFile(text); await file.sync();} finally {await file.close();}
+    await link(temporary, join(directory, name));
+  } finally {await unlink(temporary).catch(error => {if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;});}
+  const dir = await open(directory, "r");
+  try {await dir.sync();} finally {await dir.close();}
+}
+
 /** The protected launcher's journal is inaccessible to the guest. A writable
  * guest ownership marker alone cannot pin resumed host or tool semantics. */
 export async function pinHostRegistry(config: PreparedPiConfig, registry: ToolRegistry, journalDirectory: string, profile: GovernanceProfile = "execution-only"): Promise<void> {
@@ -68,10 +83,8 @@ export async function pinHostRegistry(config: PreparedPiConfig, registry: ToolRe
   try {await check();}
   catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    try {
-      const file = await open(path, "wx", 0o600);
-      try {await file.writeFile(binding + "\n"); await file.sync();} finally {await file.close();}
-    } catch (error) {
+    try {await publishExclusive(journalDirectory, "pi-host.binding", binding + "\n");}
+    catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
       await check();
     }
@@ -85,6 +98,9 @@ export async function pinHostRegistry(config: PreparedPiConfig, registry: ToolRe
  * kernel tool server's writable filesystem. */
 export async function configuredExecutor(config: PreparedPiConfig, profile: string): Promise<{ executor: KernelExecutor; registry: ToolRegistry; close(): Promise<void> }> {
   config = frozenJson(config);
+  // Explicit chio_resume belongs to the protected launcher's gateway journal and
+  // retained proposal. This direct path could declare it but never resume it.
+  if (config.approval) throw new Error("Approval resume requires the protected launcher's gateway; the direct prepared-config executor refuses an approval configuration");
   const registry = registryForConfig(config);
   const binding = preparedAuthorityDigest(config, registry);
   const directory = join(resolve(profile), "chio");
@@ -101,10 +117,7 @@ export async function configuredExecutor(config: PreparedPiConfig, profile: stri
     try { previous = await readFile(bindingPath, "utf8"); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
     if (previous && previous !== binding) throw new Error("Profile belongs to different authority, session, signer, or tools");
-    if (!previous) {
-      const file = await open(bindingPath, "wx", 0o600);
-      try { await file.writeFile(binding); await file.sync(); } finally { await file.close(); }
-    }
+    if (!previous) await publishExclusive(directory, "authority.binding", binding);
     const dir = await open(directory, "r");
     try { await dir.sync(); } finally { await dir.close(); }
     const client = bridgeExecutor(createMcpExecutionClient(config.execution),

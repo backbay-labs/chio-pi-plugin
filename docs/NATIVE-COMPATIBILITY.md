@@ -46,10 +46,16 @@ inspected installed operator utility, with explicit scope and qualification text
 ## Exact model release
 
 `startModelRelay(authority, model, historyObserver, registry,
-{required: true, embedding})` returns an opaque `governanceReference` in addition
-to its private local transport credentials. Required `createChioPiSession` and
-`createChioPiRuntime` receive that reference in `governance.relayReference`. They
-validate the exact embedding, provider, model, registry and still-open relay.
+{required: true, embedding}, budget)` returns an opaque `governanceReference` in
+addition to its private local transport credentials. A required relay refuses to
+start unless it has both the trusted embedding and the durable run budget from
+`openRunBudget` (bound to `governanceProfile: "required"` and the same registry).
+Every release then carries the profile and limits identities that the relay
+actually enforces, and native release refuses an embedding whose
+`providerProfile` or `limitsIdentity` differs from them. Required
+`createChioPiSession` and `createChioPiRuntime` receive that reference in
+`governance.relayReference`. They validate the exact embedding, provider, model,
+registry and still-open relay.
 A loopback URL or forged reference is insufficient. Required sessions construct
 a read-only relay credential runtime and pin the model base URL to that relay,
 including runtime replacements and Pi's summarization paths. The public Agent
@@ -76,6 +82,15 @@ restart-proof fencing and accounting belong to the native durable service.
 Concurrent requests cannot bypass the interlock during an asynchronous account
 lookup. Successful full response observation clears only this additional local
 interlock. Reconciliation and replacement authority remain native responsibilities.
+A native refusal or proven non-dispatch also clears it. Once release has begun,
+a user abort, disconnect, timeout, stream failure, unresolved native result or
+native port exception leaves it set for the life of that embedding, and every
+later governed request through it refuses. The adapter has no reconcile API for
+this interlock. Reconcile the original release request through the native
+service first, then create a new embedding with `createNativeEmbedding` and a
+new relay. Recreating the embedding only removes this extra local
+interlock; it never establishes native non-dispatch or authorizes a replacement
+submission.
 
 Codex release uses the account in the operator-held `ModelAuthority`, never the
 guest's `chio-local-relay` account claim. OpenAI API account identity remains
@@ -110,9 +125,11 @@ open/create consistently use that snapshot; later caller mutation cannot select
 a different restored transcript or destination directory.
 The required session factory preflights before opening or restoring its initial
 SessionManager and before `createAgentSession`. Preopened initial managers are
-refused. The public runtime factory repeats preflight for replacements, and its
-import wrapper validates the original input file before Pi copies it. A switch
-hook sees the destination and cannot substitute for that source check.
+refused. The public runtime factory repeats preflight for replacements with the
+`runtime_replacement` target only; a replacement never re-checks the stale
+startup target, and the factory's own check is not repeated. Its import wrapper
+validates the original input file before Pi copies it. A switch hook sees the
+destination and cannot substitute for that source check.
 
 Trusted handlers catch failures and explicitly return `{cancel: true}` from
 `session_before_compact`, `session_before_fork`, `session_before_switch` and

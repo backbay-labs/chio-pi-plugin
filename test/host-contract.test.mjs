@@ -329,3 +329,10 @@ test("typed approval resume preserves original completion in actual Pi history b
   assert.deepEqual(result.details.retainedOutcome, fullOutcome);
   session.dispose();
 });
+
+test("A1-M6: the native extension requires an explicit pinned registry instead of registering nothing", () => {
+  for (const registry of [undefined, {mode: "typed", digest: "0".repeat(64), tools: []}]) {
+    assert.throws(() => plugin.chioExtension(undefined, registry), /registry/i);
+  }
+  assert.equal(typeof plugin.chioExtension(undefined, plugin.createToolRegistry(typedTools)), "function");
+});
