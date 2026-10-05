@@ -13,11 +13,11 @@ export const caller = "a".repeat(64);
 export const hash = value => createHash("sha256").update(value).digest("hex");
 export const meta = (id = "1", extra = {}) => ({chioRequestId: id.repeat(64), chioOperationId: id.repeat(64), chioAttemptId: "native-attempt", chioTransportKeyEpoch: 1, chioCallerCapabilitySha256: caller, ...extra});
 export const data = result => JSON.parse(result.content[0].text);
-let macRuntimePins;
-async function fixtureRuntimePins(executable) {
+const macRuntimePins = new Map();
+export async function fixtureRuntimePins(executable) {
   if (process.platform !== "darwin") return JSON.parse(process.env.CHIO_CODING_LINUX_RUNTIME_JSON ?? "[]");
-  macRuntimePins ??= runtimeLibraries(executable).then(paths => Promise.all(paths.filter(path => path !== executable).map(async path => ({path, sha256: hash(await readFile(path))}))));
-  return (await macRuntimePins).map(file => ({...file}));
+  if (!macRuntimePins.has(executable)) macRuntimePins.set(executable, runtimeLibraries(executable).then(paths => Promise.all(paths.filter(path => path !== executable).map(async path => ({path, sha256: hash(await readFile(path))})))));
+  return (await macRuntimePins.get(executable)).map(file => ({...file}));
 }
 
 export async function fixture(options = {}) {
@@ -29,8 +29,8 @@ export async function fixture(options = {}) {
     await mkdir(dirname(join(root("repository"), path)), {recursive: true, mode: 0o700});
     await writeFile(join(root("repository"), path), content, {mode: 0o600});
   }
-  const executable = await realpath(process.execPath);
-  const recipe = {name: "unit", executable, executableSha256: hash(await readFile(executable)), argv: ["fixture-test.mjs"], timeoutMs: options.timeoutMs ?? 2000, outputBytes: options.outputBytes ?? 16384, graceMs: 100, runtimeFiles: options.runtimeFiles ?? await fixtureRuntimePins(executable)};
+  const executable = await realpath(options.executable ?? process.execPath);
+  const recipe = {name: "unit", executable, executableSha256: hash(await readFile(executable)), argv: options.argv ?? ["fixture-test.mjs"], timeoutMs: options.timeoutMs ?? 2000, outputBytes: options.outputBytes ?? 16384, graceMs: 100, runtimeFiles: options.runtimeFiles ?? await fixtureRuntimePins(executable)};
   recipe.recipeSha256 = hash(canonicalJson(recipe));
   const config = {schema: "chio.coding-resource.v1", resourceOwnerId: "fixture-owner", workspaceId: "fixture-workspace", repositoryRoot: root("repository"), stateRoot: root("state"), artifactRoot: root("artifacts"), jobRoot: root("jobs"), allowedCallerCapabilitySha256: [caller, "b".repeat(64)], bounds: {maxFileBytes: 262144, maxRepositoryBytes: 1048576, maxFiles: 128, maxReadBytes: 65536, maxSearchMatches: 50, maxReadMany: 8, maxPatchBytes: 65536, maxInputBytes: 131072, maxQueuedCalls: 8, maxOutputBytes: 131072, ...options.bounds}, recipes: [recipe]};
   const configPath = join(base, "operator.json");

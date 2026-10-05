@@ -1,7 +1,15 @@
+import {readFileSync} from "node:fs";
 import {TextDecoder} from "node:util";
 import type {Readable, Writable} from "node:stream";
 import type {CodingResource} from "./participant.js";
-import {MAX_JSONRPC_ID_LENGTH} from "./config.js";
+import {MAX_JSONRPC_ID_LENGTH, MAX_REQUEST_FRAME_BYTES} from "./config.js";
+
+// The installed package metadata, two levels above dist/coding-resource.
+const packageVersion = (() => {
+  const version = (JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as {version?: unknown}).version;
+  if (typeof version !== "string" || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) throw new Error("Installed package version is unavailable");
+  return version;
+})();
 
 interface Request {jsonrpc: "2.0"; id?: string | number; method: string; params?: Record<string, unknown>}
 export async function serveCodingResource(participant: CodingResource, input: Readable, output: Writable): Promise<number> {
@@ -18,7 +26,7 @@ export async function serveCodingResource(participant: CodingResource, input: Re
   const dispatch = async (request: Request): Promise<unknown> => {
     const params = request.params ?? {};
     switch (request.method) {
-      case "initialize": return {protocolVersion: ["2024-11-05", "2025-03-26", "2025-06-18"].includes(params.protocolVersion as string) ? params.protocolVersion : "2024-11-05", capabilities: {tools: {}}, serverInfo: {name: "chio-coding-resource", version: "0.1.0"}};
+      case "initialize": return {protocolVersion: ["2024-11-05", "2025-03-26", "2025-06-18"].includes(params.protocolVersion as string) ? params.protocolVersion : "2024-11-05", capabilities: {tools: {}}, serverInfo: {name: "chio-coding-resource", version: packageVersion}};
       case "tools/list": return {tools: participant.tools.inventory};
       case "tools/call": {
         if (typeof params.name !== "string" || Object.keys(params).some(key => !["name", "arguments", "_meta"].includes(key))) throw new Error("Closed native tools/call parameters are required");
@@ -47,7 +55,7 @@ export async function serveCodingResource(participant: CodingResource, input: Re
       while (start < chunk.length) {
         const newline = chunk.indexOf(10, start); const stop = newline < 0 ? chunk.length : newline;
         const part = chunk.subarray(start, stop);
-        if (partialBytes + part.length > participant.bounds.maxInputBytes) throw new Error("Input frame exceeds bound before newline");
+        if (partialBytes + part.length > MAX_REQUEST_FRAME_BYTES) throw new Error("Input frame exceeds bound before newline");
         partial.push(part); partialBytes += part.length;
         if (newline < 0) break;
         const line = new TextDecoder("utf8", {fatal: true}).decode(Buffer.concat(partial, partialBytes)); partial = []; partialBytes = 0;

@@ -4,12 +4,18 @@ import {join} from "node:path";
 import {DatabaseSync} from "node:sqlite";
 import {canonicalJson} from "../tool-registry.js";
 import {sha256, type LoadedConfig} from "./config.js";
-import {durableFile, fsyncDirectory, regularFile} from "./paths.js";
+import {durableFile, fsyncDirectory, privateFileIdentity} from "./paths.js";
 
 export interface NativeMetadata {chioRequestId: string; chioOperationId: string; chioAttemptId: string; chioTransportKeyEpoch: number; chioCallerCapabilitySha256: string}
 export interface McpResult {content: {type: "text"; text: string}[]; isError?: true}
 export interface Operation {operationId: string; binding: string; caller: string; tool: string; arguments: string; configDigest: string; sourceDigest: string; state: "intent" | "completed"; result: string | null}
 export class FatalResourceError extends Error {constructor(message = "Unresolved durable resource intent; native reconciliation is required") {super(message); this.name = "FatalResourceError";}}
+/** SQLITE_READONLY_ROLLBACK: a read-only connection found a hot journal left by
+ * an interrupted commit. Only a read-write connection may roll it back. */
+const SQLITE_READONLY_ROLLBACK = 776;
+export class LedgerRollbackRequired extends Error {
+  constructor(readonly journal: string) {super(`Interrupted ledger commit left hot rollback journal ${journal}. Never delete it; it restores the last committed ledger. Read-only inspect/export cannot roll it back. Recover a proven-dead owner lock if present, then start serve, which rolls it back under the exclusive owner lock.`); this.name = "LedgerRollbackRequired";}
+}
 function rootBinding({config}: LoadedConfig) {return sha256(canonicalJson({workspaceId: config.workspaceId, resourceOwnerId: config.resourceOwnerId, repositoryRoot: config.repositoryRoot, stateRoot: config.stateRoot, artifactRoot: config.artifactRoot, jobRoot: config.jobRoot}));}
 export class ResourceLedger {
   private constructor(readonly path: string, private readonly db: DatabaseSync, readonly selected: LoadedConfig) {}
@@ -19,12 +25,14 @@ export class ResourceLedger {
     try {
       const info = await lstat(path);
       if (!info.isFile() || info.nlink !== 1 || info.uid !== process.getuid?.() || (info.mode & 0o777) !== 0o600) throw new Error("Ledger must be a private regular owned file without links");
-      await regularFile(path, {private: true, maxBytes: 256 * 1024 * 1024});
+      // Identity and type only: a size cap here would make a grown ledger
+      // unopenable for serve, inspect and export.
+      await privateFileIdentity(path);
       // SQLite may open these during hot-journal recovery even for read-only
       // inspection. Reject special files before passing the database to SQLite.
       for (const suffix of ["-journal", "-wal", "-shm"]) {
         const sidecar = path + suffix;
-        try {await regularFile(sidecar, {private: true, maxBytes: 256 * 1024 * 1024});}
+        try {await privateFileIdentity(sidecar);}
         catch (error) {if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw new Error("SQLite sidecar must be a private owned regular file without links");}
       }
     } catch (error) {if ((error as NodeJS.ErrnoException).code === "ENOENT") throw new Error("Resource is not initialized; explicit operator init/import is required"); throw error;}
@@ -38,7 +46,11 @@ export class ResourceLedger {
         ledger.setMeta("schema", "chio.coding-resource-ledger.v1"); ledger.setMeta("rootBinding", rootBinding(selected));
       } else if (ledger.meta("schema") !== "chio.coding-resource-ledger.v1" || ledger.meta("rootBinding") !== rootBinding(selected) || !ledger.meta("currentDigest")) throw new Error("Initialized resource identity differs from operator-selected roots and owner");
       return ledger;
-    } catch (error) {db.close(); throw error;}
+    } catch (error) {
+      db.close();
+      if (options.readonly && (error as {errcode?: unknown}).errcode === SQLITE_READONLY_ROLLBACK) throw new LedgerRollbackRequired(path + "-journal");
+      throw error;
+    }
   }
   meta(key: string): string | undefined {return (this.db.prepare("SELECT value FROM metadata WHERE key=?").get(key) as {value: string} | undefined)?.value;}
   private setMeta(key: string, value: string): void {this.db.prepare("INSERT INTO metadata(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(key, value);}

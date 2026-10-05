@@ -1,7 +1,7 @@
 import {constants} from "node:fs";
 import {chmod, lstat, mkdir, open, readdir, realpath, rename, rm, unlink} from "node:fs/promises";
 import {hostname} from "node:os";
-import {dirname, isAbsolute, join, normalize, relative, sep} from "node:path";
+import {basename, dirname, isAbsolute, join, normalize, relative, sep} from "node:path";
 import {randomUUID} from "node:crypto";
 import {canonicalSourcePath} from "./namespace.js";
 
@@ -45,6 +45,19 @@ export async function regularFile(path: string, options: {private?: boolean; imm
     return bytes;
   } finally {await file.close();}
 }
+/** Validate an owned private regular file without reading it or bounding its
+ * size, for files such as the ledger that a bounded full read would make
+ * unopenable as they grow. Type is checked before and after a nonblocking open. */
+export async function privateFileIdentity(path: string): Promise<void> {
+  await noSymlinkPath(path);
+  const before = await lstat(path);
+  if (!before.isFile() || before.nlink !== 1 || before.uid !== process.getuid?.() || (before.mode & 0o777) !== 0o600) throw new Error("File must be an owned regular private file without links");
+  const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  try {
+    const after = await file.stat();
+    if (!after.isFile() || after.nlink !== 1 || after.uid !== before.uid || (after.mode & 0o777) !== 0o600 || after.dev !== before.dev || after.ino !== before.ino) throw new Error("Regular file changed during open");
+  } finally {await file.close();}
+}
 export async function fsyncDirectory(path: string): Promise<void> {
   const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {await file.sync();} finally {await file.close();}
@@ -71,7 +84,31 @@ export async function installImmutableTree(parent: string, name: string, files: 
   await rename(stage, join(parent, name));
   await fsyncDirectory(parent);
 }
-export async function removeJob(path: string): Promise<void> {await rm(path, {recursive: true, force: false}); await fsyncDirectory(dirname(path));}
+async function absent(path: string): Promise<boolean> {try {await lstat(path); return false;} catch (error) {if ((error as NodeJS.ErrnoException).code === "ENOENT") return true; throw error;}}
+async function restoreOwnerAccess(path: string): Promise<void> {
+  // Never follow links; recipe sandboxes cannot create them, and only verified
+  // directories need their owner search/write bits for removal.
+  const info = await lstat(path); if (!info.isDirectory()) return;
+  if ((info.mode & 0o700) !== 0o700) await chmod(path, 0o700);
+  for (const name of await readdir(path)) await restoreOwnerAccess(join(path, name));
+}
+/** Remove a job tree only after its recipe process group is proven gone. The
+ * tree is inert test output, not a resource effect, so test-chosen modes or a
+ * removed TMPDIR cannot fence the resource. A tree that still cannot be removed
+ * is renamed to a quarantine name inside the private job root. */
+export async function removeJob(path: string): Promise<"removed" | "quarantined"> {
+  const parent = dirname(path);
+  try {await rm(path, {recursive: true, force: false});}
+  catch {
+    if (!await absent(path)) {
+      try {await restoreOwnerAccess(path); await rm(path, {recursive: true, force: false});}
+      catch {
+        if (!await absent(path)) {await rename(path, join(parent, `quarantine-${basename(path)}-${randomUUID()}`)); await fsyncDirectory(parent); return "quarantined";}
+      }
+    }
+  }
+  await fsyncDirectory(parent); return "removed";
+}
 
 interface OwnerLock {schema: string; pid: number; hostname: string; nonce: string}
 export async function acquireOwnerLock(stateRoot: string): Promise<() => Promise<void>> {

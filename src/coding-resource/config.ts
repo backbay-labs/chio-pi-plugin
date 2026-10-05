@@ -9,6 +9,17 @@ export const MAX_JSONRPC_ID_LENGTH = 512;
 // trailing newline. Payload capacity must survive any later native redelivery ID.
 export const MCP_RESULT_ENVELOPE_BYTES = Buffer.byteLength(JSON.stringify({jsonrpc: "2.0", id: "\0".repeat(MAX_JSONRPC_ID_LENGTH), result: null}) + "\n") - 4;
 export function fitsMcpTransport(value: unknown, maxOutputBytes: number): boolean {return Buffer.byteLength(JSON.stringify(value)) + MCP_RESULT_ENVELOPE_BYTES <= maxOutputBytes;}
+/** Serialized byte length of plain JSON data. Equal to its canonical encoding's
+ * length (key order does not change size), without the 1 MiB binding limit. */
+export function jsonBytes(value: unknown): number {return Buffer.byteLength(JSON.stringify(value));}
+// Largest admitted tools/call request around its arguments: the longest
+// JSON-RPC ID and attempt ID with six-byte escapes, the longest tool name, the
+// native metadata and the trailing newline.
+export const MCP_REQUEST_ENVELOPE_BYTES = jsonBytes({jsonrpc: "2.0", id: "\0".repeat(MAX_JSONRPC_ID_LENGTH), method: "tools/call", params: {name: "publish_artifact", arguments: null, _meta: {chioRequestId: "0".repeat(64), chioOperationId: "0".repeat(64), chioAttemptId: "\0".repeat(512), chioTransportKeyEpoch: Number.MAX_SAFE_INTEGER, chioCallerCapabilitySha256: "0".repeat(64)}}}) + 1 - 4;
+// The input reader carries every argument object within Chio's 1 MiB canonical
+// argument binding, so the configured maxInputBytes is answered with a known
+// input_bound refusal instead of closing the transport. Longer lines still close.
+export const MAX_REQUEST_FRAME_BYTES = 1024 * 1024 + MCP_REQUEST_ENVELOPE_BYTES;
 export interface Recipe {name: string; executable: string; executableSha256: string; argv: string[]; timeoutMs: number; outputBytes: number; graceMs: number; runtimeFiles: {path: string; sha256: string; mountPath?: string}[]; recipeSha256: string}
 export interface ResourceBounds {maxFileBytes: number; maxRepositoryBytes: number; maxFiles: number; maxReadBytes: number; maxSearchMatches: number; maxReadMany: number; maxPatchBytes: number; maxInputBytes: number; maxQueuedCalls: number; maxOutputBytes: number}
 export interface CodingConfig {schema: "chio.coding-resource.v1"; resourceOwnerId: string; workspaceId: string; repositoryRoot: string; stateRoot: string; artifactRoot: string; jobRoot: string; allowedCallerCapabilitySha256: string[]; bounds: ResourceBounds; recipes: Recipe[]}

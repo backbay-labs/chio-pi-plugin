@@ -136,8 +136,9 @@ installed from FD3 at bubblewrap's final exec stage. It permits qualified Unix a
 IPv4 TCP stream sockets and Node threads. It denies process creation, later namespace
 changes, namespace clone flags, io_uring setup and x32 syscall variants. `clone3`
 returns ENOSYS for libc's qualified thread fallback. Both local relays and Pi SDK
-start in one Node bootstrap. The coding-resource recipe's socket-denying filter
-is unchanged; recipe qualification does not qualify this guest boundary.
+start in one Node bootstrap. The coding-resource recipe has its own socket-denying
+filter ([CODING-RESOURCE.md](CODING-RESOURCE.md#recipe-and-publication-confinement));
+recipe qualification does not qualify this guest boundary.
 
 Parent supervision waits for actual observed exit, sends a graceful signal and
 escalates to group SIGKILL after its bounded interval if exit is still absent.

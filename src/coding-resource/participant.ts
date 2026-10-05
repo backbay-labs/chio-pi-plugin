@@ -1,8 +1,8 @@
 import {lstat} from "node:fs/promises";
 import {join} from "node:path";
 import {canonicalJson, frozenJson} from "../tool-registry.js";
-import {fitsMcpTransport, loadCodingConfig, sha256, type LoadedConfig} from "./config.js";
-import {FatalResourceError, ResourceLedger, type McpResult, type NativeMetadata} from "./ledger.js";
+import {MCP_REQUEST_ENVELOPE_BYTES, fitsMcpTransport, jsonBytes, loadCodingConfig, sha256, type LoadedConfig} from "./config.js";
+import {FatalResourceError, LedgerRollbackRequired, ResourceLedger, type McpResult, type NativeMetadata} from "./ledger.js";
 import {acquireOwnerLock, fsyncDirectory, installImmutableTree, privateDirectory, regularFile, requireEmpty, recoverOwnerLock} from "./paths.js";
 import {Repository, ToolRefusal, createGenerationsDirectory, decodeText, importSource, type SourceGeneration} from "./repository.js";
 import {prepareRecipeSandbox} from "./recipe-sandbox.js";
@@ -54,7 +54,13 @@ export class CodingResource {
     // Invalid redelivery cannot replace unresolved work with an ACK-able error.
     if (retained && (retained.state !== "completed" || !retained.result) || !retained && this.ledger.fenced()) throw new FatalResourceError();
     try {args = this.tools.validate(tool, rawArguments);} catch {return refusal("invalid_arguments", "Tool or arguments differ from the closed inventory");}
-    const binding = sha256(canonicalJson({schema: "chio.coding-operation-binding.v1", resourceOwnerId: this.selected.config.resourceOwnerId, workspaceId: this.selected.config.workspaceId, configDigest: this.selected.digest, caller: meta.chioCallerCapabilitySha256, operationId: meta.chioOperationId, tool, arguments: args, sourceDigest: retained?.sourceDigest ?? this.ledger.sourceDigest}));
+    // The reader carries any argument object Chio's 1 MiB binding admits, so a
+    // larger request is a known refusal, not a closed transport. Exact retained
+    // replay is checked before the current bound.
+    if (!retained && jsonBytes(args) + MCP_REQUEST_ENVELOPE_BYTES > this.bounds.maxInputBytes) return refusal("input_bound", "Tool arguments exceed the selected input byte bound");
+    let binding: string;
+    try {binding = sha256(canonicalJson({schema: "chio.coding-operation-binding.v1", resourceOwnerId: this.selected.config.resourceOwnerId, workspaceId: this.selected.config.workspaceId, configDigest: this.selected.digest, caller: meta.chioCallerCapabilitySha256, operationId: meta.chioOperationId, tool, arguments: args, sourceDigest: retained?.sourceDigest ?? this.ledger.sourceDigest}));}
+    catch {return retained ? refusal("operation_conflict", "Original operation binding conflict: caller, tool, arguments or operator configuration changed") : refusal("input_bound", "Tool arguments exceed the operation binding byte bound");}
     if (retained) {
       if (retained.binding !== binding) return refusal("operation_conflict", "Original operation binding conflict: caller, tool, arguments or operator configuration changed");
       const original = JSON.parse(retained.result!) as McpResult;
@@ -91,6 +97,9 @@ export class CodingResource {
     const source = await this.repository.load(current);
     const initial = async () => await this.repository.load(this.ledger.meta("initialDigest")!);
     const bounded = (body: unknown): McpResult => {
+      // Size before canonical encoding, whose 1 MiB limit is not a tool refusal.
+      // The content text alone exceeding the frame cannot fit after wrapping.
+      if (jsonBytes(body) > this.bounds.maxOutputBytes) throw new ToolRefusal("result_bound", "Requested tool result exceeds selected output bound");
       const value = result(body); if (!fitsMcpTransport(value, this.bounds.maxOutputBytes)) throw new ToolRefusal("result_bound", "Requested tool result exceeds selected output bound"); return value;
     };
     const ready = (body: unknown): Prepared => {const value = bounded(body); return {execute: async () => value};};
@@ -111,7 +120,7 @@ export class CodingResource {
         let bytes = 0; let partial = false;
         const results = (args.reads as {path: string; startLine: number; endLine: number}[]).map(read => {
           try {
-            const child = this.repository.read(source, read); const size = Buffer.byteLength(canonicalJson(child));
+            const child = this.repository.read(source, read); const size = jsonBytes(child);
             if (bytes + size > this.bounds.maxReadBytes) throw new ToolRefusal("read_many_bound", "Aggregate read bound exhausted"); bytes += size; return child;
           } catch (error) {partial = true; return {ok: false, path: read.path, code: error instanceof ToolRefusal ? error.code : "invalid_path", message: error instanceof Error ? error.message : "Read unavailable"};}
         });
@@ -120,7 +129,7 @@ export class CodingResource {
       case "repo_context": {
         const manifest = JSON.parse(source.manifest) as {files: unknown[]};
         const context = {authority: false, schema: "chio.coding-context.v1", workspaceId: this.selected.config.workspaceId, resourceOwnerId: this.selected.config.resourceOwnerId, sourceDigest: current, initialDigest: this.ledger.meta("initialDigest"), manifestSha256: current, files: manifest.files, recipes: this.selected.config.recipes.map(recipe => ({name: recipe.name, recipeSha256: recipe.recipeSha256, executableSha256: recipe.executableSha256})), provenance: "operator-imported immutable source; unsigned resource content"};
-        if (Buffer.byteLength(canonicalJson(context)) > this.bounds.maxReadBytes) throw new ToolRefusal("context_bound", "Requested source context exceeds selected read byte bound"); return ready(context);
+        if (jsonBytes(context) > this.bounds.maxReadBytes) throw new ToolRefusal("context_bound", "Requested source context exceeds selected read byte bound"); return ready(context);
       }
       case "test_recipe": {
         const recipe = this.selected.config.recipes.find(recipe => recipe.name === args.recipe); if (!recipe) throw new ToolRefusal("recipe_assignment", "Recipe is outside the operator-pinned inventory");
@@ -164,7 +173,7 @@ export class CodingResource {
       let text: string; try {text = decodeText(content);} catch {continue;}
       for (const [index, line] of text.split("\n").entries()) {
         const column = line.indexOf(args.literal as string); if (column < 0) continue;
-        const match = {path, line: index + 1, column: column + 1, text: line, fileSha256: sha256(content)}; const size = Buffer.byteLength(canonicalJson(match));
+        const match = {path, line: index + 1, column: column + 1, text: line, fileSha256: sha256(content)}; const size = jsonBytes(match);
         if (matches.length >= limit || bytes + size > this.bounds.maxReadBytes) {truncated = true; continue;} matches.push(match); bytes += size;
       }
     }
@@ -187,7 +196,10 @@ export async function initializeCodingResource(configPath: string): Promise<Reco
 export async function openCodingResource(configPath: string, seam: TrustedResourceTestSeam = {}): Promise<CodingResource> {
   const selected = await loadCodingConfig(configPath);
   // Verify initialized state before creating a lock. Never auto-import on serve.
-  const check = await ResourceLedger.open(selected, {readonly: true}); check.close();
+  // A hot journal from an interrupted commit is rolled back only by the locked
+  // read-write open below, which still verifies the restored ledger identity.
+  try {const check = await ResourceLedger.open(selected, {readonly: true}); check.close();}
+  catch (error) {if (!(error instanceof LedgerRollbackRequired)) throw error;}
   const release = await acquireOwnerLock(selected.config.stateRoot);
   let ledger: ResourceLedger | undefined;
   try {

@@ -84,6 +84,20 @@ reserve before effects. Retained replay uses the same capacity rule and preserve
 the original result; an original record that cannot fit remains available for
 unsigned forensic export rather than being replaced or reexecuted.
 
+`maxInputBytes` bounds one admitted call: its canonical arguments plus the
+largest permitted request envelope (a 512-character JSON-RPC ID and attempt ID
+needing six-byte escapes, the longest tool name and the native `_meta`). Larger
+arguments receive an `input_bound` tool error before any intent; exact retained
+replay is checked first. The JSONL reader itself accepts lines up to a fixed
+ceiling of 1 MiB of arguments plus that envelope, which covers every argument
+object Chio's 1 MiB canonical argument binding admits; a longer line, or one that
+is not valid bounded JSON-RPC, closes the transport. Tool results are sized before
+canonical encoding, so a result, diff, context, read or search match that would
+exceed the 1 MiB canonical limit returns its documented `result_bound`,
+`diff_bound`, `context_bound`, `read_many_bound` or truncation outcome instead of
+closing the transport. A candidate whose manifest would exceed that limit is a
+`source_bound` refusal.
+
 On Linux, `runtimeFiles` must list exact canonical loader/library files with
 SHA256 hashes. An optional `mountPath` supplies an exact `/lib/`, `/lib64/`,
 `/usr/lib/` or `/usr/local/lib/` loader alias. No host library directory is mounted.
@@ -93,7 +107,9 @@ executable has its own separate pin. Each dependency requires its canonical
 resolved path and SHA256, including actual Homebrew Cellar paths; macOS does not
 accept `mountPath` aliases. The illustrative JSON above abbreviates this list.
 Missing, extra, changed or mismatched dependencies refuse before any recipe job
-is created. Admitted proven no-effect refusals remain durable terminal outcomes
+is created. A missing, replaced or permission-changed executable or runtime file
+is a `recipe_pin` refusal, and a missing or unsafe `sandbox-exec` or
+`/usr/bin/bwrap` is `unsupported_sandbox`. Admitted proven no-effect refusals remain durable terminal outcomes
 and replay exactly, even if the dependency is later repaired. The selected system
 OS runtime trees remain a separately measured boundary; they are not claimed to
 be individually hash-pinned.
@@ -245,7 +261,11 @@ New exact-source calls use the current generation. Exact completed historical
 replay is checked first and remains available after later patches or provider
 attempts. An absent new file uses `expectedFileSha256: null` and a replacement.
 Literal edits require exactly one match in the original full-file content,
-including detection of overlapping occurrences. Every entry's original range
+including detection of overlapping occurrences. Patch text must be well-formed
+Unicode: an unpaired surrogate in a replacement or edit, including an `oldText`
+that would split a surrogate pair, is an `invalid_patch` refusal rather than a
+silent U+FFFD. Source text is decoded without stripping a leading U+FEFF, so
+reads, diffs and literal edits preserve a UTF-8 byte-order mark. Every entry's original range
 must be pairwise disjoint; edits apply from the highest offset downward, so
 replacement lengths or introduced text cannot change another precondition.
 Every file precondition is checked before building a new generation; a stale
@@ -274,9 +294,20 @@ pointer and original terminal result. A crash before that transaction preserves
 the old head and unresolved intent; an orphan generation is not completion.
 A crash after commit but before reply preserves the exact replayable result.
 
-Incomplete intent fences fresh work. Post-intent storage, publication, launch or
-unproved descendant/cleanup failure closes stdio without an ordinary terminal
-MCP `isError`. Such a result would otherwise become a signed completed native
+A crash inside an SQLite commit can leave a hot `ledger.sqlite-journal` beside
+the ledger. **Never delete `ledger.sqlite-journal`**: it holds the original pages
+that restore the last committed ledger, and deleting it can leave a corrupt or
+half-committed ledger. Recover a proven-dead owner lock if one remains, then start
+`serve`; its read-write open under the exclusive owner lock lets SQLite roll the
+interrupted transaction back before it verifies the ledger identity and source
+generations. Until then, read-only `inspect` and `export` refuse with a message
+naming the journal, because a read-only connection cannot roll it back. Opening
+the ledger checks only its owner, mode, type and link count; there is no ledger
+size cap that could make a grown ledger unopenable.
+
+Incomplete intent fences fresh work. Post-intent storage, publication, launch,
+unproved process-group exit or failed job quarantine closes stdio without an
+ordinary terminal MCP `isError`. Such a result would otherwise become a signed completed native
 outcome and could ACK away uncertainty. Proven pre-effect refusals may be retained
 terminal tool errors. Failed tests are retained failed test results and cannot
 authorize publication.
@@ -308,17 +339,30 @@ directory. Its environment contains selected executable-directory PATH, `LANG=C`
 job-only HOME/TMPDIR and `OPENSSL_CONF=/dev/null`. It inherits no loader, Git,
 provider, Chio or model secrets. Stdin is ignored; combined stdout/stderr, runtime
 and termination grace are bounded. Process groups receive TERM then KILL based
-on observed exit and group existence. Unproved absence or cleanup remains fenced.
+on observed exit and group existence. Unproved process-group absence remains
+fenced. After absence is proven, the job tree is inert test output rather than a
+resource effect: cleanup tolerates a test that removed its own TMPDIR, restores
+owner access to directories a test made read-only or unsearchable and retries.
+A tree that still cannot be removed is renamed to
+`quarantine-<job>-<uuid>` inside the job root and the result completes. Inspect
+and delete quarantined trees manually; they never affect later jobs.
 
 macOS uses real `sandbox-exec` with deny default, necessary hardware/kernel
 sysctls, exact Node/dylibs and source, job-only writes, no network, no process
-fork, no hardlinks and no symlink creation. Linux uses `/usr/bin/bwrap` with all
-namespaces unshared, a new user/PID/network namespace, parent-death termination,
-private proc/dev/tmp, exact read-only runtime files and source, and a trusted
-architecture-selected seccomp filter denying processes, sockets and links while
-allowing Node threads. The x64 filter refuses the x32 syscall-number bit before
-matching native syscall numbers, because the two ABIs share their audit
-architecture. See [seccomp(2)](https://man7.org/linux/man-pages/man2/seccomp.2.html).
+fork, no hardlinks, no symlink creation and no file flag or ACL changes, so
+output such as a `uchg` file cannot become undeletable by its owner. Linux uses
+`/usr/bin/bwrap` with all namespaces unshared, a new user/PID/network namespace,
+parent-death termination, private proc/dev/tmp, exact read-only runtime files and
+source, `--disable-userns` so the recipe cannot create nested user namespaces,
+and a trusted architecture-selected seccomp filter denying processes, sockets,
+links, `unshare` and `io_uring_setup`/`io_uring_enter`/`io_uring_register` while
+allowing Node threads. io_uring operations would otherwise reach link and socket
+operations without the per-syscall rules. `--disable-userns` needs a non-setuid
+bubblewrap 0.8.0 or later; an older or setuid bubblewrap fails every recipe
+closed rather than running it without that option. The x64 filter refuses the
+x32 syscall-number bit before matching native syscall numbers, because the two
+ABIs share their audit architecture. See
+[seccomp(2)](https://man7.org/linux/man-pages/man2/seccomp.2.html).
 Unsupported platforms/architectures and missing runtime
 pins fail closed. This is an OS boundary; an executable allowlist alone would
 not confine repository code.

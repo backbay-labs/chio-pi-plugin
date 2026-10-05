@@ -1,7 +1,7 @@
 import {lstat, mkdir, readdir} from "node:fs/promises";
 import {join} from "node:path";
 import {canonicalJson} from "../tool-registry.js";
-import {sha256, type CodingConfig} from "./config.js";
+import {jsonBytes, sha256, type CodingConfig} from "./config.js";
 import {installImmutableTree, privateDirectory, regularFile, resourcePath} from "./paths.js";
 import type {ResourceLedger} from "./ledger.js";
 import {portableFileInventory} from "./namespace.js";
@@ -20,6 +20,8 @@ export function generationFor(files: Map<string, Buffer>, config: Readonly<Codin
     return {path, sha256: sha256(value), bytes: value.length};
   })};
   if (files.size > config.bounds.maxFiles || bytes > config.bounds.maxRepositoryBytes) throw new ToolRefusal("source_bound", "Source generation exceeds selected repository bounds");
+  // The manifest is a canonical 1 MiB binding; many long paths refuse as a bound.
+  if (jsonBytes(manifest) > 1024 * 1024) throw new ToolRefusal("source_bound", "Source manifest exceeds the 1 MiB canonical binding limit");
   const encoded = canonicalJson(manifest); return {digest: sha256(encoded), manifest: encoded, files};
 }
 export async function importSource(config: Readonly<CodingConfig>): Promise<SourceGeneration> {
@@ -78,6 +80,9 @@ export class Repository {
       if (change.expectedFileSha256 === null ? original !== undefined : original === undefined || sha256(original) !== change.expectedFileSha256) throw new ToolRefusal("stale_file", "Expected full-file digest or explicit absent precondition differs");
       if (!original && change.edits) throw new ToolRefusal("invalid_patch", "An absent file requires explicit replacement");
       let replacement = change.replacement;
+      // UTF-8 encoding would silently replace an unpaired surrogate, or split a
+      // pair matched by one, with U+FFFD. Patch text must be well-formed.
+      if ([replacement, ...(change.edits ?? []).flatMap(edit => [edit.oldText, edit.newText])].some(value => value !== undefined && !wellFormed(value))) throw new ToolRefusal("invalid_patch", "Patch text must be well-formed Unicode without unpaired surrogates");
       if (change.edits) {
         const text = decodeText(original!);
         const ranges = change.edits.map(edit => {
@@ -108,9 +113,15 @@ export class Repository {
   }
   diff(initial: SourceGeneration, current: SourceGeneration): Record<string, unknown> {
     const changed = (this.status(initial, current).changed as {path: string}[]).map(({path}) => ({path, before: initial.files.has(path) ? decodeText(initial.files.get(path)!) : null, after: current.files.has(path) ? decodeText(current.files.get(path)!) : null}));
+    // Bound the serialized size before canonical encoding, whose 1 MiB binding
+    // limit would otherwise replace this refusal with a closed transport.
+    let size = 1; for (const change of changed) if ((size += jsonBytes(change) + 1) > this.config.bounds.maxReadBytes) throw new ToolRefusal("diff_bound", "Diff exceeds selected read byte bound");
     const encoded = canonicalJson(changed); if (Buffer.byteLength(encoded) > this.config.bounds.maxReadBytes) throw new ToolRefusal("diff_bound", "Diff exceeds selected read byte bound");
     return {sourceDigest: current.digest, initialDigest: initial.digest, diffSha256: sha256(encoded), changes: changed};
   }
 }
-export function decodeText(bytes: Buffer): string {try {return new TextDecoder("utf8", {fatal: true}).decode(bytes);} catch {throw new ToolRefusal("binary_source", "Requested source content is not UTF-8 text");}}
+// Keep a leading U+FEFF: literal edits rebuild bytes from this text, and a
+// stripped byte-order mark would disappear without appearing in any diff.
+export function decodeText(bytes: Buffer): string {try {return new TextDecoder("utf8", {fatal: true, ignoreBOM: true}).decode(bytes);} catch {throw new ToolRefusal("binary_source", "Requested source content is not UTF-8 text");}}
+function wellFormed(value: string): boolean {return !/\p{Surrogate}/u.test(value);}
 export async function createGenerationsDirectory(config: Readonly<CodingConfig>): Promise<void> {await mkdir(join(config.stateRoot, "generations"), {mode: 0o700});}

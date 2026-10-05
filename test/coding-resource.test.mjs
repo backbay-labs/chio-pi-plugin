@@ -1,12 +1,18 @@
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
-import {chmod, link, mkdtemp, readFile, readdir, rm, symlink, unlink, writeFile} from "node:fs/promises";
+import {chmod, link, mkdtemp, readFile, readdir, rm, symlink, truncate, unlink, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
+import {DatabaseSync} from "node:sqlite";
+import {fileURLToPath} from "node:url";
 import test from "node:test";
 import {canonicalJson} from "../dist/tool-registry.js";
+import * as codingConfig from "../dist/coding-resource/config.js";
+import {bubblewrapArguments} from "../dist/coding-resource/recipe-sandbox.js";
 import {caller, cli, command, data, fixture, hash, initialized, meta, patch, stdio} from "./helpers/coding-fixture.mjs";
 import {compiledRecipeFilter, evaluateClassicBpf} from "./helpers/coding-seccomp.mjs";
+
+const ledgerCrash = fileURLToPath(new URL("./helpers/coding-ledger-crash.mjs", import.meta.url));
 
 test("an npm-style executable symlink runs resource commands", async t => {
   const f = await initialized(); t.after(() => f.close());
@@ -251,6 +257,24 @@ test("actual compiled x64 seccomp rejects x32 syscall variants and preserves nat
   assert.equal(evaluateClassicBpf(filter, {arch: 0xc00000b7, nr: 39}), 0x80000000);
   const arm = await compiledRecipeFilter("arm64"); assert.equal(evaluateClassicBpf(arm, {arch: 0xc00000b7, nr: 198}), denied); assert.equal(evaluateClassicBpf(arm, {arch: 0xc00000b7, nr: 220, argument0: 0x10000}), allowed);
 });
+test("B-M4 compiled recipe filters deny io_uring and nested namespaces on both architectures, including x32 variants", async () => {
+  const denied = 0x00050001; const allowed = 0x7fff0000;
+  // io_uring_setup/enter/register share numbers on arm64 and x64; unshare is 97 on arm64 and 272 on x64.
+  for (const [architecture, arch, unshare, ordinary] of [["x64", 0xc000003e, 272, 39], ["arm64", 0xc00000b7, 97, 172]]) {
+    const filter = await compiledRecipeFilter(architecture);
+    for (const nr of [425, 426, 427, unshare]) {
+      assert.equal(evaluateClassicBpf(filter, {arch, nr}), denied, `${architecture} syscall ${nr} must be denied`);
+      if (architecture === "x64") assert.equal(evaluateClassicBpf(filter, {arch, nr: nr | 0x40000000}), denied, `x32 variant of ${nr} must be denied`);
+    }
+    assert.equal(evaluateClassicBpf(filter, {arch, nr: ordinary}), allowed, `${architecture} ordinary getpid stays allowed`);
+    assert.equal(evaluateClassicBpf(filter, {arch, nr: architecture === "x64" ? 56 : 220, argument0: 0x10000}), allowed, "thread-only clone stays allowed");
+    assert.equal(evaluateClassicBpf(filter, {arch, nr: architecture === "x64" ? 56 : 220, argument0: 0x10000000}), denied, "clone without CLONE_THREAD, including CLONE_NEWUSER, stays denied");
+    assert.equal(evaluateClassicBpf(filter, {arch, nr: 435}), 0x00050026);
+  }
+  const args = bubblewrapArguments({executable: "/usr/bin/node", argv: [], timeoutMs: 1, outputBytes: 1, graceMs: 1}, {backend: "bubblewrap", launcher: "/usr/bin/bwrap", runtimeFiles: []}, "/source-generation", "/job-directory");
+  assert.ok(args.includes("--disable-userns"), "bubblewrap must also block nested user namespaces");
+  assert.ok(args.indexOf("--unshare-user") < args.indexOf("--disable-userns"), "--disable-userns requires the sandbox user namespace");
+});
 test("read many preserves ordered partial truth and bounded literal search returns digests", async t => {
   const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
   const batch = data(await io.call("read_many", {sourceDigest: f.sourceDigest, reads: [{path: "source.txt", startLine: 1, endLine: 1}, {path: "missing.txt", startLine: 1, endLine: 1}, {path: "source.txt", startLine: 2, endLine: 2}]}));
@@ -280,8 +304,9 @@ test("exclusive owner lock refuses concurrent serve and explicit dead recovery r
   await io.close(); assert.equal((await readdir(f.root("state"))).includes("owner.lock"), false);
 });
 test("bounded framing rejects a line before newline and releases only its own lock", async t => {
-  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); await io.request("initialize");
-  io.child.stdin.write("x".repeat(f.config.bounds.maxInputBytes + 1)); const response = await io.exited;
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close()); await io.request("initialize");
+  assert.equal(typeof codingConfig.MAX_REQUEST_FRAME_BYTES, "number", "the reader exports its fixed frame ceiling");
+  io.child.stdin.write("x".repeat(codingConfig.MAX_REQUEST_FRAME_BYTES + 1)); const response = await io.exited;
   assert.equal(response.code, 1); assert.equal(response.messages.length, 1); assert.equal((await readdir(f.root("state"))).includes("owner.lock"), false);
 });
 test("CLI help exposes operator safety and no model/provider authorization", async () => {
@@ -353,4 +378,117 @@ test("graceful native termination releases only the live resource owner's lock",
 test("recipe output pins leave capacity for worst-case JSON escaping before accepting config", async t => {
   const f = await fixture({outputBytes: 30000}); t.after(() => f.close()); const result = await command(["init", "--config", f.configPath]);
   assert.equal(result.code, 1); assert.match(result.stderr, /output bounds/i); assert.deepEqual(await readdir(f.root("state")), []);
+});
+
+test("B-I2 a crash inside a ledger commit is rolled back by serve under the owner lock; read-only commands refuse naming the journal", async t => {
+  const f = await initialized(); t.after(() => f.close()); let io = stdio(f);
+  const current = data(await io.call("apply_patch", patch(f.sourceDigest, hash("alpha\nbeta\n")))).sourceDigest; await io.close();
+  const journal = join(f.root("state"), "ledger.sqlite-journal");
+  const signal = await new Promise((resolve, reject) => {const child = spawn(process.execPath, [ledgerCrash, f.root("state")], {stdio: "ignore", env: {PATH: "/usr/bin:/bin", LANG: "C"}}); child.once("error", reject); child.once("close", (_, value) => resolve(value));});
+  assert.equal(signal, "SIGKILL"); const hot = await readFile(journal); assert.ok(hot.length > 0, "the interrupted commit leaves a rollback journal");
+  for (const args of [["inspect", "--config", f.configPath], ["export", "--config", f.configPath, "--operation", "1".repeat(64)]]) {
+    const refused = await command(args); assert.equal(refused.code, 1); assert.match(refused.stderr, /ledger\.sqlite-journal/); assert.match(refused.stderr, /never delete/i);
+  }
+  assert.deepEqual(await readFile(journal), hot, "read-only commands neither roll back nor delete the journal");
+  assert.equal((await command(["recover-lock", "--config", f.configPath])).code, 0, "the crashed owner's lock is recovered first");
+  io = stdio(f); t.after(() => io.close());
+  assert.equal(data(await io.call("repo_status", {}, meta("2"))).sourceDigest, current, "serve restores the last committed head");
+  await assert.rejects(readFile(journal), {code: "ENOENT"}, "SQLite consumed the journal during the locked rollback"); await io.close();
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout);
+  assert.equal(state.sourceDigest, current); assert.equal(state.initialDigest, f.sourceDigest); assert.equal(state.fenced, false); assert.equal(state.operations.length, 2);
+  const db = new DatabaseSync(join(f.root("state"), "ledger.sqlite"), {readOnly: true});
+  try {assert.equal(db.prepare("SELECT count(*) AS count FROM generations").get().count, 2, "uncommitted rows are gone");} finally {db.close();}
+});
+test("B-I4 a ledger beyond the former 256 MiB full-read cap still opens for serve, inspect and export", async t => {
+  const f = await initialized(); t.after(() => f.close()); let io = stdio(f); const args = patch(f.sourceDigest, hash("alpha\nbeta\n"));
+  const first = await io.call("apply_patch", args); await io.close();
+  // Sparse trailing space past SQLite's in-header page count stands in for growth.
+  await truncate(join(f.root("state"), "ledger.sqlite"), 300 * 1024 * 1024);
+  const inspected = await command(["inspect", "--config", f.configPath]); assert.equal(inspected.code, 0, inspected.stderr); assert.equal(JSON.parse(inspected.stdout).sourceDigest, data(first).sourceDigest);
+  const exported = await command(["export", "--config", f.configPath, "--operation", "1".repeat(64)]); assert.equal(exported.code, 0, exported.stderr); assert.deepEqual(JSON.parse(exported.stdout).result, first);
+  io = stdio(f); t.after(() => io.close());
+  assert.deepEqual(await io.call("apply_patch", args, meta("1", {chioAttemptId: "large-ledger-replay"})), first);
+  assert.equal(data(await io.call("repo_status", {}, meta("2"))).sourceDigest, data(first).sourceDigest);
+});
+test("B-I3 a diff beyond the 1 MiB canonical limit returns diff_bound with the documented bounds", async t => {
+  const line = "const value = \"example\";\n"; const body = line.repeat(Math.floor(200000 / line.length));
+  const files = Object.fromEntries(["a", "b", "c"].map(name => [`${name}.js`, `${body}// end ${name}\n`]));
+  const f = await initialized({files}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const applied = await io.call("apply_patch", {sourceDigest: f.sourceDigest, changes: ["a", "b", "c"].map(name => ({path: `${name}.js`, expectedFileSha256: hash(files[`${name}.js`]), edits: [{oldText: `// end ${name}`, newText: `// END ${name}`}]}))});
+  assert.equal(applied.isError, undefined); const current = data(applied).sourceDigest;
+  const diff = await io.call("repo_diff", {sourceDigest: current}, meta("2")); assert.equal(diff.isError, true); assert.equal(data(diff).code, "diff_bound");
+  assert.deepEqual(await io.call("repo_diff", {sourceDigest: current}, meta("2", {chioAttemptId: "diff-bound-replay"})), diff);
+  assert.equal(data(await io.call("repo_status", {}, meta("3"))).changed.length, 3, "the transport stays open");
+});
+test("B-I3 reads, read_many and search beyond the 1 MiB canonical limit return their bound outcomes", async t => {
+  const f = await initialized({files: {"source.txt": "\u0001".repeat(200000)}, bounds: {maxReadBytes: 200000, maxOutputBytes: 1048576}}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const read = await io.call("read_range", {sourceDigest: f.sourceDigest, path: "source.txt", startLine: 1, endLine: 1}); assert.equal(read.isError, true); assert.equal(data(read).code, "result_bound");
+  const many = data(await io.call("read_many", {sourceDigest: f.sourceDigest, reads: [{path: "source.txt", startLine: 1, endLine: 1}]}, meta("2")));
+  assert.equal(many.partial, true); assert.equal(many.results[0].code, "read_many_bound");
+  const found = data(await io.call("search", {sourceDigest: f.sourceDigest, literal: "\u0001"}, meta("3"))); assert.deepEqual(found.matches, []); assert.equal(found.truncated, true);
+  await io.close(); const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout); assert.equal(state.fenced, false); assert.equal(state.operations.length, 3);
+});
+test("B-I3 repository context and a grown manifest beyond the 1 MiB canonical limit return bound refusals", async t => {
+  // Long nested names keep the managed absolute destination within macOS capacity.
+  // Size the manifest just under its 1 MiB binding; maximal escaped owner and
+  // workspace identities then carry the requested context past that limit.
+  const directory = ["d", "e", "g"].map(letter => letter.repeat(240)).join("/"); const name = index => `${directory}/f${String(index).padStart(5, "0")}`;
+  const entry = Buffer.byteLength(JSON.stringify({bytes: 1, path: name(0), sha256: hash("x")})) + 1; const base = Buffer.byteLength(JSON.stringify({files: [], schema: "chio.coding-source.v1"}));
+  const count = Math.floor((1024 * 1024 - 2048 - base) / entry);
+  const files = Object.fromEntries(Array.from({length: count}, (_, index) => [name(index), "x"]));
+  const f = await fixture({files, bounds: {maxFiles: 4000}}); t.after(() => f.close());
+  await f.updateConfig(config => {config.resourceOwnerId = "\u0001".repeat(1024); config.workspaceId = "\u0002".repeat(1024);});
+  const init = await command(["init", "--config", f.configPath]); assert.equal(init.code, 0, init.stderr); const sourceDigest = JSON.parse(init.stdout).sourceDigest;
+  const io = stdio(f); t.after(() => io.close());
+  const context = await io.call("repo_context", {sourceDigest}); assert.equal(context.isError, true); assert.equal(data(context).code, "context_bound");
+  const grown = await io.call("apply_patch", {sourceDigest, changes: Array.from({length: 8}, (_, index) => ({path: name(count + index), expectedFileSha256: null, replacement: "x"}))}, meta("2"));
+  assert.equal(grown.isError, true); assert.equal(data(grown).code, "source_bound");
+  assert.equal(data(await io.call("repo_status", {}, meta("3"))).changed.length, 0, "the transport stays open");
+});
+test("B-I5 literal edits preserve a UTF-8 byte-order mark that reads and diffs report", async t => {
+  const original = "\ufeffalpha\nbeta\n"; const f = await initialized({files: {"a.ps1": original}}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const applied = await io.call("apply_patch", {sourceDigest: f.sourceDigest, changes: [{path: "a.ps1", expectedFileSha256: hash(original), edits: [{oldText: "beta", newText: "gamma"}]}]});
+  assert.equal(applied.isError, undefined); const current = data(applied).sourceDigest;
+  assert.deepEqual(await readFile(join(f.root("state"), "generations", current, "a.ps1")), Buffer.from("\ufeffalpha\ngamma\n"));
+  assert.equal(data(await io.call("read_range", {sourceDigest: current, path: "a.ps1", startLine: 1, endLine: 1}, meta("2"))).text, "\ufeffalpha\n");
+  assert.deepEqual(data(await io.call("repo_diff", {sourceDigest: current}, meta("3"))).changes, [{path: "a.ps1", before: original, after: "\ufeffalpha\ngamma\n"}]);
+});
+test("B-M1 arguments beyond the input bound return input_bound with the documented bounds instead of closing the transport", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const args = {sourceDigest: f.sourceDigest, changes: ["one.txt", "two.txt", "three.txt"].map(path => ({path, expectedFileSha256: null, replacement: "x".repeat(45000)}))};
+  assert.ok(Buffer.byteLength(JSON.stringify(args)) > f.config.bounds.maxInputBytes);
+  const refused = await io.call("apply_patch", args); assert.equal(refused.isError, true); assert.equal(data(refused).code, "input_bound");
+  assert.deepEqual(await io.call("apply_patch", args, meta("1", {chioAttemptId: "input-bound-redelivery"})), refused);
+  assert.deepEqual(await readdir(join(f.root("state"), "generations")), [f.sourceDigest]);
+  assert.equal(data(await io.call("repo_status", {}, meta("2"))).sourceDigest, f.sourceDigest, "the transport stays open"); await io.close();
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout); assert.equal(state.fenced, false); assert.deepEqual(state.operations.map(x => x.tool), ["repo_status"]);
+});
+for (const [kind, change] of [
+  ["an edit splitting a surrogate pair", sha => ({path: "e.txt", expectedFileSha256: sha, edits: [{oldText: "\ud83d", newText: "Z"}]})],
+  ["an unpaired surrogate replacement", sha => ({path: "e.txt", expectedFileSha256: sha, replacement: "a\ude00"})],
+  ["an unpaired surrogate inserted by an edit", sha => ({path: "e.txt", expectedFileSha256: sha, edits: [{oldText: "y", newText: "\ud800"}]})],
+]) test(`B-M2 patches refuse ${kind} as a retained invalid_patch`, async t => {
+  const f = await initialized({files: {"e.txt": "x\u{1f600}y"}}); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const args = {sourceDigest: f.sourceDigest, changes: [change(hash("x\u{1f600}y"))]};
+  const refused = await io.call("apply_patch", args); assert.equal(refused.isError, true); assert.equal(data(refused).code, "invalid_patch");
+  assert.deepEqual(await io.call("apply_patch", args, meta("1", {chioAttemptId: "surrogate-replay"})), refused);
+  assert.deepEqual(await readdir(join(f.root("state"), "generations")), [f.sourceDigest]);
+});
+for (const kind of ["executable", ...(process.platform === "linux" ? ["runtime library"] : [])]) test(`B-M3 a missing pinned recipe ${kind} is a retained recipe_pin refusal, not a closed transport`, async t => {
+  const f = await initialized(); t.after(() => f.close());
+  await f.updateConfig(config => {
+    const recipe = config.recipes[0]; const missing = join(f.base, "missing-recipe-file");
+    if (kind === "executable") recipe.executable = missing; else recipe.runtimeFiles[0].path = missing;
+    const {recipeSha256, ...body} = recipe; recipe.recipeSha256 = hash(canonicalJson(body));
+  });
+  const io = stdio(f); t.after(() => io.close()); const args = {sourceDigest: f.sourceDigest, recipe: "unit"};
+  const refused = await io.call("test_recipe", args); assert.equal(refused.isError, true); assert.equal(data(refused).code, "recipe_pin");
+  assert.deepEqual(await io.call("test_recipe", args, meta("1", {chioAttemptId: "missing-pin-replay"})), refused);
+  assert.deepEqual(await readdir(f.root("jobs")), []); await io.close();
+  const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout); assert.equal(state.fenced, false); assert.equal(state.operations[0].state, "completed");
+});
+test("B-M7 initialize reports the installed package version", async t => {
+  const f = await initialized(); t.after(() => f.close()); const io = stdio(f); t.after(() => io.close());
+  const {version} = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal((await io.request("initialize", {protocolVersion: "2025-06-18"})).result.serverInfo.version, version);
 });
