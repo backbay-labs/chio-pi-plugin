@@ -546,6 +546,30 @@ test("A2-M3: a queued tools/call whose guest connection closed is never reserved
   } finally {release(); await proxy?.close(); await f.close();}
 });
 
+test("final review: a retained identity re-sent while the proxy closes is resolved from its original, never refused as not dispatched", async () => {
+  const f = await nativeFixture(); let proxy; let release = () => {};
+  try {
+    proxy = await start(f); const session = await initialize(proxy);
+    const first = request("first");
+    assert.equal(bodyOutcome(await call(proxy, session, first)).state, "completed");
+    // Hold the shared per-directory mapping line so another call occupies the
+    // parent's tool line and the re-send of `first` is still queued at close.
+    const holder = await api().createNativeOriginalOperationPort({configPath: f.configPath, binding: f.binding});
+    const gate = new Promise(done => {release = done;}); const held = holder.mappings.serial(() => gate);
+    const other = call(proxy, session, request("other")).catch(error => error);
+    await new Promise(done => setTimeout(done, 200));
+    const resend = call(proxy, session, first).catch(error => error);
+    await new Promise(done => setTimeout(done, 200));
+    const looked = []; const lookup = proxy.originals.lookup.bind(proxy.originals);
+    proxy.originals.lookup = async logical => {const original = await lookup(logical); looked.push({toolCallId: logical.toolCallId, state: original.state}); return original;};
+    const closing = proxy.close(); const closed = proxy; proxy = undefined;
+    release(); await held; await closing; await other; await resend;
+    assert.deepEqual(looked, [{toolCallId: "first", state: "completed"}], "the queued re-send reads its retained original instead of a closed-proxy non-dispatch");
+    assert.equal(await closed.originals.mappings.find(request("other")), undefined, "nothing new was reserved while closing");
+    assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
+  } finally {release(); await proxy?.close(); await f.close();}
+});
+
 test("A2-M4: the parent refuses a native execution timeout its fixed upstream and guest deadlines cannot accommodate", async () => {
   const f = await nativeFixture({timeoutMs: 60000}); let proxy;
   try {

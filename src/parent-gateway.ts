@@ -133,8 +133,10 @@ export async function startParentGatewayProxy(options: {configPath: string; bind
         const nativeRequestId = gatewayIdentity(context.config.sessionId, session, logical).nativeRequestId;
         json(response, 200, {jsonrpc: "2.0", id: message.id, result: {isError: true, content: [{type: "text", text: JSON.stringify({state: "not_dispatched", evidence: "unverified", requestId: nativeRequestId, reason})}], _meta: metadata(nativeRequestId)}});
       };
-      if (closed) {refused("parent closed; no forward"); return;}
+      // A retained identity may already have completed: report its original,
+      // even while closing, and never answer it as not dispatched.
       const prior = await mappings.find(logical);
+      if (!prior && closed) {refused("parent closed; no forward"); return;}
       if (prior) {
         const original = await originals.lookup(logical);
         const outcome = original.outcome ?? {state: "unknown", evidence: "unverified", requestId: original.nativeRequestId, reason: "reserved original has no authoritative completion; no automatic retry"};
