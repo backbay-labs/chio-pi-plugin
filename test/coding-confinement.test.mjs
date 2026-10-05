@@ -4,9 +4,23 @@ import {readFile, readdir, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import test from "node:test";
 import {canonicalJson} from "../dist/tool-registry.js";
+import * as recipeSandbox from "../dist/coding-resource/recipe-sandbox.js";
 import {command, data, fixture, hash, initialized, meta, stdio} from "./helpers/coding-fixture.mjs";
 
 const local = process.platform === "darwin" || process.platform === "linux" && process.env.CHIO_CODING_LINUX_PROBE === "1";
+test("Seatbelt policy has no unfiltered metadata grant when the runtime has no dylib aliases", () => {
+  // Official nodejs.org macOS binaries link only system libraries, so the loader
+  // alias list is empty. An SBPL allow with no filter would grant every path.
+  assert.equal(typeof recipeSandbox.seatbeltPolicy, "function", "policy generation must be testable without a specific Node build");
+  const node = "/opt/selected/node/bin/node"; const source = "/private/state/generations/g"; const job = "/private/jobs/j";
+  const policy = recipeSandbox.seatbeltPolicy(node, [node], [], source, job);
+  assert.doesNotMatch(policy, /\(allow [a-z*-]+\s*\)/, "every allow rule needs a filter");
+  assert.doesNotMatch(policy, /\(allow file-read-metadata \)/);
+  const alias = "/opt/homebrew/opt/libuv/lib/libuv.1.dylib";
+  const aliased = recipeSandbox.seatbeltPolicy(node, [node], [alias], source, job);
+  assert.match(aliased, /\(allow file-read-metadata \(literal "\/opt\/homebrew\/opt\/libuv\/lib\/libuv\.1\.dylib"\)/);
+  assert.doesNotMatch(aliased, /\(allow [a-z*-]+\s*\)/);
+});
 if (process.platform === "darwin") for (const kind of ["missing", "incomplete", "wrong hash", "extra"]) test(`macOS runtime closure ${kind} pins refuse before recipe jobs and retain exact error replay`, async t => {
   const f = await initialized(); t.after(() => f.close());
   await f.updateConfig(config => {

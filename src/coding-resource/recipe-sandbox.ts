@@ -39,7 +39,8 @@ export async function prepareRecipeSandbox(recipe: Recipe): Promise<RecipeSandbo
   }
   throw new ToolRefusal("unsupported_sandbox", "No qualified local recipe sandbox backend on this platform");
 }
-function seatbeltPolicy(executable: string, libraries: string[], aliases: string[], source: string, job: string): string {
+/** Exported for policy regression tests; not part of the package exports. */
+export function seatbeltPolicy(executable: string, libraries: string[], aliases: string[], source: string, job: string): string {
   const quote = (path: string) => JSON.stringify(path);
   const exactAlias = (path: string) => `(literal ${quote(path)})`;
   const ancestors = new Set<string>();
@@ -49,12 +50,14 @@ function seatbeltPolicy(executable: string, libraries: string[], aliases: string
   }
   const aliasMetadata = new Set(aliases);
   for (const selected of aliases) {let path = dirname(selected); while (path !== "/") {aliasMetadata.add(path); path = dirname(path);}}
+  // An SBPL allow rule without a filter matches every path. Official macOS Node
+  // builds link only system libraries, so emit alias metadata only when present.
+  const aliasRule = aliasMetadata.size ? `(allow file-read-metadata ${[...aliasMetadata].map(exactAlias).join(" ")})\n` : "";
   return `(version 1)
 (deny default)
 (allow sysctl-read (sysctl-name-prefix "hw.") (sysctl-name "kern.hostname") (sysctl-name "kern.ostype") (sysctl-name "kern.osrelease") (sysctl-name "kern.osversion") (sysctl-name "kern.osproductversion") (sysctl-name "kern.version") (sysctl-name "kern.maxfilesperproc") (sysctl-name "kern.tcsm_available") (sysctl-name "kern.tcsm_enable") (sysctl-name "machdep.cpu.brand_string"))
 (allow file-read-metadata (literal "/") (require-all (vnode-type DIRECTORY) (require-any ${[...ancestors].map(path => `(literal ${quote(path)})`).join(" ")})))
-(allow file-read-metadata ${[...aliasMetadata].map(exactAlias).join(" ")})
-(allow file-read-data (literal "/"))
+${aliasRule}(allow file-read-data (literal "/"))
 (allow file-read* (subpath "/System/Library") (subpath "/System/Volumes/Preboot/Cryptexes/OS") (subpath "/usr/lib") (subpath "/Library/Apple/System") (subpath "/private/var/db/dyld") (literal "/dev/null")
   ${libraries.map(path => `(literal ${quote(path)})`).join("\n  ")}
   (subpath ${quote(source)}))
