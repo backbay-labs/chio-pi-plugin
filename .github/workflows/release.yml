@@ -120,6 +120,7 @@ jobs:
           npm run pack:release -- "${RUNNER_TEMP}/chio-release"
 
       - name: Qualify base and Durable cold consumers
+        id: consumers
         working-directory: ${{ env.PACKAGE_DIRECTORY }}
         run: |
           set -euo pipefail
@@ -166,7 +167,9 @@ jobs:
         with:
           name: consumer-evidence
           path: ${{ runner.temp }}/chio-consumer-evidence
-          if-no-files-found: error
+          # Missing evidence fails only a run whose qualification succeeded; an
+          # earlier failure keeps one failing step and uploads any partial evidence.
+          if-no-files-found: ${{ steps.consumers.outcome == 'success' && 'error' || 'warn' }}
           retention-days: 90
 
   provenance:

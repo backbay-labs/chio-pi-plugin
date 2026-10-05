@@ -4,7 +4,8 @@ import {chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile} from "node:fs/p
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 import test from "node:test";
-import {archiveProblems, binProblems, containsHostPath, declarationSpecifiers, installedPackageProblems, listArchive} from "../scripts/qualify-release.mjs";
+import * as qualify from "../scripts/qualify-release.mjs";
+const {archiveProblems, binProblems, containsHostPath, declarationSpecifiers, installedPackageProblems, listArchive} = qualify;
 
 const script = new URL("../scripts/qualify-release.mjs", import.meta.url).pathname;
 async function scratch(t) {const dir = await mkdtemp(join(tmpdir(), "chio-qualify-release-")); t.after(() => rm(dir, {recursive: true, force: true})); return dir;}
@@ -82,4 +83,15 @@ test("command refuses missing arguments and existing directories before any inst
   assert.equal(spawnSync(process.execPath, [script, "--release", dir], {encoding: "utf8"}).status, 2);
   const existing = spawnSync(process.execPath, [script, "--release", dir, "--work", dir, "--evidence", join(dir, "evidence")], {encoding: "utf8"});
   assert.equal(existing.status, 2); assert.match(existing.stderr, /refusing existing directory/);
+});
+
+test("consumer lock must record the artifact's integrity, not merely omit it", () => {
+  assert.equal(typeof qualify.consumerLockProblems, "function");
+  const manifest = {dependencies: {"@chio/pi-plugin": "file:../a.tgz"}};
+  const entry = {resolved: "file:../a.tgz", version: "0.2.0", integrity: "sha512-good"};
+  assert.deepEqual(qualify.consumerLockProblems(manifest, entry, "a.tgz", "sha512-good", "0.2.0"), []);
+  assert.deepEqual(qualify.consumerLockProblems(manifest, {...entry, integrity: undefined}, "a.tgz", "sha512-good", "0.2.0"), ["lock integrity absent"]);
+  assert.deepEqual(qualify.consumerLockProblems(manifest, {...entry, integrity: "sha512-other"}, "a.tgz", "sha512-good", "0.2.0"), ["lock integrity differs from artifact"]);
+  assert.deepEqual(qualify.consumerLockProblems({dependencies: {}}, {}, "a.tgz", "sha512-good", "0.2.0"),
+    ["manifest dependency undefined", "lock resolved undefined", "lock integrity absent", "lock version undefined"]);
 });

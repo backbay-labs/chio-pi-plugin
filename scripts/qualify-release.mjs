@@ -99,6 +99,16 @@ export function declarationSpecifiers(entry) {
   return [...bare].sort();
 }
 
+/** The consumer depends on the relative artifact and its lock records that
+ * artifact's exact npm integrity. An absent integrity is a failure. */
+export function consumerLockProblems(manifest, pluginLock, artifactName, integrity, version) {
+  return [
+    ...(manifest.dependencies?.["@chio/pi-plugin"] === `file:../${artifactName}` ? [] : [`manifest dependency ${manifest.dependencies?.["@chio/pi-plugin"]}`]),
+    ...(pluginLock.resolved === `file:../${artifactName}` ? [] : [`lock resolved ${pluginLock.resolved}`]),
+    ...(pluginLock.integrity === undefined ? ["lock integrity absent"] : pluginLock.integrity === integrity ? [] : ["lock integrity differs from artifact"]),
+    ...(pluginLock.version === version ? [] : [`lock version ${pluginLock.version}`])];
+}
+
 /** Staged manifest, export/bin containment and installed file fidelity. */
 export function installedPackageProblems(packageRoot, expected) {
   const problems = []; const actualRoot = realpathSync(packageRoot);
@@ -337,11 +347,8 @@ export async function main(argv = process.argv.slice(2)) {
       const lockBytes = readFileSync(join(consumer, "package-lock.json")); const lock = JSON.parse(lockBytes);
       const manifest = JSON.parse(readFileSync(join(consumer, "package.json"), "utf8"));
       const pluginLock = lock.packages?.["node_modules/@chio/pi-plugin"] ?? {};
-      check(kind, "relative artifact dependency and lock integrity", [
-        ...(manifest.dependencies?.["@chio/pi-plugin"] === `file:../${artifactName}` ? [] : [`manifest dependency ${manifest.dependencies?.["@chio/pi-plugin"]}`]),
-        ...(pluginLock.resolved === `file:../${artifactName}` ? [] : [`lock resolved ${pluginLock.resolved}`]),
-        ...(pluginLock.integrity === undefined || pluginLock.integrity === sha512(artifact) ? [] : ["lock integrity differs from artifact"]),
-        ...(pluginLock.version === source.version ? [] : [`lock version ${pluginLock.version}`])], {lockIntegrityRecorded: pluginLock.integrity !== undefined});
+      check(kind, "relative artifact dependency and lock integrity", consumerLockProblems(manifest, pluginLock, artifactName, sha512(artifact), source.version),
+        {lockIntegrityRecorded: pluginLock.integrity !== undefined});
       const ls = run(consumer, env, process.execPath, [npmCli, "ls", "--all", "--json"], `consumer-${kind}-ls`);
       let graph = {}; try {graph = JSON.parse(ls.stdout);} catch {}
       check(kind, "npm ls resolves the complete graph without problems", ls.status === 0 && !graph.problems ? [] : [`npm ls exited ${ls.status}`, ...(graph.problems ?? [])]);

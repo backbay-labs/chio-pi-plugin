@@ -145,8 +145,11 @@ Verify the minimum supported Node by running it with Node 22.19.0 itself.
 CI runs the same command with Node 22.19.0 and npm 11.8.0 after typecheck, build
 and tests, then performs only `npm publish --dry-run`. It retains the packed
 candidate as `source-package` and the consumer evidence as `consumer-evidence`.
-The release workflow runs the same consumer qualification before its existing,
-unchanged publication gates. Local candidate results are in the
+In the release workflow, the build job runs the same consumer qualification after
+its tag-build prerequisite check and before provenance generation and the separate
+publication job, whose gates are unchanged. In both workflows the consumer
+evidence upload fails only when qualification succeeded but left no evidence; an
+earlier failure uploads any partial evidence without a second failing step. Local candidate results are in the
 [Task 7 release record](superpowers/evidence/2026-10-04-task7-release.md) in the
 source repository.
 
