@@ -214,7 +214,7 @@ The detailed port requirements are [trusted native embedding contracts](../specs
 Files: `src/governance.ts`, `src/delegation.ts`, relay, operator feature table,
 index, `test/governance.test.mjs`, `test/delegation.test.mjs`, compatibility guide.
 
-- [ ] Add tests that no outbound provider bytes appear without a trusted admission
+- [x] Add tests that no outbound provider bytes appear without a trusted admission
   when governance is required, and that thrown/expired/mismatched admission or
   child authority fails closed.
 
@@ -224,8 +224,8 @@ assert.equal(providerRequests, 0);
 await assert.rejects(submitScopedChild(parent, widening, nativePort), /scope|authority/);
 ```
 
-- [ ] Run before implementation; observe failure.
-- [ ] Define host-only ports using exact recovered native contract information.
+- [x] Run before implementation; observe failure.
+- [x] Define host-only ports using exact recovered native contract information.
   Verify P2 explanation signer/audience/domain/issuer/expiry and keep advisory remedy
   rendering separate from exact native resume or linked continuation. Native
   disclosure admission binds request bytes and provider account/model/purpose;
@@ -236,12 +236,12 @@ await assert.rejects(submitScopedChild(parent, widening, nativePort), /scope|aut
   insufficient. Lost native commit acknowledgement withholds bytes. Freeze the
   final outbound payload after all host normalization and provider-limit changes
   before native admission, then deliver those exact bytes through the sink.
-- [ ] Child submission requires actual native child-capability issuance and
+- [x] Child submission requires actual native child-capability issuance and
   persisted budget/cancellation identity, not transport filtering. The installed
   bridge's unsupported attenuation yields explicit unavailable status. Protect
   authority scope, child accounting and unknown recovery in the adapter contract.
   Cross-process labeled artifact adoption refuses under current P4 profile.
-- [ ] Wire documented trusted SDK integration entrypoints and startup refusal for
+- [x] Wire documented trusted SDK integration entrypoints and startup refusal for
   required unavailable profiles. Preserve compatibility CLI execution-only mode;
   select required governance explicitly and pin the mode on resume with no
   downgrade or missing-service fallback. Record native service and P5 Linux prerequisites
@@ -405,3 +405,28 @@ original-operation recovery. Credential screening covers selected known material
 standard labels and Bearer strings; it does not classify unknown secrets in
 unlabeled prose. Native service, cross-authority, provider and P4/P5 qualification
 remain separate. See [the task record](../evidence/2026-10-04-task4-continuation.md).
+
+
+## Task 5 review closure
+
+Implementation: `4423ee6`; reload and explicit CLI compatibility fixes:
+`4b2b984`; lifecycle cancellation and immutable startup-target fixes:
+`610c575e6c83a130e284f3388c66d4ab7453e6e0`. Independent specification
+re-review passed at `610c575`, followed by quality re-review approving that
+exact commit. Fresh typecheck, build and all 336 tests passed. Specification
+review independently passed 57 focused cases and an unresolved-freshness abort
+probe; quality re-review independently passed 19 lifecycle cases and four
+additional public-API probes. No failures, skips or cancellations in these
+accepted checks. The evidence records an earlier timeout-versus-output result
+in the unchanged 300 ms confinement specimen, its isolated pass and fresh full
+suite passes.
+
+Required SDK provider calls remain on the native-owned relay through model
+switching and stock summarizers. Cancellation, reload and startup target binding
+use actual Pi public contracts. CLI execution-only compatibility remains available;
+explicit required governance refuses before credentials without a compatible
+facade, with the mode pinned on resume. Native embedding, knowledge, child and
+P2 advisory seams remain unqualified native integrations. Callback fixtures and
+real Ed25519 verification establish adapter behavior; they do not install or
+qualify missing native services or P5. See
+[the task record](../evidence/2026-10-04-task5-governance.md).
