@@ -1,0 +1,253 @@
+{
+  "schema": "chio.pi.consumer-provenance.v1",
+  "kind": "durable",
+  "artifact": "chio-pi-plugin-0.2.0.tgz",
+  "artifactSha256": "ca4bb45f7a333ca890c6243eeed935e6083454433e3a1f49b6531fa3b7b8ab51",
+  "sourceCommit": "c5b94a5932204849c6b11d9e9415ac29dd1060a3",
+  "builderProvenanceSha256": "eb2f9a6b3cb903c6baf7412b78d40ab3b91466eb641ff0b363be5e21ee356b91",
+  "node": {
+    "version": "v22.19.0",
+    "sha256": "0d005c18e095027ca8f9fe1cc1126f767ee4ad7b004f4d6fb781ec4228a7c5d1"
+  },
+  "npm": "11.8.0",
+  "platform": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "release": "25.4.0"
+  },
+  "environment": {
+    "keys": [
+      "HOME",
+      "LANG",
+      "LC_ALL",
+      "NO_UPDATE_NOTIFIER",
+      "PATH",
+      "PI_CODING_AGENT_DIR",
+      "TMPDIR",
+      "TZ",
+      "npm_config_audit",
+      "npm_config_cache",
+      "npm_config_fund",
+      "npm_config_globalconfig",
+      "npm_config_registry",
+      "npm_config_update_notifier",
+      "npm_config_userconfig"
+    ],
+    "isolatedHome": true,
+    "isolatedPiProfile": true,
+    "emptyNpmCache": true,
+    "credentials": "none passed"
+  },
+  "installCommands": [
+    "npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund --save-exact @earendil-works/pi-coding-agent@1.0.2 @earendil-works/pi-durable@1.0.2",
+    "npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund ../chio-pi-plugin-0.2.0.tgz",
+    "npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund --save-exact --save-dev typescript@7.0.2 @types/node@26.5.0"
+  ],
+  "dependency": "file:../chio-pi-plugin-0.2.0.tgz",
+  "resolvedGraphNormalization": {
+    "absoluteArtifactResolutions": 1,
+    "retainedAs": "file:../chio-pi-plugin-0.2.0.tgz"
+  },
+  "lockfileSha256": "339644dc9e2bdd9f5e12b14591786f8f3023a8d153d73c72690390e1d7197b97",
+  "packageJsonSha256": "8529a1c8c67f8dbd66f5611740ba5ba4b0491597eeab0281263f87b691366470",
+  "resolvedGraphSha256": "4705a3382d3a8f2cff3981af7084f3176470286341d35bd2081392881c2d85de",
+  "lockPackages": 333,
+  "pi": "1.0.2",
+  "piDurable": "1.0.2",
+  "isolatedPiProfileEntries": 2,
+  "checks": [
+    {
+      "scope": "durable",
+      "name": "peer-first nested installation from an empty cache",
+      "passed": true,
+      "detail": [
+        {
+          "command": "npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund --save-exact @earendil-works/pi-coding-agent@1.0.2 @earendil-works/pi-durable@1.0.2",
+          "ms": 22606
+        },
+        {
+          "command": "npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund ../chio-pi-plugin-0.2.0.tgz",
+          "ms": 6800
+        },
+        {
+          "command": "npm install --ignore-scripts --install-strategy=nested --no-audit --no-fund --save-exact --save-dev typescript@7.0.2 @types/node@26.5.0",
+          "ms": 3139
+        }
+      ]
+    },
+    {
+      "scope": "durable",
+      "name": "relative artifact dependency and lock integrity",
+      "passed": true,
+      "detail": {
+        "lockIntegrityRecorded": true
+      }
+    },
+    {
+      "scope": "durable",
+      "name": "npm ls resolves the complete graph without problems",
+      "passed": true
+    },
+    {
+      "scope": "durable",
+      "name": "staged metadata, containment and installed file fidelity",
+      "passed": true
+    },
+    {
+      "scope": "durable",
+      "name": "exact host peers",
+      "passed": true,
+      "detail": {
+        "pi": "1.0.2",
+        "piDurable": "1.0.2"
+      }
+    },
+    {
+      "scope": "durable",
+      "name": "npm executable symlinks run every help path",
+      "passed": true,
+      "detail": [
+        {
+          "bin": "chio-coding-resource",
+          "args": [
+            "--help"
+          ],
+          "status": 0,
+          "stdoutSha256": "fc991820f7fd62400c28992c45c243dcb4664d30aa3cf72659055c49a784a5aa",
+          "firstLine": "chio-coding-resource init|serve|inspect|export|recover-lock --config ABSOLUTE_PRIVATE_CONFIG"
+        },
+        {
+          "bin": "chio-pi",
+          "args": [
+            "--help"
+          ],
+          "status": 0,
+          "stdoutSha256": "83bce0107d35b725a9b18c7a09a4f1a13542a62fb0b84f4450caea31705dee82",
+          "firstLine": "Usage: chio-pi --config /absolute/delegated.json --profile /absolute/profile --cwd /absolute/disposable-workspace --prov"
+        },
+        {
+          "bin": "pi",
+          "args": [
+            "--help"
+          ],
+          "status": 0,
+          "stdoutSha256": "9ef64d211f142d560e936328a4b245ff06572b85271eb26f9f2569c322839bec",
+          "firstLine": "pi - AI coding assistant with read, bash, edit, write tools"
+        },
+        {
+          "bin": "tsc",
+          "args": [
+            "--help"
+          ],
+          "status": 0,
+          "stdoutSha256": "037f796a5402c83f177c3df951111b640f978b19a57dd61b82a649ed984b0238",
+          "firstLine": "tsc: The TypeScript Compiler - Version 7.0.2"
+        },
+        {
+          "bin": "chio-pi",
+          "args": [
+            "doctor",
+            "--help"
+          ],
+          "status": 0,
+          "stdoutSha256": "9e6eaa8953a1fcabb193ff34875d3fa7b6ff98691b85c124293967567f978cf4",
+          "firstLine": "Usage:"
+        },
+        {
+          "bin": "chio-pi",
+          "args": [
+            "status",
+            "--help"
+          ],
+          "status": 0,
+          "stdoutSha256": "9e6eaa8953a1fcabb193ff34875d3fa7b6ff98691b85c124293967567f978cf4",
+          "firstLine": "Usage:"
+        },
+        {
+          "bin": "chio-pi",
+          "args": [
+            "inspect",
+            "--help"
+          ],
+          "status": 0,
+          "stdoutSha256": "9e6eaa8953a1fcabb193ff34875d3fa7b6ff98691b85c124293967567f978cf4",
+          "firstLine": "Usage:"
+        },
+        {
+          "bin": "chio-pi",
+          "args": [
+            "recover",
+            "--help"
+          ],
+          "status": 0,
+          "stdoutSha256": "9e6eaa8953a1fcabb193ff34875d3fa7b6ff98691b85c124293967567f978cf4",
+          "firstLine": "Usage:"
+        }
+      ]
+    },
+    {
+      "scope": "durable",
+      "name": "Durable import and registration smoke",
+      "passed": true,
+      "detail": {
+        "kind": "durable",
+        "registryTools": [
+          "chio_read",
+          "chio_write"
+        ],
+        "rootAndCodingImports": true,
+        "deepImportRefused": true,
+        "durableRegistration": {
+          "tools": 2,
+          "replay": "unsafe",
+          "executionMode": "sequential",
+          "executorCalls": 0,
+          "acknowledgements": 0,
+          "storeOwnerBinding": "chio.pi.durable-store-owner.v1"
+        }
+      }
+    },
+    {
+      "scope": "durable",
+      "name": "typecheck the Durable entrypoint",
+      "passed": true,
+      "detail": {
+        "strictLibraryCheck": {
+          "exit": 1,
+          "diagnostics": 45,
+          "inThisPackageOrConsumer": 0,
+          "upstreamCodesByPackage": [
+            "TS1543 node_modules/@earendil-works/pi-coding-agent",
+            "TS2307 node_modules/@earendil-works/pi-coding-agent",
+            "TS2694 node_modules/@earendil-works/pi-coding-agent"
+          ]
+        },
+        "skipLibCheckBuild": {
+          "exit": 0
+        }
+      }
+    },
+    {
+      "scope": "durable",
+      "name": "root declaration closure excludes Pi Durable",
+      "passed": true,
+      "detail": {
+        "rootSpecifiers": [
+          "@chio/bridge",
+          "@earendil-works/pi-coding-agent",
+          "node:child_process",
+          "node:fs"
+        ]
+      }
+    },
+    {
+      "scope": "durable",
+      "name": "retained lockfile replays with npm ci from an empty cache",
+      "passed": true,
+      "detail": {
+        "npmCi": "npm ci --ignore-scripts --install-strategy=nested --no-audit --no-fund"
+      }
+    }
+  ],
+  "status": "passed"
+}

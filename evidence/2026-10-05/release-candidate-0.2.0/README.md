@@ -1,5 +1,16 @@
 # Release candidate 0.2.0 cold consumer evidence
 
+**Superseded.** This pre-review candidate (`0701bfc7...`, built from unreviewed
+source commit `2059150`) is not the candidate of record. The candidate of record
+is packed from the final reviewed commit; see
+[release-candidate-0.2.0-final](../release-candidate-0.2.0-final/README.md). In
+Task 8 the `package-lock.json` and `resolved-graph.json` files of
+`node-25.5.0-npm-11.8.0/` were removed because they were byte-identical to those
+of `node-22.19.0-npm-11.8.0/`, which keeps the full set. Their
+`consumer-provenance.json` files still record both digests, and the run's
+`package.json` files and `summary.json` remain. The rest of this record is
+unchanged.
+
 Retained by Task 7 of the full roadmap on 2026-10-05, macOS 26.4 arm64
 (Darwin 25.4.0). The record is
 [docs/superpowers/evidence/2026-10-04-task7-release.md](../../../docs/superpowers/evidence/2026-10-04-task7-release.md).
@@ -16,7 +27,7 @@ packaged `files` selection, so retaining it does not change the archive.
 | Path | Record |
 | --- | --- |
 | `builder/` | Builder-lock provenance from the packer, the artifact checksum line and the archive member manifest with per-file SHA-256. |
-| `node-25.5.0-npm-11.8.0/` | Consumers run with Homebrew Node 25.5.0 and its npm 11.8.0. |
+| `node-25.5.0-npm-11.8.0/` | Consumers run with Homebrew Node 25.5.0 and its npm 11.8.0. Lockfiles and graphs removed as duplicates; digests retained. |
 | `node-22.19.0-npm-10.9.3/` | Minimum Node: official nodejs.org Node 22.19.0 with its bundled npm 10.9.3. |
 | `node-22.19.0-npm-11.8.0/` | Minimum Node with the release toolchain's npm 11.8.0. |
 | `rebuild-node-22.19.0-npm-11.8.0/` | Builder provenance and consumer summary for the same commit packed with Node 22.19.0 and npm 11.8.0. |

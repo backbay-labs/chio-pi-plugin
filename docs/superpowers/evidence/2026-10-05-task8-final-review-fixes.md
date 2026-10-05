@@ -689,3 +689,279 @@ GREEN after the fixes, same Node:
   substitute and the real bubblewrap 0.8.0 with mode 4755 each returned the
   `unsupported_sandbox` refusal with no job directory; the unchanged real
   bubblewrap 0.8.0 ran the recipe successfully (`exitCode: 0`).
+
+## Final verification
+
+Final reviewed source commit `c5b94a5932204849c6b11d9e9415ac29dd1060a3`
+(`7c174ad` plus the four fold-in commits above), from a clean worktree. This
+section and the candidate evidence are committed afterwards. They lie outside
+the packaged `files` selection, so that commit does not change the archive
+(checked below). Earlier task records are unchanged. Nothing was pushed or
+published.
+
+### Toolchains
+
+macOS 26.4 build 25E246, Darwin 25.4.0 arm64.
+
+| Name | Binary | SHA-256 | npm |
+| --- | --- | --- | --- |
+| Homebrew Node 25.5.0 | `/opt/homebrew/Cellar/node/25.5.0/bin/node` | `dd15588a84f33431b4e616b04a2d0f79be676b1d537a43f0537a62279c592d21` | 11.8.0 |
+| Official Node 22.19.0 | nodejs.org `node-v22.19.0-darwin-arm64.tar.gz`, extracted into a session scratch directory | `0d005c18e095027ca8f9fe1cc1126f767ee4ad7b004f4d6fb781ec4228a7c5d1` | bundled 10.9.3, or the Homebrew npm 11.8.0 CLI |
+
+The Node 22.19.0 tarball was the copy obtained in Task 7. Its SHA-256
+`c59006db713c770d6ec63ae16cb3edc11f49ee093b5c415d667bb4f436c6526d` matched
+`https://nodejs.org/dist/v22.19.0/SHASUMS256.txt`, fetched again over HTTPS for
+this run; the checksum file's signature was not verified. The user's global
+toolchain was not changed.
+
+### Source checks, macOS arm64
+
+From the worktree root at `c5b94a5`:
+
+```sh
+npm run typecheck && npm test
+```
+
+- Homebrew Node 25.5.0, npm 11.8.0: typecheck exit 0. `npm test`: 468 tests,
+  466 passed, 2 skipped, 0 failed, 313.0 s. The skips are Linux only
+  (`B-M4 a Linux recipe cannot create a nested user namespace` and the
+  `C-I1 and C-M8` bubblewrap argument test). The known `real recipe output
+  bounds` flake did not appear, so no rerun was needed.
+- Official Node 22.19.0, bundled npm 10.9.3: typecheck exit 0. `npm test`: 468
+  tests, 463 passed, 5 skipped, 0 failed, 232.0 s. The skips are the same two
+  Linux-only tests and three macOS runtime-closure fixtures (`missing`,
+  `incomplete`, `wrong hash`), each reporting "needs a Node linked against at
+  least N non-system dylib(s)" because the official build resolves none. The
+  `extra` closure fixture runs and passes. Task 7 recorded these three plus
+  `extra` as failures (390 of 394); they now skip with a reason.
+
+### Linux, pinned image
+
+Image `sha256:6d5bbc54ae9fd29177042755c41667006b708874c7ed6d489d543e931e33fe23`
+(Node 22.23.1, bubblewrap 0.8.0-2+deb12u1, arm64, kernel 6.8.0-64-generic) in
+the shared Colima VM (2 vCPUs, 3.8 GiB). The user's kind cluster, imperium,
+postgres and redis containers kept running and were not touched; at times they
+used over 300% CPU and about 3 GiB. Every run was a disposable `--rm` container
+with `--network none`. Because `pack:release` removes and rebuilds `dist/`,
+the containers mounted a read-only snapshot of the final commit instead of the
+live worktree: `git archive c5b94a5`, a clone of the worktree's `node_modules`,
+and `npm run build` with Homebrew Node 25.5.0. The snapshot was mounted at
+`/input` with `--workdir /input`. Unit suites ran unprivileged; recipe, Durable,
+continuation, workflow and whole-guest runs used `--privileged --network none`
+for real namespaces, the documented practice on this VM, which does not qualify
+ordinary Docker defaults or native P5. Test files ran one group at a time.
+
+| Group | Command | Result |
+| --- | --- | --- |
+| A1 gaps | `node --test test/host-contract.test.mjs test/governance-cli.test.mjs` | 22 tests, 21 passed, 1 failed |
+| A1 set | `node --test test/configured.test.mjs test/typed-relay.test.mjs test/host-delivery.test.mjs test/governance.test.mjs test/governance-lifecycle.test.mjs test/model-relay.test.mjs test/model-limits.test.mjs test/tool-registry.test.mjs` | 107 tests, 107 passed |
+| C set | `node --test test/run-limits.test.mjs test/unix-relay.test.mjs test/linux-sandbox.test.mjs test/guest-termination.test.mjs test/guest-profile.test.mjs` | 53 tests, 46 passed, 6 failed, 1 skipped (Seatbelt only) |
+| Coding resource | `node test/helpers/coding-linux-runner.mjs test/coding-resource.test.mjs` (privileged) | 87 tests, 87 passed |
+| Confinement | `node test/helpers/coding-linux-runner.mjs test/coding-confinement.test.mjs` (privileged) | 15 tests, 12 passed, 1 failed, 2 skipped (macOS only) |
+| A2 set | `node test/helpers/coding-linux-runner.mjs test/roadmap-workflow.test.mjs test/durable.test.mjs test/continuation.test.mjs` (privileged) | continuation 94 of 94; Durable 26 of 30 then stalled; workflow not started |
+| Remaining | `node --test test/delegation.test.mjs test/operator.test.mjs test/http-executor.test.mjs test/terminal.test.mjs test/qualify-release.test.mjs` | 53 tests, 49 passed, 4 failed |
+| Whole guest | `node scripts/linux-guest/runner.mjs` with the existing probe image (privileged) | first attempt failed at the launcher stage; second attempt passed |
+
+The new final-review tests passed on Linux: the closed-proxy regression in
+continuation, and the envelope and bubblewrap tests in the coding resource
+suite, whose recipe tests also ran through the new bubblewrap check with the
+real bubblewrap 0.8.0. `host-contract` passed 15 of 15 and `governance-cli`
+7 of 7 after one rerun, closing the A1 gap. Every failure was examined and
+rerun:
+
+- **governance-cli doctor.** `chio-pi doctor` returned `native_operator_refused`
+  after 271 s: its native operator child hit the fixed 45 s deadline, as in the
+  area A1 record. Rerun alone: 1 of 1 passed.
+- **guest-profile, four subtests.** Launches were refused with "authenticated
+  session credential does not match the retained caller, capability, resource
+  owner, tool scope or lifetime": the shared fixture's credential expires 300 s
+  after creation and the subtests took 13 s to 80 s each. Rerun alone: 14 of 15
+  subtests passed; the remaining one (`C-M4: an early refusal on an empty profile
+  leaves it launchable`) was killed by the test's 60 s launch timeout before it
+  printed anything.
+- **run-limits `C-I2: a real guest surviving its SIGKILLed parent blocks owner
+  recovery until it is gone`.** The container had no init process. The test's
+  SIGKILLed parent orphans its guest to PID 1, the Node test runner, which does
+  not reap it, so the killed guest stays a zombie and `kill(-pgid, 0)` keeps
+  succeeding. Run alone it failed again without `--init` and passed with
+  `docker run --init`, whose init reaps the zombie. This is a property of the
+  container, not of the change. In such a container, stale-lock recovery stays
+  refused until the zombie is reaped, which fails closed.
+- **coding-confinement `real confined NUL stdout ...`.** The recipe hit the
+  fixture's 2,000 ms recipe timeout. Three direct runs of the same recipe took
+  1,080 ms and 1,574 ms (success) and then 4,332 ms (SIGTERM, `limit:
+  "timeout"`, no output). Rerun alone: passed. The usual `real recipe output
+  bounds` flake passed this time.
+- **Durable, four tests, then a stall.** Four tests failed with "delegated
+  session validation failed before dispatch": the scripted kernel did not answer
+  `chio/execution-context` within the fixture's 1,500 ms native timeout. The
+  test file then stayed idle at 0% CPU for over 25 minutes after its last result
+  with fixture handles left open by those failures, so I killed my own container;
+  the workflow file had not started. Durable rerun alone: 30 of 30 passed.
+- **operator, four FIFO tests.** `private config|journal|delivery-input|operator-input
+  FIFO is refused promptly` exceeded the test's 6 s subprocess budget. Rerun:
+  1 of 4. A diagnostic copy with a 120 s budget refused the config, journal and
+  delivery-input FIFOs in 117 s, 78 s and 17 s, while the operator-input case,
+  which first runs the native status child, exceeded 120 s during the
+  whole-guest rerun. The refusal path cannot block on a FIFO:
+  `readPrivateText` checks `lstat` for a regular file before any open and opens
+  with `O_NONBLOCK`. These are load timeouts.
+- **Roadmap workflow.** Run alone: 3 of 5 passed. The main scenario failed with
+  "Workflow step before-test has no committed signed completion" after 200 s,
+  and the stopped-workflow qualification test hit its 300 s test timeout. A
+  second run of the main scenario hit the 300 s timeout. As a control, the same
+  scenario against a snapshot of `7c174ad`, without the fold-in fixes, also hit
+  the 300 s timeout in the same VM. The scenario passes on macOS in both full
+  suites above, and the coding resource, continuation and Durable files it
+  composes passed on Linux. A passing Linux workflow run at the final commit
+  therefore remains unobserved on this VM; area A2's record holds the last
+  passing Linux run.
+- **Whole guest.** The committed runner's whole-guest and SDK stages passed; its
+  installed launcher stage reserved no request (empty stderr). A second run, with
+  a diagnostic copy of the runner that adds one log line before that assertion,
+  passed every assertion: the launcher stage took 594 s of its 600 s wall. The
+  [machine-readable result](2026-10-05-task8-final-linux-result.json) records
+  it: all five guest namespaces differ, both routes and every denial including
+  `ptrace`, `process_vm` and `pidfd_getfd`; arm64 filter
+  `d00965ae3ff6ab335a5821438e016df5ce92233eebb51eb2503f7aa7808c4119`, equal to
+  the area C hash; the SDK session completed with three gateway and two model
+  requests; no secret in 44 process samples and 86 bubblewrap command lines; the
+  installed launcher's Linux branch reserved exactly one request, released its
+  owner lock and left no control directory, with no bearer name in 360 samples;
+  the confined wrapper exited by SIGTERM and the raw ignoring child by SIGKILL,
+  with no survivors or zombies.
+
+### Candidate of record
+
+With Homebrew Node 25.5.0 and npm 11.8.0, from the clean worktree:
+
+```sh
+npm run pack:release -- /tmp/chio-pi-roadmap-release
+```
+
+The earlier scratch directory of that name, which held the superseded
+`0701bfc7...` archive, was moved aside first. The packer exited 0. Before and
+after packing, `git status --porcelain` was empty and the source hashes were
+unchanged, equal to the Task 7 values: `package.json`
+`c9c6637bc732efdcc449098bb27110d78cf6931e9dc5f4cdb8d45e1b655a39e6`, builder
+`package-lock.json`
+`d5ed351fe7b2fecbfcc3f027aa80701c98d40a9c1fc665b36231139c37713de2`, bridge
+archive `7d9e34f7408a316e35125982a23faaecfd2f31f4da6b50ca8eab287c2c918f67`.
+
+| Candidate | Value |
+| --- | --- |
+| Artifact | `chio-pi-plugin-0.2.0.tgz`, 5,811,862 bytes, 1,164 files |
+| SHA-256 | `ca4bb45f7a333ca890c6243eeed935e6083454433e3a1f49b6531fa3b7b8ab51` |
+| npm integrity | `sha512-rgZAsP/3Br9NKoKlD0mFr7yMmncgA7xeMzb+93TKUia4gTweOOmMNyJFI0hK2llePd3SKDGSoabfk8StVbGyuA==` |
+| Source commit | `c5b94a5932204849c6b11d9e9415ac29dd1060a3`, `sourceDirty: false` |
+| Builder | Node v25.5.0, npm 11.8.0, darwin arm64 |
+| Bundled | `@chio/bridge@0.3.0` with `@chio-protocol/sdk@0.1.1-rc.1`, `yaml@2.9.0`, `zod@3.25.76` |
+| Registry dependencies | exact `ajv@8.17.1`, `typebox@1.3.7`, with builder-lock integrity |
+
+Two more files than the Task 7 candidate: the new `guest-secrets` module and
+its declaration. A second pack of the same commit into a new directory produced
+a byte-identical archive and an identical builder provenance file. A third pack
+with this complete record and the new evidence present but uncommitted
+(`sourceDirty: true`) produced the same archive bytes, as the archive excludes
+both. The superseded pre-review candidate `0701bfc7...` from `2059150` is
+marked as such in its evidence directory.
+
+### Cold consumers
+
+```sh
+node scripts/qualify-release.mjs --release /tmp/chio-pi-roadmap-release \
+  --work NEW_WORK_DIRECTORY --evidence NEW_EVIDENCE_DIRECTORY [--npm-cli NPM_CLI_JS]
+```
+
+| Node and npm | Exit | Base lockfile SHA-256 | Durable lockfile SHA-256 | Time |
+| --- | ---: | --- | --- | ---: |
+| 22.19.0, npm 11.8.0 (CI release toolchain) | 0 | `b5a8b3108d02bf5e426fe19a5b53d4540abef34997eaf171cdae1002d470fb50` | `339644dc9e2bdd9f5e12b14591786f8f3023a8d153d73c72690390e1d7197b97` | 121.9 s |
+| 25.5.0, npm 11.8.0 | 0 | `b5a8b3108d02bf5e426fe19a5b53d4540abef34997eaf171cdae1002d470fb50` | `339644dc9e2bdd9f5e12b14591786f8f3023a8d153d73c72690390e1d7197b97` | 140.7 s |
+
+Both runs passed the three host and builder checks and all ten checks of each
+consumer, the same checks as in Task 7: peer-first nested installation from an
+empty cache; the relative `file:../chio-pi-plugin-0.2.0.tgz` dependency with
+recorded lock integrity; `npm ls --all`; staged metadata, containment and
+installed file hashes; exact peers (Pi 1.0.2, and Pi Durable 1.0.2 only in the
+Durable consumer); every `node_modules/.bin` help path through its symlink;
+imports, with the Durable entrypoint refusing without its optional peer in the
+base consumer; both typecheck runs (45 upstream Pi diagnostics with
+`skipLibCheck: false`, none in this package or the consumer file, and a clean
+`skipLibCheck: true` build); the root declaration closure without Pi Durable;
+and `npm ci` replay from another empty cache with an identical lockfile and
+graph. The Durable registration smoke installed two tools, both
+`replay: "unsafe"` and sequential, with zero executor calls and
+acknowledgements. Each consumer had its own empty cache, `HOME` and
+`PI_CODING_AGENT_DIR`, and the normal `~/.pi` profile metadata (11 entries) was
+unchanged. Lockfiles and resolved graphs (base
+`339ec9af80932215cea66084bda0b0c0893240ed9bdbdd56b353413b8c2c2d3c`, Durable
+`4705a3382d3a8f2cff3981af7084f3176470286341d35bd2081392881c2d85de`) were
+byte-identical across the two toolchains.
+
+The first pair of consumer runs used work directories under a session scratch
+path that contains a UUID. npm redacts UUIDs in its output as `***`, so the
+absolute archive URL that `npm ls` reports no longer matched the work path: the
+graph kept a redacted absolute path, `absoluteArtifactResolutions` was 0, and the
+host-path check, which looks for the literal path, still passed. Those runs were
+discarded and rerun from `/tmp/chio-pi-final-consumers/`; the retained graphs
+contain only the relative URL and each records one normalized resolution.
+`scripts/qualify-release.mjs` should require exactly one normalized resolution
+and refuse any absolute `file:` URL in a retained graph; that is a follow-up.
+
+### Publication dry run
+
+With official Node 22.19.0 and the npm 11.8.0 CLI, an isolated `HOME`, user
+configuration and empty cache:
+
+```sh
+npm publish /tmp/chio-pi-roadmap-release/chio-pi-plugin-0.2.0.tgz --dry-run --ignore-scripts --access public
+```
+
+Exit 0, 1,164 files, the integrity above, and npm's expected not-logged-in
+warning. Nothing was published.
+
+### Retained evidence
+
+[evidence/2026-10-05/release-candidate-0.2.0-final/](../../../evidence/2026-10-05/release-candidate-0.2.0-final/README.md)
+holds the builder provenance, checksum line and archive manifest, the full
+Node 22.19.0 and npm 11.8.0 consumer fixture set (package files, lockfiles,
+resolved graphs and consumer provenance), and for Node 25.5.0 and npm 11.8.0 the
+summary, consumer package files and consumer provenance with both digests. In
+[the superseded pre-review directory](../../../evidence/2026-10-05/release-candidate-0.2.0/README.md)
+only the `node-25.5.0-npm-11.8.0` lockfiles and graphs were removed, after
+confirming they were byte-identical to the retained `node-22.19.0-npm-11.8.0`
+files; its provenance, summaries and digests remain.
+[RELEASE-QUALIFICATION.md](../../RELEASE-QUALIFICATION.md#candidate-020) points
+to this record for the candidate of record and marks the earlier candidate
+superseded. It does not repeat the hash because it ships in the archive.
+
+### Branch checks
+
+On the tree with this record staged, against `origin/main` (`cd3dbf9`):
+
+- `git diff --check`: clean.
+- No em or en dash in any added Markdown line, nor in any other added non-JSON
+  line.
+- Credential patterns (provider, GitHub, npm, AWS, Slack and Google keys,
+  private key blocks, npm auth settings, long bearer values and quoted
+  secret-like assignments) over every added or changed file: only synthetic test
+  fixtures match (`test/continuation.test.mjs`,
+  `test/helpers/continuation-fixture.mjs`, `test/model-relay.test.mjs`,
+  `test/guest-termination.test.mjs`, `test/linux-sandbox.test.mjs` and
+  `scripts/linux-guest/runner.mjs`).
+- Every commit subject from `origin/main` to the evidence commit is a
+  conventional commit.
+- [ROADMAP-IMPLEMENTATION.md](../../ROADMAP-IMPLEMENTATION.md) has all twelve
+  summary rows and twelve sections, each with shipped entrypoints, evidence,
+  native prerequisites and limitations.
+- The primary checkout still shows exactly `.worktrees/`,
+  `docs/RESEARCH-2026-10-04.md` and `evidence/2026-09-09/scoped-preack-25d5717/`
+  untracked at `b24b14e`, read with `GIT_OPTIONAL_LOCKS=0`.
+
+### Not qualified
+
+The same boundary as the Task 7 record holds. This is component, stock-host
+and installation evidence on macOS arm64 and the measured Linux arm64 VM. It
+does not qualify a native kernel, provider, P2 to P5 service or native coding
+workflow, real-host I01 to I08 on Pi 1.0.2, ordinary Docker defaults, actual
+x64, Windows or publication. Hosted CI has not run on this branch.

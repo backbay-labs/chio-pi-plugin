@@ -1,0 +1,52 @@
+{
+  "schema": "chio.pi.cold-consumers.v1",
+  "artifact": "chio-pi-plugin-0.2.0.tgz",
+  "artifactSha256": "ca4bb45f7a333ca890c6243eeed935e6083454433e3a1f49b6531fa3b7b8ab51",
+  "sourceCommit": "c5b94a5932204849c6b11d9e9415ac29dd1060a3",
+  "sourceDirty": false,
+  "node": {
+    "version": "v22.19.0",
+    "sha256": "0d005c18e095027ca8f9fe1cc1126f767ee4ad7b004f4d6fb781ec4228a7c5d1"
+  },
+  "npm": "11.8.0",
+  "platform": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "release": "25.4.0"
+  },
+  "consumers": [
+    {
+      "kind": "base",
+      "status": "passed"
+    },
+    {
+      "kind": "durable",
+      "status": "passed"
+    }
+  ],
+  "checks": [
+    {
+      "scope": "builder",
+      "name": "archive members, regular files and exclusions",
+      "passed": true,
+      "detail": {
+        "entries": 1164
+      }
+    },
+    {
+      "scope": "host",
+      "name": "normal Pi profile metadata unchanged",
+      "passed": true,
+      "detail": {
+        "exists": true,
+        "entries": 11
+      }
+    },
+    {
+      "scope": "host",
+      "name": "retained evidence has no host-specific absolute paths",
+      "passed": true
+    }
+  ],
+  "status": "passed"
+}
