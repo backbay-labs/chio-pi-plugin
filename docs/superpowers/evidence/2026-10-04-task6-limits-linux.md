@@ -196,3 +196,79 @@ runtime qualification. `git diff --check` also passed.
 
 The earlier full 372-test and measured Linux guest acceptance records remain
 separate evidence. They were not rerun for this test-only expectation correction.
+
+## Quality review correction
+
+The independent quality review of `049408a` found a Critical defect. The parent
+published `gateway-transport.json` into the guest-writable profile with
+`writeFile`, which follows an existing symlink and writes through a hardlink. The
+escaping-link audit ran afterwards inside `prepareLinuxGuest`, so a link left by
+an earlier confined guest let a resumed launch overwrite a host file before the
+refusal. Linux permits guest symlinks. A credential-free probe of the shipped
+macOS policy on this host also created an escaping symlink at that name and
+replaced the profile root itself with a link; Seatbelt denies only hardlinks.
+Both platforms were therefore affected.
+
+Changes, all in the trusted parent: before any mutation of a resumed profile the
+launcher refuses a linked profile root and runs the existing closure audit on the
+profile (the later Linux audit is retained). `publishGuestFile` in
+`src/private-state.ts` refuses a link, multiply linked file or special file at the
+published name, writes only through an exclusive `O_NOFOLLOW` temporary in the
+verified private profile directory, checks descriptor identity and single-link
+state before and after `rename`, then fsyncs the directory. Rename replaces the
+entry, so a link raced in after the check is never written through. `profile/tmp`
+is created without following a link and must be a private owned directory. A
+workspace whose existing path components resolve into the profile refuses before
+`mkdir`. Transport bytes, budgets, deadlines, Codex limits, termination, mounts,
+seccomp, the Task 3 recipe filter and Task 4/5 semantics are unchanged.
+
+`test/guest-profile.test.mjs` runs the actual installed launcher on resumed
+profiles whose original accounting has its single request already spent, so no
+outcome can submit a provider request. Variants: escaping and contained transport
+symlinks, a transport hardlink to an outside sentinel, an escaping `tmp` symlink,
+a replaced profile root and a workspace inside the profile. Each asserts its exact
+refusal, no guest launch and byte-identical sentinel or marker. A unit case covers
+the helper. A positive control, added after GREEN, shows a clean resumed profile
+still receives a fresh single-link mode 0600 transport file and private `tmp`.
+
+macOS, recorded Homebrew Node 25.5.0:
+
+```sh
+node --test test/guest-profile.test.mjs
+npm run typecheck
+npm test
+git diff --check
+```
+
+RED before the fix: 0 pass, 8 fail; for example the outside sentinel received the
+transport configuration with its proxy token. GREEN: 9 pass. The full suite passed
+**381 tests** (372 earlier plus 9 new), with zero failures, cancellations or skips,
+in 98.8 s. On this host the first `node` on `PATH` is now a statically linked
+v26.7.0; with it 375 of 381 pass. Its five `coding-confinement` runtime-closure
+failures reproduce identically at `049408a` without this change, because that build
+has no dylib closure. One `guest-termination` EPERM appeared once under full-suite
+load and passed 8 repeated isolated runs on both Node builds.
+
+Linux, the pinned image above, `docker run --rm --network none`, read-only
+worktree mount at `/input`, `--workdir /input`:
+
+```sh
+node --test test/guest-profile.test.mjs
+node --test test/run-limits.test.mjs test/model-limits.test.mjs test/unix-relay.test.mjs test/linux-sandbox.test.mjs test/guest-termination.test.mjs test/governance-cli.test.mjs test/guest-profile.test.mjs
+```
+
+RED before the fix: 0 pass, 8 fail with the same overwrites. GREEN: 9 pass. The
+seven suites passed 50 tests (41 earlier plus 9 new), with zero failures,
+cancellations or skips.
+
+A supplementary uncommitted probe (SHA-256
+`c7fcd0128f3508c214c180378ae751cde807e6cccfc16f5bee193fd7ef9fab96`) used one
+disposable `--rm --privileged --network none` container from the same image. A
+real guest prepared by the shipped `prepareLinuxGuest`, FD3 filter and
+`superviseGuest` planted an escaping symlink, and in a second run an in-profile
+hardlink to the marker, each exiting 0. The real installed launcher then ran on
+that profile. Before the fix it refused only at the late audit, after the outside
+sentinel was overwritten. After the fix it refused before parent mutation (profile
+audit for the symlink, publication for the hardlink), with sentinel, marker and
+planted entry unchanged and no guest launch. Running Colima/Docker services were
+preserved. The earlier measured guest acceptance run was not repeated.

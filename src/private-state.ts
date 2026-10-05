@@ -84,3 +84,31 @@ export async function writePrivateJson(path: string, value: unknown, replace = f
     await syncDirectory(directory);
   } finally {await unlink(temporary).catch(error => {if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;});}
 }
+/** Parent publication into a guest-writable private directory. A guest may leave
+ * a link at the published name between launches, so an existing entry must be a
+ * single-link regular file; links and special files refuse before any write. The
+ * bytes go only through an exclusive NOFOLLOW temporary descriptor, and rename
+ * replaces the directory entry itself, never the target of a raced-in link. */
+export async function publishGuestFile(path: string, text: string): Promise<void> {
+  normalizedPath(path);
+  const directory = await ownedDirectory(dirname(path));
+  if (directory !== dirname(path)) throw new Error("Guest publication directory contains a link");
+  const single = (stat: Stats) => stat.isFile() && stat.nlink === 1 && stat.uid === process.getuid?.();
+  const same = (stat: Stats, identity: Stats) => single(stat) && stat.ino === identity.ino && stat.dev === identity.dev;
+  const existing = await lstat(path).catch(error => {if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined; throw error;});
+  if (existing && !single(existing)) throw new Error("Guest publication path is a link or special file; parent write refused");
+  const temporary = join(directory, `.chio-${randomBytes(16).toString("hex")}.tmp`);
+  const file = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+  try {
+    let created: Stats;
+    try {
+      created = await file.stat();
+      if (!single(created)) throw new Error("Guest publication temporary is not a private single-link file");
+      await file.writeFile(text, "utf8"); await file.sync();
+    } finally {await file.close();}
+    if (!same(await lstat(temporary), created)) throw new Error("Guest publication temporary changed before rename");
+    await rename(temporary, path);
+    if (!same(await lstat(path), created)) throw new Error("Guest publication changed after rename");
+    await syncDirectory(directory);
+  } finally {await unlink(temporary).catch(error => {if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;});}
+}

@@ -114,7 +114,12 @@ clears the guest environment, drops capabilities, mounts installed code and the
 selected runtime read-only, constructs private proc/dev/tmp and a disposable cwd,
 and mounts only two individual parent-owned Unix socket leaves. The private profile
 is writable. The installed/runtime closures refuse sockets, special files and
-escaping symlinks. The native gateway, provider credentials, prepared operator
+escaping symlinks. A guest can create links in its profile, so on Linux and macOS
+the launcher refuses, before any parent write, a linked profile root, profile links
+that escape it, special files, a link or multiply linked file at the published
+transport name, and a workspace inside the profile. The transport configuration is
+published through an exclusive temporary file and atomic rename. Treat a refused
+profile as untrusted guest output; do not repair it by following its links. The native gateway, provider credentials, prepared operator
 configuration, journal and protected resource source are absent.
 
 The sockets lead only to the parent gateway proxy and the fixed model relay.

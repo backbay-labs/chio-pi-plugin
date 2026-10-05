@@ -15,10 +15,10 @@ import { readCodexAuthority, startModelRelay, type ModelAuthority } from "./mode
 import { buildSandboxPolicy, isWithin, requireSessionCredential } from "./sandbox.js";
 import { requireNativeGovernance } from "./governance.js";
 import {DEFAULT_RUN_LIMITS, openRunBudget, validateRunLimits, type RunLimits} from "./run-limits.js";
-import {prepareLinuxGuest, type LinuxRuntime} from "./linux-sandbox.js";
+import {auditMountClosure, prepareLinuxGuest, type LinuxRuntime} from "./linux-sandbox.js";
 import {createUnixRelay} from "./unix-relay.js";
 import {superviseGuest} from "./guest-termination.js";
-import {readPrivateJson, ownedDirectory, sha256, syncDirectory} from "./private-state.js";
+import {readPrivateJson, ownedDirectory, publishGuestFile, sha256, syncDirectory} from "./private-state.js";
 import { runOperatorCommand } from "./operator-cli.js";
 
 export function parseProtectedLaunchArguments(args: string[]) {
@@ -35,6 +35,16 @@ export function parseProtectedLaunchArguments(args: string[]) {
   if (!subscription && (values.get("--provider") !== "openai" || values.get("--model") !== "gpt-4.1-mini")) throw new Error("Model relay supports openai/gpt-4.1-mini or openai-codex/gpt-5.5");
   if (subscription !== values.has("--codex-auth")) throw new Error("--codex-auth is required only for openai-codex");
   return {values, subscription, governanceProfile};
+}
+
+/** Refuse a path whose existing components resolve into guest-writable profile
+ * state before any missing component is created through them. */
+async function outsideProfile(path: string, profile: string): Promise<void> {
+  for (let prefix = path; ; prefix = dirname(prefix)) {
+    const resolved = await realpath(prefix).catch(error => {if (["ENOENT", "ENOTDIR"].includes((error as NodeJS.ErrnoException).code ?? "")) return undefined; throw error;});
+    if (resolved && isWithin(profile, resolved)) throw new Error("Disposable workspace cannot overlap guest profile state");
+    if (prefix === dirname(prefix)) return;
+  }
 }
 
 async function main() {
@@ -76,9 +86,14 @@ async function main() {
   if (endpoint.protocol !== "http:" || endpoint.hostname !== "127.0.0.1" || !endpoint.port || endpoint.username || endpoint.password) throw new Error("Protected candidate requires an explicit local kernel HTTP endpoint");
   const requestedProfile = resolve(values.get("--profile")!);
   await mkdir(requestedProfile, { recursive: true, mode: 0o700 });
+  // A macOS guest can replace its writable profile root with a link; never follow it.
+  if ((await lstat(requestedProfile)).isSymbolicLink()) throw new Error("Profile path must name the private directory itself, not a link");
   const profile = await realpath(requestedProfile);
   const profileStat = await lstat(profile);
   if (profileStat.mode & 0o077 || isWithin(installation, profile) || isWithin(profile, installation) || isWithin(profile, configPath) || isWithin(installation, configPath)) throw new Error("Profile, immutable configuration and installed code require separate private paths");
+  // A guest can leave links or special files in its writable profile. Refuse them
+  // before any parent mutation of the resumed profile or a workspace inside it.
+  await auditMountClosure(profile).catch(error => {throw new Error(`Guest profile refused before parent mutation: ${error instanceof Error ? error.message : "audit failed"}`);});
   const profileMarker = join(profile, ".chio-pi-profile.json");
   const contents = await readdir(profile);
   if (contents.length) {
@@ -92,6 +107,7 @@ async function main() {
     finally { await marker.close(); }
   }
   const requestedCwd = resolve(values.get("--cwd")!);
+  await outsideProfile(requestedCwd, profile);
   await mkdir(requestedCwd, { recursive: true, mode: 0o700 });
   const cwd = await realpath(requestedCwd);
   if (authPath && [profile, installation, cwd].some(path => isWithin(path, authPath))) throw new Error("Native Codex credentials must remain outside guest paths");
@@ -116,13 +132,15 @@ async function main() {
     proxy = await startParentGatewayProxy({configPath, binding: parentBinding, native: transport});
     relay = await startModelRelay(authority, values.get("--model")!, createHostDeliveryObserver({...prepared, journalDir: journal}, transport, proxy.originals), registry, undefined, budget);
     const guestConfig = join(profile, "gateway-transport.json");
-    await writeFile(guestConfig, JSON.stringify({schema: "chio.pi.transport.v1", sessionId: config.sessionId,
+    await publishGuestFile(guestConfig, JSON.stringify({schema: "chio.pi.transport.v1", sessionId: config.sessionId,
       transport: {url: proxy.url, token: proxy.token}, parentBinding, tools: config.tools, approvals: Boolean(config.approval),
       toolMode: registry.mode, registryDigest: registry.digest,
-      binding: {subjectKey: config.execution.subjectKey, capabilityId: config.execution.capabilityId, serverId: config.execution.serverId, trustedSigners: config.execution.trustedSigners}}), {mode: 0o600});
+      binding: {subjectKey: config.execution.subjectKey, capabilityId: config.execution.capabilityId, serverId: config.execution.serverId, trustedSigners: config.execution.trustedSigners}}));
     values.set("--config", guestConfig);
     const control = await realpath(await mkdtemp(join(tmpdir(), "cp-")));
-    const temporary = join(profile, "tmp"); await mkdir(temporary, { recursive: true, mode: 0o700 });
+    const temporary = join(profile, "tmp");
+    try {await mkdir(temporary, {mode: 0o700});} catch (error) {if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;}
+    if (await ownedDirectory(temporary) !== temporary) throw new Error("Guest temporary directory must not be a link");
     const environment = { PATH: dirname(executable), LANG: "C", HOME:profile, TMPDIR: temporary, PI_CODING_AGENT_DIR: profile, OPENSSL_CONF: "/dev/null", CHIO_PI_MODEL_TOKEN: relay.token, CHIO_PI_GATEWAY_TRANSPORT: "1", CHIO_PI_MODEL_BASE_URL: `http://127.0.0.1:${relay.port}/v1` };
     let launcher:string, launchArgs:string[], filter: Awaited<ReturnType<typeof open>> | undefined;
     let profileIdentity:string, profileSha256:string, policyPath:string|undefined;
