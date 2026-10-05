@@ -34,6 +34,9 @@ async function installedLauncher(root, scope = "@chio-protocol", name = "pi-plug
 }
 
 test("protected launcher accepts only the installed layout of its own package name", async t => {
+  // The launcher's fixed layout names must stay the package's registry name.
+  const {INSTALLED_SCOPE, INSTALLED_NAME} = await import("../dist/protected-cli.js");
+  assert.equal(`${INSTALLED_SCOPE}/${INSTALLED_NAME}`, JSON.parse(await readFile(join(checkout, "package.json"), "utf8")).name);
   const directory = await realpath(await mkdtemp(join(tmpdir(), "chio-installed-layout-")));
   t.after(() => rm(directory, {recursive: true, force: true}));
   const runtimePath = join(directory, "runtime.json"); await writeFile(runtimePath, "{}", {mode: 0o600});
@@ -53,6 +56,11 @@ test("protected launcher accepts only the installed layout of its own package na
   // The npm layout passes this check and stops later, at the missing configuration.
   const installed = await launch(await installedLauncher(join(directory, "installed")));
   assert.equal(installed.code, 1); assert.doesNotMatch(installed.stderr, layout); assert.match(installed.stderr, /missing-config\.json/);
+  // The check reads no file: a missing installed manifest cannot surface as a raw path error here.
+  const bare = await installedLauncher(join(directory, "no-manifest"));
+  await rm(join(directory, "no-manifest", "node_modules", "@chio-protocol", "pi-plugin", "package.json"));
+  const unread = await launch(bare);
+  assert.equal(unread.code, 1); assert.doesNotMatch(unread.stderr, layout); assert.doesNotMatch(unread.stderr, /package\.json/); assert.match(unread.stderr, /missing-config\.json/);
   assert.equal(await absent(join(directory, "profile")), true); assert.equal(await absent(join(directory, "cwd")), true);
 });
 

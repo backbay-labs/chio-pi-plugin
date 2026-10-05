@@ -36,6 +36,7 @@ jobs:
     outputs:
       subjects: ${{ steps.subjects.outputs.subjects }}
       version: ${{ steps.identity.outputs.version }}
+      archive_sha256: ${{ steps.pack.outputs.sha256 }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -116,10 +117,18 @@ jobs:
           npm run build
           npm test
       - name: Build staged release artifact
+        id: pack
         working-directory: ${{ env.PACKAGE_DIRECTORY }}
         run: |
           set -euo pipefail
           npm run pack:release -- "${RUNNER_TEMP}/chio-release"
+          # Record the packed digest before any later step, including cold-consumer
+          # lifecycle scripts, can touch the archive. Later steps must match it.
+          cd "${RUNNER_TEMP}/chio-release"
+          sha256sum --check ./*.sha256
+          artifacts=(./*.tgz)
+          test "${#artifacts[@]}" -eq 1
+          echo "sha256=$(sha256sum "${artifacts[0]}" | cut -d' ' -f1)" >> "${GITHUB_OUTPUT}"
 
       - name: Qualify base and Durable cold consumers
         id: consumers
@@ -131,12 +140,17 @@ jobs:
       - name: Dry-run publication
         env:
           PACKAGE_VERSION: ${{ steps.identity.outputs.version }}
+          ARCHIVE_SHA256: ${{ steps.pack.outputs.sha256 }}
         run: |
           set -euo pipefail
           cd "${RUNNER_TEMP}/chio-release"
           sha256sum --check ./*.sha256
           artifacts=(./*.tgz)
           test "${#artifacts[@]}" -eq 1
+          if [[ "$(sha256sum "${artifacts[0]}" | cut -d' ' -f1)" != "${ARCHIVE_SHA256}" ]]; then
+            echo "archive changed after packing" >&2
+            exit 1
+          fi
           # The packed manifest must carry the bound registry name and version.
           ARCHIVE_MANIFEST="$(tar -xzOf "${artifacts[0]}" package/package.json)" node --input-type=module <<'NODE'
           const pkg = JSON.parse(process.env.ARCHIVE_MANIFEST);
@@ -147,10 +161,18 @@ jobs:
         id: subjects
         env:
           PACKAGE_VERSION: ${{ steps.identity.outputs.version }}
+          ARCHIVE_SHA256: ${{ steps.pack.outputs.sha256 }}
         run: |
           set -euo pipefail
           test -z "$(git status --porcelain)"
           cd "${RUNNER_TEMP}/chio-release"
+          # SLSA subjects come from SHA256SUMS: bind them to the digest recorded at packing.
+          artifacts=(./*.tgz)
+          test "${#artifacts[@]}" -eq 1
+          if [[ "$(sha256sum "${artifacts[0]}" | cut -d' ' -f1)" != "${ARCHIVE_SHA256}" ]]; then
+            echo "archive changed after packing" >&2
+            exit 1
+          fi
           node --input-type=module <<'NODE'
           import { writeFileSync } from 'node:fs';
           writeFileSync('release-identity.json', `${JSON.stringify({
@@ -249,6 +271,12 @@ jobs:
           set -euo pipefail
           # npm trusted publishing (OIDC) requires npm 11.5.1 and Node 22.14.0 or later.
           # No NODE_AUTH_TOKEN is configured; npm exchanges this job's OIDC identity.
+          # actions/setup-node at this pin exports NODE_AUTH_TOKEN=XXXXX-XXXXX-XXXXX-XXXXX
+          # when it is unset (src/authutil.ts). Any other value would be a token fallback.
+          if [[ -n "${NODE_AUTH_TOKEN:-}" && "${NODE_AUTH_TOKEN}" != 'XXXXX-XXXXX-XXXXX-XXXXX' ]]; then
+            echo "NODE_AUTH_TOKEN must be unset or the setup-node placeholder" >&2
+            exit 1
+          fi
           NPM_VERSION="$(npm --version)" node --input-type=module <<'NODE'
           const atLeast = (version, minimum) => {
             const [a, b] = [version, minimum].map(value => value.split(/[.-]/).slice(0, 3).map(part => Number.parseInt(part, 10)));
@@ -272,9 +300,16 @@ jobs:
         working-directory: release
         env:
           PACKAGE_VERSION: ${{ needs.build.outputs.version }}
+          ARCHIVE_SHA256: ${{ needs.build.outputs.archive_sha256 }}
         run: |
           set -euo pipefail
           sha256sum --check SHA256SUMS
+          tarballs=(./*.tgz)
+          test "${#tarballs[@]}" -eq 1
+          if [[ -z "${ARCHIVE_SHA256}" || "$(sha256sum "${tarballs[0]}" | cut -d' ' -f1)" != "${ARCHIVE_SHA256}" ]]; then
+            echo "downloaded archive differs from the digest recorded at packing" >&2
+            exit 1
+          fi
           node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs';
           const id = JSON.parse(readFileSync('release-identity.json'));
@@ -306,6 +341,10 @@ jobs:
           PACKAGE_VERSION: ${{ needs.build.outputs.version }}
         run: |
           set -euo pipefail
+          if [[ -n "${NODE_AUTH_TOKEN:-}" && "${NODE_AUTH_TOKEN}" != 'XXXXX-XXXXX-XXXXX-XXXXX' ]]; then
+            echo "NODE_AUTH_TOKEN must be unset or the setup-node placeholder" >&2
+            exit 1
+          fi
           dist_tag=latest
           if [[ "${PACKAGE_VERSION}" == *-* ]]; then dist_tag=next; fi
           npm publish ./*.tgz --access public --provenance --ignore-scripts --tag "${dist_tag}"

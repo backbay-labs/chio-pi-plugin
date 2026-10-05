@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { access, lstat, mkdir, mkdtemp, open, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { access, lstat, mkdir, mkdtemp, open, readdir, realpath, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -20,6 +20,10 @@ import {createUnixRelay, relayBounds} from "./unix-relay.js";
 import {superviseGuest} from "./guest-termination.js";
 import {readPrivateJson, ownedDirectory, publishGuestFile, sha256, syncDirectory, writePrivateJson} from "./private-state.js";
 import { runOperatorCommand } from "./operator-cli.js";
+
+/** Registry scope and name of the installed package; see package.json. */
+export const INSTALLED_SCOPE = "@chio-protocol";
+export const INSTALLED_NAME = "pi-plugin";
 
 export function parseProtectedLaunchArguments(args: string[]) {
   const values = new Map<string, string>();
@@ -77,11 +81,10 @@ async function main() {
   await access(process.platform === "darwin" ? "/usr/bin/sandbox-exec" : "/usr/bin/bwrap", constants.X_OK);
   const packageRoot = await realpath(join(dirname(fileURLToPath(import.meta.url)), ".."));
   const installation = dirname(dirname(packageRoot));
-  // npm installs this scoped package at node_modules/<scope>/<name>; bind that
-  // layout to the package's own manifest name rather than a second literal.
-  const packageName = (JSON.parse(await readFile(join(packageRoot, "package.json"), "utf8")) as {name?: unknown}).name;
-  if (typeof packageName !== "string" || !packageName.startsWith("@") || `${basename(dirname(packageRoot))}/${basename(packageRoot)}` !== packageName
-    || basename(installation) !== "node_modules") throw new Error("Protected launcher requires the installed artifact, not a source checkout");
+  // npm installs @chio-protocol/pi-plugin at node_modules/@chio-protocol/pi-plugin.
+  // Fixed names, not a manifest read: no file in the package can widen this check.
+  if (basename(dirname(packageRoot)) !== INSTALLED_SCOPE || basename(packageRoot) !== INSTALLED_NAME || basename(installation) !== "node_modules")
+    throw new Error("Protected launcher requires the installed artifact, not a source checkout");
   const executable = await realpath(process.execPath);
   const configPath = await realpath(values.get("--config")!);
   const prepared = await readPreparedConfig(configPath);
