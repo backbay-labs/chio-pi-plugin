@@ -136,6 +136,13 @@ node dist/coding-resource-cli.js init --config /absolute/private/operator.json
 node dist/coding-resource-cli.js inspect --config /absolute/private/operator.json
 ```
 
+These `node dist/coding-resource-cli.js` forms run from a built source checkout.
+From an installed archive, use the `chio-coding-resource` binary instead, for
+example `./node_modules/.bin/chio-coding-resource init --config /absolute/private/operator.json`,
+or give the trusted launcher the realpath of the installed
+`node_modules/@chio/pi-plugin/dist/coding-resource-cli.js`. The binary accepts
+the same `init`, `serve`, `inspect`, `export` and `recover-lock` commands.
+
 `init` requires empty state, artifact and job roots. It imports regular source
 files into fresh immutable inodes and records an initial manifest. `.git` is
 excluded without reading its contents. It never changes the import originals.

@@ -131,8 +131,11 @@ three characters) do not classify unknown secret values in unlabeled prose.
 ## Native Pi Durable tools
 
 Pi Durable is an optional exact peer and development dependency at `1.0.2`.
-Import `createChioDurableTools` only from `@chio/pi-plugin/durable`. The base
-runtime and root declarations do not load that optional package.
+Install `@earendil-works/pi-durable@1.0.2` exactly, beside Pi 1.0.2 and before
+the plugin archive, when using this adapter. Import `createChioDurableTools`
+only from `@chio/pi-plugin/durable`. The base runtime and root declarations do
+not load that optional package; importing the Durable entrypoint without it
+fails with a missing-module error.
 
 The trusted backend owner must prepare a stable 64-hex `storeId` and associate it
 with the exact selected persistent backend and Storage/Session handles. Durable's
