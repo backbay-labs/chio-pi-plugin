@@ -45,7 +45,8 @@ profile metadata. Incompatible frozen profiles are refused without migration.
 The unprotected programmatic comparison seam retains its previous uncertainty
 interlock: it can ACK after durable local result retention, before native
 conversation insertion. It is not the protected native-history delivery profile.
-Explicit Pi Durable delivery/recovery integration is a later roadmap task.
+Explicit Pi Durable delivery and original recovery are described in
+[CONTINUATION.md](CONTINUATION.md).
 
 Run `npm run typecheck && npm test` for component and stock-host contracts.
 These checks exercise actual Pi dispatch and callable inventories with scripted

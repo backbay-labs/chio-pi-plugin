@@ -225,13 +225,15 @@ export async function invokeNative(operator: NativeOperator, action: NativeActio
   const result = await new Promise<string>((done, reject) => {
     const child = spawn(executable, [operator.entrypoint, action, configPath, ...args], {shell: false, stdio: ["ignore", "pipe", "pipe"],
       env: {PATH: dirname(executable), LANG: "en_US.UTF-8", OPENSSL_CONF: "/dev/null"}});
-    let stdout = ""; let bytes = 0; let failed = false;
-    const fail = () => {failed = true; child.kill("SIGTERM");};
+    let stdout = ""; let bytes = 0; let failed = false; let kill: ReturnType<typeof setTimeout> | undefined;
+    // A child that ignores TERM is killed after a short grace. Settlement still
+    // waits for its observed close; a kill request is not exit evidence.
+    const fail = () => {if (failed) return; failed = true; child.kill("SIGTERM"); kill = setTimeout(() => child.kill("SIGKILL"), 2000);};
     const timer = setTimeout(fail, 45000);
     child.stdout.on("data", (value: Buffer) => {bytes += value.length; if (bytes > 4 * LIMIT) fail(); else stdout += value.toString("utf8");});
     child.stderr.on("data", (value: Buffer) => {bytes += value.length; if (bytes > 4 * LIMIT) fail();});
-    child.once("error", () => {clearTimeout(timer); reject(new OperatorError("native_operator_failed", "Trusted native operator could not start; preserve the original operation."));});
-    child.once("close", code => {clearTimeout(timer); if (failed || code !== 0) reject(new OperatorError("native_operator_refused", "Trusted native operator refused or could not finish the action. Preserve the original journal and artifacts; no protected tool was dispatched by this command.")); else done(stdout);});
+    child.once("error", () => {clearTimeout(timer); clearTimeout(kill); reject(new OperatorError("native_operator_failed", "Trusted native operator could not start; preserve the original operation."));});
+    child.once("close", code => {clearTimeout(timer); clearTimeout(kill); if (failed || code !== 0) reject(new OperatorError("native_operator_refused", "Trusted native operator refused or could not finish the action. Preserve the original journal and artifacts; no protected tool was dispatched by this command.")); else done(stdout);});
   });
   try {const value: unknown = JSON.parse(result); if (object(value)) return value;}
   catch { /* Never forward parse diagnostics or native child output. */ }

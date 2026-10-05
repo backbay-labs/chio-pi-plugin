@@ -12,6 +12,7 @@ import * as plugin from "../dist/index.js";
 import {verifyCompletedOutcome} from "@chio/bridge";
 import {pinHostRegistry} from "../dist/configured.js";
 import {registryForConfig} from "../dist/tool-registry.js";
+import {invokeNative} from "../dist/operator.js";
 const {createGateway, operationKey} = await import(new URL("./gateway.js", import.meta.resolve("@chio/bridge")));
 const sdk = await import(new URL("../node_modules/@chio-protocol/sdk/dist/invariants/index.js", import.meta.resolve("@chio/bridge")));
 const {canonicalizeJson, sha256Hex, signUtf8MessageEd25519} = sdk;
@@ -172,6 +173,10 @@ test("status and doctor use the bundled native utility with no model, network, A
     assert.ok(Object.values(diagnosis.counters).every(value => value === null));
     for (const id of ["owner-result-import", "capability-attenuation", "semantic-recovery", "coding-resource", "durable-host-recovery", "whole-host-linux"])
       assert.equal(diagnosis.capabilities.find(value => value.id === id).available, false, id);
+    for (const [id, guide] of [["coding-resource", "CODING-RESOURCE.md"], ["durable-host-recovery", "CONTINUATION.md"]]) {
+      const reason = diagnosis.capabilities.find(value => value.id === id).reason;
+      assert.doesNotMatch(reason, /later roadmap task/, `${id} ships on this branch`); assert.match(reason, /not exposed by these operator commands/); assert.ok(reason.includes(guide), reason);
+    }
     assert.equal(diagnosis.capabilities.find(value => value.id === "native-status").available, true);
     assert.match(diagnosis.bridge.operatorSha256, /^[a-f0-9]{64}$/);
     assert.deepEqual(f.counts(), counts);
@@ -561,4 +566,16 @@ test('doctor reports parent limits and measured Linux implementation separately 
  const linux=doctor.capabilities.find(value=>value.id==='whole-host-linux');assert.equal(linux.status,'local-confinement-tested');assert.equal(linux.available,false);assert.match(linux.reason,/P5/);
  assert.deepEqual(f.counts(),counts);assert.deepEqual(await snapshot(f.journalDir),before);
  }finally{await f.close();}
+});
+
+test("A2-M8: a native operator child that ignores SIGTERM is killed and the call settles", {timeout: 20000}, async t => {
+  const directory = await mkdtemp(join(tmpdir(), "chio-operator-stubborn-")); t.after(() => rm(directory, {recursive: true, force: true}));
+  const entrypoint = join(directory, "stubborn-operator.mjs");
+  // Floods past the bounded output, ignores TERM, and self-destructs later so a
+  // regression cannot leave an orphan behind.
+  await writeFile(entrypoint, 'process.on("SIGTERM", () => {}); setTimeout(() => process.exit(0), 30000); setInterval(() => {}, 1000);\n'
+    + 'const chunk = "x".repeat(1 << 20); for (let i = 0; i < 6; i++) process.stdout.write(chunk);\n', {mode: 0o600});
+  const started = Date.now();
+  await assert.rejects(invokeNative({entrypoint, version: "fixture", operatorSha256: "0".repeat(64)}, "status", "/unused-config.json"), error => error.code === "native_operator_refused");
+  assert.ok(Date.now() - started < 10000, `settled after ${Date.now() - started} ms`);
 });
