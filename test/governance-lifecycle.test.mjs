@@ -7,7 +7,7 @@ import {ModelRuntime, SessionManager} from "@earendil-works/pi-coding-agent";
 import * as plugin from "../dist/index.js";
 import {createRestrictedSession} from "../dist/session.js";
 const binding={authorityDomain:"domain",tenant:"tenant",process:"process",runtime:"runtime",lineage:"lineage",isolationEpoch:"epoch",policy:"policy",contracts:"contracts",installGeneration:"generation"};
-function embedding(sessions,model){return plugin.createNativeEmbedding({expectedBinding:binding,ports:{async currentInstallation(){return {binding,expiresAt:Date.now()+10000};},sessions,model},process:{},context:{},history:[],sink:{},providerProfile:"profile",credentialGeneration:"credential",limitsIdentity:"limits",purpose:"purpose"});}
+function embedding(sessions,model,currentInstallation=async()=>({binding,expiresAt:Date.now()+10000})){return plugin.createNativeEmbedding({expectedBinding:binding,ports:{currentInstallation,sessions,model},process:{},context:{},history:[],sink:{},providerProfile:"profile",credentialGeneration:"credential",limitsIdentity:"limits",purpose:"purpose"});}
 async function fixture(){const root=await mkdtemp(join(tmpdir(),"chio-governed-host-"));const cwd=join(root,"workspace");const agentDir=join(root,"profile");await mkdir(cwd);await mkdir(agentDir);const authPath=join(agentDir,"auth.json");await writeFile(authPath,JSON.stringify({openai:{type:"api_key",key:"fixture"}}),{mode:0o600});const modelRuntime=await ModelRuntime.create({authPath,modelsPath:null,modelsStorePath:join(agentDir,"models-cache.json"),allowModelNetwork:false});return {cwd,agentDir,modelRuntime,provider:"openai",model:"gpt-4.1-mini"};}
 
 
@@ -80,6 +80,28 @@ test("real runtime ignores declared skipConversationRestore on fork",async()=>{
 test("public tree operation cancels before branch mutation when native custody fails",async()=>{
  const f=await fixture();const e=embedding({async preflight(){},async mediate(){throw Error("custody failure");}});const {session}=await governedSession(f,e);
  try {const first=session.sessionManager.appendMessage({role:"user",content:"first",timestamp:Date.now()});const second=session.sessionManager.appendMessage({role:"user",content:"second",timestamp:Date.now()});const result=await session.navigateTree(first);assert.equal(result.cancelled,true);assert.equal(session.sessionManager.getLeafId(),second);}finally{session.dispose();}
+});
+
+for(const summarize of [false,true])test(`public tree abort during final freshness check preserves original projection (${summarize?"custom summary":"no summary"})`,async()=>{
+ const f=await fixture();const entered=Promise.withResolvers();const release=Promise.withResolvers();let finalCheck=false;
+ const e=embedding({async preflight(){},async mediate(){finalCheck=true;return summarize?{summary:{summary:"native retained summary"}}:{};}},undefined,async()=>{if(finalCheck){entered.resolve();await release.promise;}return {binding,expiresAt:Date.now()+10000};});
+ const {session}=await governedSession(f,e);
+ try{
+  const first=session.sessionManager.appendMessage({role:"user",content:"first",timestamp:Date.now()});const leaf=session.sessionManager.appendMessage({role:"user",content:"second",timestamp:Date.now()});const before=session.sessionManager.getEntries();
+  const navigation=session.navigateTree(first,{summarize});await entered.promise;session.abortBranchSummary();release.resolve();
+  assert.equal((await navigation).cancelled,true);assert.equal(session.sessionManager.getLeafId(),leaf);assert.deepEqual(session.sessionManager.getEntries(),before);
+ }finally{release.resolve();session.dispose();}
+});
+
+for(const runtimeFactory of [false,true])test(`${runtimeFactory?"runtime":"session"} factory opens only the immutable target approved before first await`,async()=>{
+ const f=await fixture();const approvedDir=join(f.agentDir,"approved");const unapprovedDir=join(f.agentDir,"unapproved");const approved=SessionManager.create(f.cwd,approvedDir);approved.appendMessage({role:"user",content:"approved",timestamp:Date.now()});const unapproved=SessionManager.create(f.cwd,unapprovedDir);unapproved.appendMessage({role:"user",content:"unapproved",timestamp:Date.now()});
+ const target={kind:"resume",path:approved.getSessionFile(),sessionsDir:approvedDir};const expected={...target};const entered=Promise.withResolvers();const release=Promise.withResolvers();let paused=false;const seen=[];
+ const e=embedding({async preflight(_p,next){seen.push(next);if(!paused){paused=true;entered.resolve();await release.promise;}},async mediate(){return {};}});
+ const original=SessionManager.open;const opened=[];SessionManager.open=(...args)=>{opened.push(args);return original(...args);};let result;
+ try{
+  const creation=runtimeFactory?governedRuntime({...f,sessionTarget:target},e):governedSession({...f,sessionTarget:target},e);await entered.promise;target.path=unapproved.getSessionFile();target.sessionsDir=unapprovedDir;release.resolve();result=await creation;
+  assert.deepEqual(seen[0],expected);assert.deepEqual(opened,[[expected.path,expected.sessionsDir,f.cwd]]);assert.equal(result.session.sessionFile,expected.path);assert.ok(result.session.messages.some(m=>m.role==="user"&&m.content==="approved"));assert.ok(!result.session.messages.some(m=>m.role==="user"&&m.content==="unapproved"));
+ }finally{release.resolve();SessionManager.open=original;if(result){if(runtimeFactory)await result.dispose();else result.session.dispose();}}
 });
 
 test("required SDK refuses direct provider or forged relay ownership before session creation",async()=>{

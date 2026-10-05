@@ -43,11 +43,22 @@ function selectedRegistry(options: ChioPiOptions): ToolRegistry {
   return registry;
 }
 
+/** Snapshot the closed startup target before any native or SDK await. */
+function snapshotSessionOptions(options: ChioPiOptions): ChioPiOptions {
+  const target = options.sessionTarget;
+  const sessionTarget = target ? Object.freeze({kind: target.kind,
+    ...(target.path !== undefined ? {path: target.path} : {}),
+    ...(target.sessionsDir !== undefined ? {sessionsDir: target.sessionsDir} : {})}) : undefined;
+  return Object.freeze({...options,
+    ...(sessionTarget ? {sessionTarget} : {}),
+    ...(options.governance ? {governance: Object.freeze({...options.governance})} : {})});
+}
+
 /** Construct only the selected inline extension. No project/global packages,
  * context files, prompt templates, themes, or skills can introduce executable
  * code. Explicit tool allowlisting also filters later tool activation. */
 export async function createChioPiSession(options: ChioPiOptions) {
-  options = Object.freeze({...options, ...(options.governance ? {governance: Object.freeze({...options.governance})} : {})});
+  options = snapshotSessionOptions(options);
   const executor = options.trustedGatewayTransport ? options.executor : options.executor ? withUncertaintyInterlock(options.executor, join(options.agentDir, "chio")) : undefined;
   const registry = selectedRegistry(options);
   return createRestrictedSession({...options, registry}, pi => {chioExtension(executor, registry)(pi); installNativeSessionGates(pi, options.governance);});
@@ -56,6 +67,7 @@ export async function createChioPiSession(options: ChioPiOptions) {
 /** Also used to test that extension omission or load failure cannot reactivate
  * built-ins. Not exported from the package entry point. */
 export async function createRestrictedSession(options: ChioPiOptions, extension?: ExtensionFactory) {
+  options = snapshotSessionOptions(options);
   if (VERSION !== "1.0.2") throw new Error("Pi host version differs from the pinned 1.0.2 contract");
   await preflightNativeSession(options.governance, options.sessionTarget ?? {kind: "new"});
   if (options.governance?.required && options.sessionManager && !runtimeManagers.has(options.sessionManager)) throw new Error("Governed initial SessionManager must be opened after native preflight");
@@ -153,7 +165,7 @@ const runtimeManagers = new WeakSet<SessionManager>();
 /** Public Pi runtime factory repeats custody checks for every replacement.
  * Initial preflight precedes opening/restoring the initial manager. */
 export async function createChioPiRuntime(options: ChioPiOptions) {
-  options = Object.freeze({...options, registry: selectedRegistry(options), ...(options.governance ? {governance: Object.freeze({...options.governance})} : {})});
+  options = snapshotSessionOptions({...options, registry: selectedRegistry(options)});
   if (options.sessionManager) throw new Error("Use a governed session target instead of a preopened manager");
   await preflightNativeSession(options.governance, options.sessionTarget ?? {kind: "new"});
   const manager = options.sessionTarget?.kind === "resume"

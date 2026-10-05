@@ -25,13 +25,15 @@ export function installNativeSessionGates(pi: ExtensionAPI, governance?: Session
   if (!governance?.required) return;
   const handler = async (event: SessionBeforeCompactEvent | SessionBeforeForkEvent | SessionBeforeSwitchEvent | SessionBeforeTreeEvent, ctx: ExtensionContext) => {
       const action = event.type;
+      const signal = "signal" in event ? event.signal : undefined;
       try {
-        const state = await bounded(currentNative(governance.embedding), "signal" in event ? event.signal : undefined);
+        const state = await bounded(currentNative(governance.embedding), signal);
         const port = state.options.ports.sessions;
         if (!port || !governance.embedding) return {cancel: true};
         if (event.type === "session_before_switch") await preflightNativeSession(governance, {kind: event.reason, ...(event.targetSessionFile ? {path: event.targetSessionFile} : {})});
-        const result = await bounded(port.mediate(nativeHandle(governance.embedding, state.process), action, event, ctx.sessionManager.getEntries()), "signal" in event ? event.signal : undefined);
-        await bounded(currentNative(governance.embedding));
+        const result = await bounded(port.mediate(nativeHandle(governance.embedding, state.process), action, event, ctx.sessionManager.getEntries()), signal);
+        await bounded(currentNative(governance.embedding), signal);
+        if (signal?.aborted) return {cancel: true};
         if (event.type === "session_before_compact") {
           const c = result.compaction;
           if (!c || typeof c.summary !== "string" || !c.firstKeptEntryId || !Number.isSafeInteger(c.tokensBefore) || c.tokensBefore < 0) return {cancel: true};

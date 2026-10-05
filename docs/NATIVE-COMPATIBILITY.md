@@ -104,6 +104,10 @@ New retained artifacts join the complete available model history references.
 Native monotone knowledge stays outside Pi's visible transcript and must be
 rechecked at model release.
 
+Session and runtime factories copy and freeze the closed startup target's kind,
+path and sessions directory before their first await. Native preflight and Pi
+open/create consistently use that snapshot; later caller mutation cannot select
+a different restored transcript or destination directory.
 The required session factory preflights before opening or restoring its initial
 SessionManager and before `createAgentSession`. Preopened initial managers are
 refused. The public runtime factory repeats preflight for replacements, and its
@@ -117,6 +121,11 @@ changed bindings cancel. Custom compaction/tree summaries are returned only afte
 the native mediation operation has retained provenance/checkpoint and released
 that summary. Pi 1.0.2 catches thrown handlers; `session_start` cannot veto initial
 restore. Its declaration's `skipConversationRestore` is ignored by runtime fork.
+Lifecycle cancellation carries the event signal through the final native
+freshness wait and checks abort before returning an admitted result. Public
+`abortBranchSummary` during that wait therefore preserves the original Pi
+projection for both custom-summary and no-summary navigation. Cancellation or
+timeout does not establish that an already performed native effect was undone.
 
 The trusted public boundary-dispatcher seam refuses drafts returned by `turn_end`
 or `agent_before_settle`; mediated SDK operations invoke Pi's existing public

@@ -105,16 +105,33 @@ accept both explicit profiles and historical absence, reject unknown values,
 and leave original bytes untouched. That regression and the complete focused
 suite passed after the integration fix.
 
+Fresh quality review at `4b2b984` reproduced two lifecycle issues. Four further
+tests first failed against the installed public APIs. Public `navigateTree`
+with both no summary and a custom summary returned `cancelled: false` after
+`abortBranchSummary` during the final native installation wait. Both startup
+factories preflighted an approved target, then opened a different path and
+sessions directory after mutation of the caller's original target object.
+The narrow fixes pass the event signal into the final wait, check abort before
+returning admission, and snapshot the closed target fields before the first
+await in the session/runtime creation paths. All four then passed: original Pi
+leaf/entries preserved, exact approved path/directory opened and restored.
+This cancellation prevents Pi projection mutation; it does not claim to undo
+any native operation already performed. Existing runtime replacement and
+preopened-manager refusal behavior remain in scope for regression verification.
+
 ## Verification
 
 | Command | Result |
 | --- | --- |
 | `npm run build` | Pass |
 | `npm run typecheck` | Pass |
-| `node --test test/governance.test.mjs test/delegation.test.mjs test/governance-lifecycle.test.mjs test/governance-cli.test.mjs test/configured.test.mjs` | Pass: 53 tests, 0 failures, 0 skips |
+| `node --test test/governance.test.mjs test/delegation.test.mjs test/governance-lifecycle.test.mjs test/governance-cli.test.mjs test/configured.test.mjs` at `4b2b984` | Pass: 53 tests, 0 failures, 0 skips |
 | `npm test` at the original implementation `4423ee6` | Pass: 322 tests, 0 failures, 0 skips |
-| Fresh follow-up `npm test` retry, no source/test changes after first full run | Pass: 332 tests, 0 failures, 0 skips; 78.04 s |
+| Fresh follow-up `npm test` retry at `4b2b984`, no source/test changes after first full run | Pass: 332 tests, 0 failures, 0 skips; 78.04 s |
 | `node --test --test-name-pattern='real recipe output bounds' test/coding-confinement.test.mjs` | Pass: 1 test, 0 failures, 0 skips |
+| Fresh quality-fix `npm run typecheck` and `npm run build` | Pass |
+| Fresh quality-fix combined focused command above | Pass: 57 tests, 0 failures, 0 skips |
+| Fresh quality-fix `npm test` | Pass: 336 tests, 0 failures, 0 skips; 79.46 s |
 | `git diff --check` | Pass |
 | `shasum -a 256 vendor/chio-bridge-0.3.0-7d9e34f7408a.tgz` | Unchanged `7d9e34f7408a316e35125982a23faaecfd2f31f4da6b50ca8eab287c2c918f67` |
 
@@ -173,3 +190,9 @@ CLI parsing finishes before credentials; required has no fallback, execution-onl
 retains its existing launch path, and guest marker tampering cannot change the
 selected profile in the private parent binding. Diagnostics accept historical
 and explicit closed profiles without rewriting records or claiming governance.
+Quality-fix self-review checked that the same event signal reaches each awaited
+lifecycle check and that admission follows a final abort guard with no intervening
+await. Startup target copies contain only kind/path/sessionsDir and are frozen
+synchronously in both public factories and the shared restricted constructor.
+Both source preflight and public Pi restore use those copies. Fresh checks retain
+all prior runtime replacement, provider, recovery, reload and CLI protections.
