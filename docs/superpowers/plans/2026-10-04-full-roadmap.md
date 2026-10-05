@@ -256,7 +256,7 @@ Files: `src/run-limits.ts`, `src/linux-sandbox.ts`, `src/unix-relay.ts`, model
 relay, protected CLI, guest CLI, config/operator, `test/run-limits.test.mjs`,
 `test/linux-sandbox.test.mjs`, operational guide.
 
-- [ ] Add provider timeout/cap/token reservation, resume-budget, hung-child kill,
+- [x] Add provider timeout/cap/token reservation, resume-budget, hung-child kill,
   post-dispatch interruption and native codemode refusal tests.
 
 ```js
@@ -266,8 +266,8 @@ await assert.rejects(budget.reserve(1), /limit/);
 assert.equal((await openRunBudget(state, limits)).remainingRequests, 0);
 ```
 
-- [ ] Run before implementation; observe failure.
-- [ ] Persist conservative limits in parent-only state and bind them on resume.
+- [x] Run before implementation; observe failure.
+- [x] Persist conservative limits in parent-only state and bind them on resume.
   Reserve requests before network forwarding and retain uncertain reservations.
   The OpenAI API profile also reserves output tokens and forces its supported
   `max_output_tokens` ceiling. The user explicitly selected keeping the Codex
@@ -279,7 +279,7 @@ assert.equal((await openRunBudget(state, limits)).remainingRequests, 0);
   a wall deadline in the parent with graceful signal then bounded hard kill;
   never reset the journal or clear outcome uncertainty. Version the existing
   two fixed provider profiles without silently adding a route or fallback.
-- [ ] Implement a bubblewrap guest profile with `--unshare-all`, `--unshare-user`,
+- [x] Implement a bubblewrap guest profile with `--unshare-all`, `--unshare-user`,
   `--die-with-parent`, `--new-session`, a read-only installed Node/runtime,
   writable isolated profile, private `/tmp`, and only two mounted parent-owned
   Unix sockets. A parent `createUnixRelay(socketPath, fixedLoopbackPort)` forwards
@@ -290,7 +290,7 @@ assert.equal((await openRunBudget(state, limits)).remainingRequests, 0);
   available and record platform or outer-container restrictions explicitly.
   Native arbitrary codemode/deferred execution
   stays disabled; `read_many` is the enabled bounded aggregate alternative.
-- [ ] Run full tests, record evidence, commit `feat: enforce parent run limits
+- [x] Run full tests, record evidence, commit `feat: enforce parent run limits
   and confinement profiles`, obtain both reviews and fix.
 
 ## Task 7: Development workflow and package qualification
@@ -430,3 +430,33 @@ P2 advisory seams remain unqualified native integrations. Callback fixtures and
 real Ed25519 verification establish adapter behavior; they do not install or
 qualify missing native services or P5. See
 [the task record](../evidence/2026-10-04-task5-governance.md).
+
+
+## Task 6 review closure
+
+Implementation: `c879b4e`; specification-review test correction: `049408a`;
+quality-review security fix: `d7feeeb`. Quality review of `049408a` reproduced a
+P1 in the pinned Linux image: a guest-planted link at
+`profile/gateway-transport.json` made a resumed parent overwrite a host file
+before the late profile closure audit. The fix also found that macOS guests could
+plant escaping symlinks and replace the profile root under the shipped Seatbelt
+policy. The parent now audits the resumed profile before any profile mutation on
+both platforms, refuses a linked profile root, workspace overlap and a linked
+`tmp`, and publishes the transport file through an exclusive no-follow temporary
+plus verified rename. The Seatbelt policy and recorded policy identity are unchanged.
+
+TDD: the new `test/guest-profile.test.mjs` failed 8 cases before the fix on macOS
+and the pinned Linux image, then passed 9 of 9. The full macOS suite passed 381
+of 381 on Homebrew Node 25.5.0, and the seven Linux suites passed 50 of 50 in the
+pinned image. A real confined guest in a disposable privileged, network-none
+container planted a symlink and a hardlink; both resumed launches refused with
+the outside sentinel unchanged. An independent scoped re-review at `d7feeeb`
+found the finding addressed and no new critical or important breakage. Residual
+minor items (concurrent or nested same-profile launches, operator `TMPDIR`
+inside the profile on macOS, documentation wording) remain recorded for the
+final review. The host default `node` is now v26.7.0, under which five
+pre-existing coding-confinement cases fail for lack of a pinned dylib closure;
+recorded macOS results use Node 25.5.0. See
+[the task record](../evidence/2026-10-04-task6-limits-linux.md). This closes
+component and measured local Task 6 evidence; native service, P5, actual x64,
+ordinary Docker and live provider acceptance remain open.
