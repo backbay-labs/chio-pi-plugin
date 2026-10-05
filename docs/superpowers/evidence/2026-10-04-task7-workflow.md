@@ -73,9 +73,12 @@ and `bindRecovery`. The imported source has `isExpired(now, deadline)` returning
    artifact store still holds exactly one publication.
 
 An independent observer reads the artifact root, import root and immutable
-generations directly, and watches the artifact root. It counts distinct
-content-addressed publications, checks inode and mtime stability across
-recovery, decodes the bundled source and compares bindings.
+generations directly, and watches the artifact root. It checks inode and mtime
+stability across recovery, decodes the bundled source and compares bindings.
+Since fix round 1 it also reads completed `publish_artifact` operations from the
+unsigned resource ledger through the read-only `inspect` and `export` commands,
+because content-addressed storage hides an identical second publication from the
+artifact root (see [Fix round 1](#fix-round-1)).
 
 Each step waits for its own original's native record and parent mapping to show
 delivery through the adapter's commit observer, bounded at 60 s, then falls back
@@ -192,3 +195,59 @@ pinned registry's schemas. With the nine coding tools this measured roughly
 90 ms per read and dominated workflow time. Durable `flush()` also re-observes every
 retained intent, so frequent flushing is quadratic over a long session. Neither
 affects correctness; both are recorded for later work rather than changed here.
+
+## Fix round 1
+
+The task review found two Important gaps, both fixed in `193ea5e`
+(`fix: count duplicate publications and preserve stopped workflow checks`).
+
+**Duplicate publications were invisible to the observer.** Publication is
+idempotent by content: an identical second `publish_artifact` operation finds
+the existing artifact directory and changes nothing in the artifact root, so the
+artifact-only count could not see recovery publishing again. The observer now
+lists completed `publish_artifact` operations in the unsigned resource ledger,
+exports each one and separates publications from retained refusals, and reports
+`publicationEffects` as the larger of ledger publications (plus any unresolved
+publication intents) and distinct content-addressed artifacts. Watch events are
+recorded per artifact name. The command's publication checks now require exactly
+one ledger publication, no unresolved publication intent, one artifact and a
+matching artifact digest. A focused test performs a deliberate second publication
+with identical content under a new operation identity: the artifact root and the
+artifact-only count still show one, while the observer reports two. An exact
+replay of the first operation does not count as a new publication.
+
+**Stopped workflows crashed the command's checks.** On `bug-not-demonstrated`,
+`fix-failed`, `diff-rejected` or `source-not-located`, `componentChecks` read
+missing evidence and threw. Reproduced against the `70a228a` command with only a
+source-selection seam added and pre-fixed source: `status: "failed"`,
+`error: "Cannot read properties of undefined (reading 'arguments')"`, zero checks,
+and the uncertain scenario never ran. Each check is now evaluated independently,
+reads partial evidence safely, and a failed check carries the retained
+`workflowStatus`. Each scenario runs and records its own errors. A focused test
+runs the command in process with pre-fixed source: status `failed`, no errors,
+both scenarios retained as `bug-not-demonstrated`, local confinement still
+`passed`, and every failed check cites that status without a type error. The
+command's refusal without real confinement (exit 3) is asserted only where the
+spawned command lacks confinement, which is the pinned Linux runner run; macOS
+always has `sandbox-exec`. The mapping of a failed result to exit code 1 is not
+spawn-tested.
+
+Verification at `193ea5e`, clean worktree, Homebrew Node 25.5.0 unless noted:
+
+- `npm run typecheck` exited 0.
+- `node --test test/roadmap-workflow.test.mjs` passed 5 of 5 (two new tests).
+- `npm test` passed **386 of 386** in 134.0 s on the final bytes. The first full
+  run passed 385 of 386: the recorded `guest-termination` EPERM flake from Task 6
+  appeared once under load; that file is unchanged and passed 5 isolated runs of
+  3 of 3.
+- `node scripts/qualify-roadmap.mjs --profile component --out RESULT.json` exited
+  0 in 76 s with 23 of 23 checks passed, `sourceCommit`
+  `193ea5ec2deabc3d5280125065afbdf985bc77f3`, `worktreeDirty: false`, one ledger
+  publication and one refused publication in the recovery scenario. Retained as
+  [2026-10-04-task7-workflow-result-fix1.json](2026-10-04-task7-workflow-result-fix1.json),
+  SHA256 `99b84faac65ed9dccba1221cf0b4490698ea895783fbb00e037af81b2da1a71b`. The
+  earlier result file is unchanged.
+- Pinned Linux image (Node 22.23.1, bubblewrap 0.8.0), same disposable
+  `--privileged --network none` read-only invocation:
+  `node test/helpers/coding-linux-runner.mjs test/roadmap-workflow.test.mjs`
+  passed 5 of 5 in 145.9 s, including the exit 3 refusal without confinement.
