@@ -300,7 +300,7 @@ Detailed requirements are [workflow and release contracts](../specs/2026-10-04-w
 Files: `test/roadmap-workflow.test.mjs`, `scripts/qualify-roadmap.mjs`, README,
 `docs/ROADMAP-IMPLEMENTATION.md`, coding/operator/continuation guides, CI/packer.
 
-- [ ] Write the coding fixture around a real small bug and an independent
+- [x] Write the coding fixture around a real small bug and an independent
   filesystem/artifact observer; first run must demonstrate the bug. Fix via
   participant CAS, test in real local confinement, review diff, publish, lose
   response, recover the exact artifact through original identity in a second
@@ -314,12 +314,12 @@ assert.equal(originalArtifact.sha256, recoveredArtifact.sha256);
 assert.equal(publicationEffects, 1);
 ```
 
-- [ ] Route current README qualification links to FINAL-QUALIFICATION. Write
+- [x] Route current README qualification links to FINAL-QUALIFICATION. Write
   twelve-row implementation/evidence/prerequisite crosswalk and runnable docs
   for every shipped entrypoint. Do not change frozen evidence or advertise gates
   as qualified native features. Ensure release archives include resource binary,
   optional Durable entrypoint and exact dependency provenance.
-- [ ] Run `npm run typecheck && npm test && npm run pack:release -- /tmp/chio-pi-roadmap-release`.
+- [x] Run `npm run typecheck && npm test && npm run pack:release -- /tmp/chio-pi-roadmap-release`.
   Install the resulting archive with pinned Pi in a fresh consumer and empty
   cache, run every binary help/import smoke, retain exact consumer lock digest.
   Record current-head acceptance limits and commit `test: qualify Chio Pi
