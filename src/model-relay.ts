@@ -58,7 +58,13 @@ export function nativeToolOutcome(output: unknown): unknown {
   } catch { return undefined; }
 }
 
-export function validateModelRequest(body: Record<string, unknown>, model: string, provider: ModelAuthority["provider"] = "openai", registry?: ToolRegistry) {
+/** Returns the native outcomes to observe for delivery, only from calls that
+ * resolve against the pinned registry. Pi 1.0.2 keeps calls it refused before
+ * dispatch (unknown alias, schema-invalid, blocked by the argument-binding
+ * guard, salvaged from truncated output) in history and continues. Such a call
+ * stays visible to the model with Pi's own refusal text. It can never carry a
+ * parseable Chio outcome and is never observed for delivery. */
+export function validateModelRequest(body: Record<string, unknown>, model: string, provider: ModelAuthority["provider"] = "openai", registry?: ToolRegistry): unknown[] {
   if (!registry) throw new Error("An explicit pinned tool registry is required");
   registryInventory(registry);
   const allowed = new Set(["model", "input", "instructions", "tools", "tool_choice", "parallel_tool_calls", "stream", "store", "reasoning", "text", "temperature", "top_p", "max_output_tokens", "service_tier", "include", "truncation", "prompt_cache_key", "prompt_cache_retention", "prompt_cache_options"]);
@@ -79,8 +85,10 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
   if (body.include !== undefined && (!Array.isArray(body.include) || body.include.some(value => provider !== "openai-codex" || value !== "reasoning.encrypted_content"))) throw new Error("Alternate provider expansions are unavailable");
   const choice = body.tool_choice;
   if (choice !== undefined && !["auto", "none", "required"].includes(choice as string) && !(object(choice) && keys(choice, ["type", "name"]) && choice.type === "function" && typeof choice.name === "string" && aliases.has(choice.name))) throw new Error("Alternate tool choice is unavailable");
-  const calls = new Map<string, {tool: string; arguments: Record<string, unknown>}>();
+  // An undefined entry is a call identity that no dispatcher could resolve.
+  const calls = new Map<string, {tool: string; arguments: Record<string, unknown>} | undefined>();
   const delivered = new Set<string>();
+  const outcomes: unknown[] = [];
   for (const item of body.input) {
     if (!object(item)) throw new Error("Input must contain complete inline items");
     if ((item.type === undefined || item.type === "message") && keys(item, ["type", "role", "content", "id", "status", "phase"]) && ["system", "developer", "user", "assistant"].includes(item.role as string) && textContent(item.content, item.role === "assistant")) {
@@ -90,13 +98,17 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
       if (provider !== "openai-codex") delete item.phase;
     } else if (item.type === "function_call" && keys(item, ["type", "id", "call_id", "name", "arguments", "status"]) && typeof item.name === "string" && typeof item.arguments === "string" && typeof item.call_id === "string" && item.call_id.length > 0 && item.call_id.length <= 256) {
       if (calls.has(item.call_id)) throw new Error("Duplicate native function call identity");
-      calls.set(item.call_id, resolveRegistryCall(registry, item.name, JSON.parse(item.arguments)));
+      let call: {tool: string; arguments: Record<string, unknown>} | undefined;
+      try {call = resolveRegistryCall(registry, item.name, JSON.parse(item.arguments));} catch {call = undefined;}
+      calls.set(item.call_id, call);
       delete item.id; delete item.status;
     } else if (item.type === "function_call_output" && keys(item, ["type", "call_id", "output", "id", "status"]) && typeof item.call_id === "string" && textContent(item.output)) {
       const call = calls.get(item.call_id);
-      if (!call || delivered.has(item.call_id)) throw new Error("Native function output is missing its exact original call");
+      if (!calls.has(item.call_id) || delivered.has(item.call_id)) throw new Error("Native function output is missing its exact original call");
       const outcome = nativeToolOutcome(item.output);
-      if (object(outcome) && ["completed", "denied"].includes(outcome.state as string)) {
+      if (!call) {
+        if (outcome !== undefined) throw new Error("Undispatchable native function call carries a Chio outcome");
+      } else if (object(outcome) && ["completed", "denied"].includes(outcome.state as string)) {
         const original = call.tool === "chio_resume" ? {tool: call.arguments.tool, arguments: call.arguments.arguments} : call;
         if (outcome.evidence !== "verified" || typeof outcome.requestId !== "string" || !outcome.requestId || !object(outcome.receipt)
           || outcome.receipt.tool_name !== original.tool || !object(outcome.receipt.action)
@@ -104,6 +116,7 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
           || outcome.state === "completed" && outcome.result === undefined
           || call.tool === "chio_resume" && outcome.requestId !== call.arguments.requestId) throw new Error("Native outcome differs from the pinned function argument binding");
       }
+      if (call && outcome !== undefined) outcomes.push(outcome);
       delivered.add(item.call_id);
       delete item.id; delete item.status;
     } else if (provider === "openai-codex" && item.type === "reasoning" && keys(item, ["type", "id", "summary", "encrypted_content", "status", "content"])
@@ -115,6 +128,7 @@ export function validateModelRequest(body: Record<string, unknown>, model: strin
       delete item.id; delete item.status;
     } else throw new Error("Only complete inline text and Chio function history are supported");
   }
+  return outcomes;
 }
 
 /** Operator-owned model transport. It exposes only the selected provider's
@@ -154,14 +168,8 @@ export async function startModelRelay(authority: ModelAuthority, model: string, 
       if (request.headers["content-encoding"] === "zstd" && authority.provider === "openai-codex") raw = zstdDecompressSync(raw, {maxOutputLength: 8 * 1024 * 1024});
       else if (request.headers["content-encoding"]) throw new Error("Unsupported model body encoding");
       const body = JSON.parse(raw.toString()) as Record<string, unknown>;
-      validateModelRequest(body, model, authority.provider, registry);
+      const outcomes = validateModelRequest(body, model, authority.provider, registry);
       body.parallel_tool_calls = false;
-      const outcomes: unknown[] = [];
-      for (const item of body.input as Record<string, unknown>[]) {
-        if (item.type !== "function_call_output") continue;
-        const outcome = nativeToolOutcome(item.output);
-        if (outcome !== undefined) outcomes.push(outcome);
-      }
       await onToolResults?.(outcomes);
       const headers: Record<string, string> = {"content-type": "application/json", accept: "text/event-stream"};
       if (authority.provider === "openai-codex") {

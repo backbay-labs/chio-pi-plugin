@@ -17,7 +17,13 @@ identity covering inventory, descriptions, mappings, exposure and mode. The
 private gateway inventory must match the complete pinned tool specifications.
 The relay checks exact declarations, choices, call arguments, call IDs and
 terminal outcome argument bindings before delivery observation or network
-egress. No MCP, codemode, deferred, resource-discovery, local file/shell, project
+egress. Pi 1.0.2 keeps a call it refused before dispatch in history and
+continues: an unknown alias, schema-invalid or normalized arguments blocked by
+the binding guard, or a call salvaged from truncated output. The relay forwards
+such a call with Pi's refusal text so the conversation can continue, including
+after resume. Its output must not parse as any Chio outcome, and it is never
+observed for delivery or ACK. Calls that resolve keep the full binding.
+No MCP, codemode, deferred, resource-discovery, local file/shell, project
 extension, skill or normal user-profile surface is activated.
 
 Typed schemas are carried by native Pi declarations. The typed system prompt
