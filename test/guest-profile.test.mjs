@@ -21,16 +21,48 @@ const absent = path => lstat(path).then(() => false, error => {if (error.code ==
 const leftovers = async directory => (await readdir(directory)).filter(name => name.startsWith(".chio-") && name.endsWith(".tmp"));
 
 /** The protected launcher accepts only an installed artifact. Copy the built
- * package under node_modules/@chio and link its dependencies from this checkout. */
-async function installedLauncher(root) {
-  const modules = join(root, "node_modules"), installed = join(modules, "@chio", "pi-plugin");
-  await mkdir(installed, {recursive: true});
+ * package under node_modules/@chio-protocol/pi-plugin, where npm installs it, and
+ * link its dependencies from this checkout. Other locations exercise refusal. */
+async function installedLauncher(root, scope = "@chio-protocol", name = "pi-plugin") {
+  const modules = join(root, "node_modules"), installed = join(modules, scope, name);
+  await mkdir(installed, {recursive: true}); await mkdir(join(modules, "@chio"), {recursive: true});
   await cp(join(checkout, "dist"), join(installed, "dist"), {recursive: true});
   await cp(join(checkout, "package.json"), join(installed, "package.json"));
-  for (const name of await readdir(join(checkout, "node_modules"))) if (name !== "@chio") await symlink(join(checkout, "node_modules", name), join(modules, name));
+  for (const entry of await readdir(join(checkout, "node_modules"))) if (entry !== "@chio" && entry !== scope) await symlink(join(checkout, "node_modules", entry), join(modules, entry));
   await symlink(join(checkout, "node_modules", "@chio", "bridge"), join(modules, "@chio", "bridge"));
   return join(installed, "dist", "protected-cli.js");
 }
+
+test("protected launcher accepts only the installed layout of its own package name", async t => {
+  // The launcher's fixed layout names must stay the package's registry name.
+  const {INSTALLED_SCOPE, INSTALLED_NAME} = await import("../dist/protected-cli.js");
+  assert.equal(`${INSTALLED_SCOPE}/${INSTALLED_NAME}`, JSON.parse(await readFile(join(checkout, "package.json"), "utf8")).name);
+  const directory = await realpath(await mkdtemp(join(tmpdir(), "chio-installed-layout-")));
+  t.after(() => rm(directory, {recursive: true, force: true}));
+  const runtimePath = join(directory, "runtime.json"); await writeFile(runtimePath, "{}", {mode: 0o600});
+  const launch = cli => promisify(execFile)(process.execPath, [cli, "--config", join(directory, "missing-config.json"), "--profile", join(directory, "profile"), "--cwd", join(directory, "cwd"),
+    "--provider", "openai", "--model", "gpt-4.1-mini", "--prompt", "synthetic task", ...(process.platform === "linux" ? ["--linux-runtime", runtimePath] : [])],
+  {env: {PATH: process.env.PATH, OPENAI_API_KEY: "synthetic-placeholder-not-a-credential"}, timeout: 60000})
+    .then(result => ({code: 0, ...result}), error => ({code: error.code, stdout: error.stdout, stderr: error.stderr}));
+  const layout = /Protected launcher requires the installed artifact, not a source checkout/;
+  for (const [label, cli] of [
+    ["source checkout", join(checkout, "dist", "protected-cli.js")],
+    ["pre-0.2.0 @chio scope", await installedLauncher(join(directory, "previous-scope"), "@chio")],
+    ["another package name", await installedLauncher(join(directory, "other-name"), "@chio-protocol", "other-plugin")],
+  ]) {
+    const result = await launch(cli);
+    assert.equal(result.code, 1, label); assert.match(result.stderr, layout, label);
+  }
+  // The npm layout passes this check and stops later, at the missing configuration.
+  const installed = await launch(await installedLauncher(join(directory, "installed")));
+  assert.equal(installed.code, 1); assert.doesNotMatch(installed.stderr, layout); assert.match(installed.stderr, /missing-config\.json/);
+  // The check reads no file: a missing installed manifest cannot surface as a raw path error here.
+  const bare = await installedLauncher(join(directory, "no-manifest"));
+  await rm(join(directory, "no-manifest", "node_modules", "@chio-protocol", "pi-plugin", "package.json"));
+  const unread = await launch(bare);
+  assert.equal(unread.code, 1); assert.doesNotMatch(unread.stderr, layout); assert.doesNotMatch(unread.stderr, /package\.json/); assert.match(unread.stderr, /missing-config\.json/);
+  assert.equal(await absent(join(directory, "profile")), true); assert.equal(await absent(join(directory, "cwd")), true);
+});
 
 test("parent guest-file publication refuses links before touching their targets", async () => {
   assert.equal(typeof privateState.publishGuestFile, "function");

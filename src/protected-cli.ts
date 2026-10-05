@@ -21,6 +21,10 @@ import {superviseGuest} from "./guest-termination.js";
 import {readPrivateJson, ownedDirectory, publishGuestFile, sha256, syncDirectory, writePrivateJson} from "./private-state.js";
 import { runOperatorCommand } from "./operator-cli.js";
 
+/** Registry scope and name of the installed package; see package.json. */
+export const INSTALLED_SCOPE = "@chio-protocol";
+export const INSTALLED_NAME = "pi-plugin";
+
 export function parseProtectedLaunchArguments(args: string[]) {
   const values = new Map<string, string>();
   const names = new Set(["--config", "--profile", "--cwd", "--provider", "--model", "--prompt", "--resume", "--codex-auth", "--governance", "--limits", "--linux-runtime"]);
@@ -77,7 +81,10 @@ async function main() {
   await access(process.platform === "darwin" ? "/usr/bin/sandbox-exec" : "/usr/bin/bwrap", constants.X_OK);
   const packageRoot = await realpath(join(dirname(fileURLToPath(import.meta.url)), ".."));
   const installation = dirname(dirname(packageRoot));
-  if (basename(dirname(packageRoot)) !== "@chio" || basename(installation) !== "node_modules") throw new Error("Protected launcher requires the installed artifact, not a source checkout");
+  // npm installs @chio-protocol/pi-plugin at node_modules/@chio-protocol/pi-plugin.
+  // Fixed names, not a manifest read: no file in the package can widen this check.
+  if (basename(dirname(packageRoot)) !== INSTALLED_SCOPE || basename(packageRoot) !== INSTALLED_NAME || basename(installation) !== "node_modules")
+    throw new Error("Protected launcher requires the installed artifact, not a source checkout");
   const executable = await realpath(process.execPath);
   const configPath = await realpath(values.get("--config")!);
   const prepared = await readPreparedConfig(configPath);
