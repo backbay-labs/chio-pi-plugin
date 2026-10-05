@@ -114,8 +114,11 @@ export function minimalRecipeEnvironment(recipe: Recipe, job: string): Record<st
 function linuxRecipeFilter(): Buffer {
   const ioUring = [425, 426, 427]; // io_uring_setup, io_uring_enter, io_uring_register
   const profiles: Record<string, {arch: number; clone: number; clone3: number; denied: number[]}> = {
-    arm64: {arch: 0xc00000b7, clone: 220, clone3: 435, denied: [36, 37, 198, 199, 200, 203, 97, ...ioUring]},
-    x64: {arch: 0xc000003e, clone: 56, clone3: 435, denied: [57, 58, 86, 88, 265, 266, 41, 42, 53, 272, ...ioUring]},
+    // Deny cross-process access explicitly, independently of optional Yama
+    // restrictions. Bubblewrap 0.8.0 also applies seccomp to its reaper, so this
+    // is isolation hardening, not evidence of an unfiltered-reaper escape.
+    arm64: {arch: 0xc00000b7, clone: 220, clone3: 435, denied: [36, 37, 198, 199, 200, 203, 97, 117, 270, 271, 438, ...ioUring]},
+    x64: {arch: 0xc000003e, clone: 56, clone3: 435, denied: [57, 58, 86, 88, 265, 266, 41, 42, 53, 272, 101, 310, 311, 438, ...ioUring]},
   };
   const profile = profiles[process.arch]; if (!profile) throw new ToolRefusal("unsupported_sandbox", "Linux recipe seccomp architecture is unsupported");
   const instructions: [number, number, number, number][] = [[0x20, 0, 0, 4], [0x15, 1, 0, profile.arch], [0x06, 0, 0, 0x80000000], [0x20, 0, 0, 0]];

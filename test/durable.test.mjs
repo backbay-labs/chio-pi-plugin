@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {randomBytes} from "node:crypto";
-import {chmod, mkdir, readFile, readdir, writeFile} from "node:fs/promises";
+import {chmod, link, mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import test from "node:test";
 import {AssistantEntry, Harness, MemoryStorage, ToolTask, createRegistry, hook} from "@earendil-works/pi-durable";
@@ -606,4 +606,102 @@ test("A2-C1: an unresolved ACK stays with its own intent; a later flush delivers
     assert.equal(next.outcome.state, "completed"); await h.adapter.flush();
     assert.deepEqual(h.f.counts(), {effects: 2, acks: 2, nativeCalls: 2});
   } finally {await h.close();}
+});
+
+test("review: closing an observer retains writer custody until an active executor settles", async () => {
+  let release; let entered;
+  const gate = new Promise(resolve => {release = resolve;});
+  const started = new Promise(resolve => {entered = resolve;});
+  const h = await setup({executor: inner => ({async execute(req, signal) {entered(); await gate; return inner.execute(req, signal);}})});
+  let attached;
+  const attach = () => api().createChioDurableTools({storeId: h.storeId, storage: h.storage, session: h.host, provenanceDir: h.provenanceDir,
+    binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: h.client.executor, transport: h.f.native, context});
+  try {
+    const ids = await runTool(h, request().arguments, 'close-in-flight', false); await started;
+    let closed = false; const closing = h.adapter.close().then(() => {closed = true;});
+    await new Promise(resolve => setImmediate(resolve));
+    await closing; assert.equal(closed, true, 'observer close permits the owner to close or cancel its Session');
+    await assert.rejects(attach(), /live backend|identity/);
+    release(); await h.host.waitForTask(ids.taskId, context);
+    attached = await attach(); await attached.flush();
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 1, nativeCalls: 1});
+  } finally {release(); await attached?.close(); await h.close();}
+});
+
+test("review: interrupted intent publication reattaches without losing the original delivery", async () => {
+  const h = await setup(); let attached;
+  try {
+    const ids = await runTool(h); await h.adapter.flush(); const logical = h.adapter.requestFor(ids.taskId);
+    await h.adapter.close();
+    const dir = join(h.provenanceDir, 'intents');
+    await link(join(h.provenanceDir, 'store-owner.binding'), join(h.provenanceDir, '.chio-' + 'f'.repeat(32) + '.tmp'));
+    await writeFile(join(dir, '.chio-' + 'e'.repeat(32) + '.tmp'), '{partial', {mode: 0o600});
+    attached = await api().createChioDurableTools({storeId: h.storeId, storage: h.storage, session: h.host, provenanceDir: h.provenanceDir,
+      binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: h.client.executor, transport: h.f.native, context});
+    assert.deepEqual(attached.requestFor(ids.taskId), logical); await attached.flush();
+    assert.equal((await readdir(dir)).some(name => name.endsWith('.tmp')), false);
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 1, nativeCalls: 1});
+  } finally {await attached?.close(); await h.close();}
+});
+
+
+test("review: a foreign native owner cannot recover or attach a Durable writer", async () => {
+  const h = await setup(); const lockPath = join(h.f.config.journalDir, "gateway.lock");
+  const original = await readFile(lockPath, "utf8");
+  try {
+    await h.adapter.close();
+    const temporary = join(h.provenanceDir, ".chio-" + "e".repeat(32) + ".tmp");
+    await writeFile(temporary, "partial", {mode: 0o600});
+    await writeFile(lockPath, JSON.stringify({...JSON.parse(original), pid: process.pid + 100000}), {mode: 0o600});
+    await assert.rejects(api().createChioDurableTools({storeId: h.storeId, storage: h.storage, session: h.host, provenanceDir: h.provenanceDir,
+      binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: h.client.executor, transport: h.f.native, context}), /actual native gateway owner/);
+    assert.equal(await readFile(temporary, "utf8"), "partial", "refused attachment must not remove another writer's temporary");
+  } finally {await writeFile(lockPath, original, {mode: 0o600}); await h.close();}
+});
+
+
+test("review: full Durable inventories reattach and preserve delivery while refusing fresh work", {timeout: 120000}, async () => {
+  const {withContentDigest} = await import("../dist/parent-mappings.js");
+  const h = await setup({memory: true}); let attached;
+  try {
+    const ids = await runTool(h); await h.adapter.flush(); const original = h.adapter.requestFor(ids.taskId);
+    const seed = await intentOf(h.provenanceDir, ids.taskId); await h.adapter.close();
+    const {hostCommit, reconciled, contentDigest, ...identity} = seed;
+    const entries = Array.from({length: 4096}, (_, index) => {
+      const taskId = 100000 + index;
+      const intent = withContentDigest({...identity, taskId, request: {...identity.request, toolCallId: taskId + ":" + identity.callId}});
+      const key = hash(JSON.stringify([intent.storeId, intent.conversationId, intent.taskId, intent.callId]));
+      return [key + ".json", JSON.stringify(intent)];
+    });
+    for (let index = 0; index < entries.length; index += 64) await Promise.all(entries.slice(index, index + 64).map(([name, text]) =>
+      writeFile(join(h.provenanceDir, "intents", name), text, {mode: 0o600})));
+    attached = await api().createChioDurableTools({storeId: h.storeId, storage: h.storage, session: h.host, provenanceDir: h.provenanceDir,
+      binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: h.client.executor, transport: h.f.native, context});
+    assert.deepEqual(attached.requestFor(ids.taskId), original); h.registry.install(attached.extension);
+    const fresh = await runTool(h, request().arguments, "capacity-refusal"); await attached.flush();
+    const task = await h.storage.task(fresh.taskId, context);
+    assert.equal(task.state.status, "terminal");
+    assert.equal(task.state.outcome.status, "failed");
+    const failedEntry = await h.storage.entry(task.state.outcome.result.entryId, context);
+    assert.match(JSON.stringify(failedEntry), /capacity reached/);
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 1, nativeCalls: 1});
+    assert.equal((await readdir(join(h.provenanceDir, "intents"))).length, 4097);
+  } finally {await attached?.close(); await h.close();}
+});
+
+test("review: Session closure retains backend custody while its ACK observer is still writing", async () => {
+  let release; const gate = new Promise(resolve => {release = resolve;});
+  let entered; const started = new Promise(resolve => {entered = resolve;});
+  const h = await setup({transport: inner => ({async acknowledgeReceivedOutcome(outcome) {entered(); await gate; return inner.acknowledgeReceivedOutcome(outcome);}})});
+  let host; let attached;
+  try {
+    await runTool(h); await started; await h.host.close(context);
+    const storage = await openNodeJsonlStorage(h.storageDirectory, context, {fsync: true}); const registry = createRegistry();
+    host = await Harness.open(storage, {models: {}, registry}, context);
+    const attach = () => api().createChioDurableTools({storeId: h.storeId, storage, session: host, provenanceDir: h.provenanceDir,
+      binding: h.f.binding, registry: h.f.registry, originals: h.proxy.originals, executor: h.client.executor, transport: h.f.native, context});
+    await assert.rejects(attach(), /live backend|identity/, 'closed Session does not prove its separate ACK writer settled');
+    release(); attached = await attach(); await attached.flush();
+    assert.deepEqual(h.f.counts(), {effects: 1, acks: 1, nativeCalls: 1});
+  } finally {release(); await attached?.close(); await host?.close(context); await h.close();}
 });

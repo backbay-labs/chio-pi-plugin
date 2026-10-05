@@ -32,6 +32,25 @@ export function containsHostPath(text, path) {
   const escaped = path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`(^|[^A-Za-z0-9_./@-])${escaped}(?=$|[/"'\\s])`).test(text);
 }
+/** npm may redact a UUID-like path component. The lock and installed archive
+ * already establish identity, so normalize the one selected dependency by its
+ * graph location and artifact basename, then reject every remaining absolute
+ * file resolution, including redacted paths that cannot match hostPaths. */
+export function normalizeConsumerGraph(text, artifactName) {
+  const graph = JSON.parse(text); const plugin = graph.dependencies?.["@chio/pi-plugin"];
+  const absolute = value => typeof value === "string" && /^file:(?:[/\\]|[A-Za-z]:[/\\])/.test(value);
+  let absoluteArtifactResolutions = 0;
+  if (absolute(plugin?.resolved) && plugin.resolved.endsWith(`/${artifactName}`)) {
+    plugin.resolved = `file:../${artifactName}`; absoluteArtifactResolutions++;
+  }
+  const problems = absoluteArtifactResolutions === 1 ? [] : ["selected archive lacks exactly one absolute graph resolution"];
+  function visit(value) {
+    if (absolute(value)) problems.push("graph retains an absolute file resolution");
+    else if (value && typeof value === "object") Object.values(value).forEach(visit);
+  }
+  visit(graph);
+  return {text: JSON.stringify(graph, null, 2) + "\n", absoluteArtifactResolutions, problems: [...new Set(problems)]};
+}
 const exact = value => typeof value === "string" && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(value);
 
 /** Lists a gzip tar archive without extracting it. Links, devices and paths
@@ -184,8 +203,8 @@ function findPackageDirs(start, name) {
 function smokeSource(kind, tools) {
   return `import assert from "node:assert/strict";
 import {randomBytes} from "node:crypto";
-import {mkdtemp, readFile} from "node:fs/promises";
-import {tmpdir} from "node:os";
+import {mkdtemp, mkdir, readFile, writeFile} from "node:fs/promises";
+import {tmpdir, hostname} from "node:os";
 import {join} from "node:path";
 const report = {kind: ${JSON.stringify(kind)}};
 const root = await import("@chio/pi-plugin");
@@ -211,6 +230,10 @@ if (report.kind === "base") {
   const storage = new MemoryStorage(); const durableRegistry = createRegistry(); const context = {};
   const host = await Harness.open(storage, {models: {}, registry: durableRegistry}, context);
   const provenanceDir = await mkdtemp(join(tmpdir(), "chio-durable-smoke-"));
+  // Registration-only owner fixture. No gateway, kernel or delivery is invoked.
+  const mappingDirectory = join(provenanceDir, "pi-parent-mappings"); await mkdir(mappingDirectory, {mode: 0o700});
+  await writeFile(join(provenanceDir, "gateway.lock"), JSON.stringify({pid: process.pid, hostname: hostname(), sessionId: "consumer-smoke"}), {mode: 0o600});
+  Object.assign(originals.mappings, {directory: mappingDirectory, sessionId: "consumer-smoke"});
   const adapter = await durable.createChioDurableTools({storeId: randomBytes(32).toString("hex"), storage, session: host, provenanceDir, binding, registry,
     executor: {execute: refuse("execute")}, originals, transport: {acknowledgeReceivedOutcome: refuse("acknowledgeReceivedOutcome")}, context});
   durableRegistry.install(adapter.extension);
@@ -419,8 +442,9 @@ export async function main(argv = process.argv.slice(2)) {
       copyFileSync(join(consumer, "package.json"), join(out, "package.json")); copyFileSync(join(consumer, "package-lock.json"), join(out, "package-lock.json"));
       // npm ls reports the local archive as an absolute file: URL; retain the
       // consumer-relative dependency the manifest and lockfile actually use.
-      const absolute = `file:${join(work, artifactName)}`; const graphText = ls.stdout.split(absolute).join(`file:../${artifactName}`);
-      record.resolvedGraphNormalization = {absoluteArtifactResolutions: ls.stdout.split(absolute).length - 1, retainedAs: `file:../${artifactName}`};
+      const normalized = normalizeConsumerGraph(ls.stdout, artifactName); const graphText = normalized.text;
+      check(kind, "resolved graph excludes absolute file paths including npm redactions", normalized.problems);
+      record.resolvedGraphNormalization = {absoluteArtifactResolutions: normalized.absoluteArtifactResolutions, retainedAs: `file:../${artifactName}`};
       writeFileSync(join(out, "resolved-graph.json"), graphText.endsWith("\n") ? graphText : `${graphText}\n`);
       Object.assign(record, {lockfileSha256: sha256(lockBytes), packageJsonSha256: sha256(readFileSync(join(consumer, "package.json"))), resolvedGraphSha256: sha256(readFileSync(join(out, "resolved-graph.json"))),
         lockPackages: Object.keys(lock.packages ?? {}).length - 1, pi: pi.version, piDurable: kind === "base" ? null : durableVersions[0], isolatedPiProfileEntries: metadataSnapshot(dirs["pi-profile"]).entries});

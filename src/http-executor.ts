@@ -21,7 +21,9 @@ export interface PiTransportConfig {
 export async function readTransportConfig(path: string): Promise<PiTransportConfig> {
   const stat = await lstat(path);
   if (!stat.isFile() || stat.isSymbolicLink() || stat.mode & 0o077 || stat.size > 1024 * 1024) throw new Error("Private transport configuration required");
-  const config = JSON.parse(await readFile(path, "utf8")) as PiTransportConfig;
+  let config: PiTransportConfig;
+  try {config = JSON.parse(await readFile(path, "utf8")) as PiTransportConfig;}
+  catch {throw new Error("Private transport configuration is unreadable or malformed; source bytes are withheld");}
   const url = new URL(config.transport?.url);
   if (config.schema !== "chio.pi.transport.v1" || !config.sessionId || !config.transport.token
     || url.protocol !== "http:" || url.hostname !== "127.0.0.1" || !url.port || url.pathname !== "/mcp"

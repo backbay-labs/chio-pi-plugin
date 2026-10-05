@@ -3,7 +3,7 @@ import {hostname} from "node:os";
 import {dirname, join} from "node:path";
 import type {KernelRequest} from "./extension.js";
 import {canonicalJson, frozenJson, validateKernelArguments, type ToolRegistry} from "./tool-registry.js";
-import {ownedDirectory, readPrivateJson, sha256, syncDirectory, writePrivateJson} from "./private-state.js";
+import {ownedDirectory, readPrivateJson, recoverPrivateWrites, sha256, syncDirectory, writePrivateJson} from "./private-state.js";
 import {object} from "./operator.js";
 
 export interface ContinuationBinding {authorityDigest: string; registryDigest: string;}
@@ -67,6 +67,7 @@ export function validateCommit(value: HostCommitReference): void {
 // Every handle under the native owner process shares one line by canonical
 // directory. The native gateway owner lock supplies cross-process exclusion.
 const mappingLines = new Map<string, {line: Promise<void>}>();
+export const PARENT_MAPPING_LIMIT = 4096;
 export class ParentMappings {
   constructor(readonly directory: string, readonly binding: ContinuationBinding, readonly registry: ToolRegistry, readonly sessionId: string) {assertBinding(binding);}
   private async serial<T>(job: () => Promise<T>): Promise<T> {
@@ -100,12 +101,15 @@ export class ParentMappings {
   private async readAll(): Promise<ParentMapping[]> {
     await ownedDirectory(this.directory);
     const names = await readdir(this.directory);
-    if (names.length > 4096 || names.some(name => !/^[a-f0-9]{64}\.json$/.test(name))) throw new Error("Parent mapping inventory is invalid or interrupted");
+    if (names.some(name => !/^[a-f0-9]{64}\.json$/.test(name))) throw new Error("Parent mapping inventory is invalid or interrupted");
     const records: ParentMapping[] = [];
     for (const name of names.filter(name => name.endsWith(".json")).sort()) records.push(this.validate(await readPrivateJson(join(this.directory, name)), name));
     return records;
   }
   async all(): Promise<ParentMapping[]> {return this.serial(() => this.readAll());}
+  async recoverInterruptedWrites(): Promise<void> {
+    await this.serial(async () => {await assertNativeGatewayOwner(this); await recoverPrivateWrites(this.directory);});
+  }
   private async findCurrent(request: KernelRequest): Promise<ParentMapping | undefined> {
     request = immutableRequest(this.registry, request);
     const found = (await this.readAll()).find(value => logicalKey(value.request) === logicalKey(request));
@@ -115,9 +119,13 @@ export class ParentMappings {
   async find(request: KernelRequest): Promise<ParentMapping | undefined> {return this.serial(() => this.findCurrent(request));}
   async reserve(request: KernelRequest, session: string): Promise<{mapping: ParentMapping; created: boolean}> {
     return this.serial(async () => {
+      await assertNativeGatewayOwner(this);
       request = immutableRequest(this.registry, request);
       const prior = await this.findCurrent(request);
       if (prior) return {mapping: prior, created: false};
+      const records = await this.readAll();
+      const resumesRetained = request.tool === "chio_resume" && records.some(record => record.identity.nativeRequestId === request.arguments.requestId);
+      if (records.length >= PARENT_MAPPING_LIMIT && !resumesRetained) throw new Error("Parent mapping capacity reached; retain originals and select a new operator-prepared session for fresh work");
       const mapping: ParentMapping = withContentDigest({schema: "chio.pi.parent-mapping.v1" as const, binding: this.binding, request,
         argumentDigest: sha256(canonicalJson(request.arguments)), identity: gatewayIdentity(this.sessionId, session, request)});
       this.validate(mapping, logicalKey(request) + ".json");
@@ -127,6 +135,7 @@ export class ParentMappings {
   }
   async update(request: KernelRequest, change: Partial<Pick<ParentMapping, "nativeObserved" | "hostCommit" | "hostHistory" | "acknowledgement">>): Promise<void> {
     await this.serial(async () => {
+      await assertNativeGatewayOwner(this);
       const prior = await this.findCurrent(request);
       if (!prior) throw new Error("Original parent mapping missing; no delivery acknowledgement");
       if (prior.hostCommit && change.hostCommit && canonicalJson(prior.hostCommit) !== canonicalJson(change.hostCommit)) throw new Error("Committed host entry reference is immutable");
@@ -153,6 +162,7 @@ export async function leaseParentMappings(store: ParentMappings): Promise<() => 
   await assertNativeGatewayOwner(store);
   if (parentLeases.has(store.directory)) throw new Error("Native owner already has a parent proxy for this mapping directory");
   parentLeases.add(store.directory);
+  try {await store.recoverInterruptedWrites();} catch (error) {parentLeases.delete(store.directory); throw error;}
   return async () => {parentLeases.delete(store.directory);};
 }
 const parentLeases = new Set<string>();

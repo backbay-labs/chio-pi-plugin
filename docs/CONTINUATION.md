@@ -51,7 +51,7 @@ non-dispatch. Storage failure forwards zero effect bytes.
 
 The native gateway's private `gateway.lock` owns the cross-process lease. Its
 installed format is exactly `{pid, hostname, sessionId}`. The proxy verifies the
-actual current-process owner before every forward and uses one in-process proxy
+actual current-process owner before every forward and parent mapping mutation and uses one in-process proxy
 lease per mapping directory. All parent mapping handles in that process share a
 read/mutation line keyed by the canonical private directory, including separately
 opened original-operation ports. The first committed entry proof stays immutable
@@ -123,6 +123,11 @@ strict UTF-8, bounded reads and durable exclusive atomic creation. Links, specia
 files, FIFOs, changed state and oversized inputs refuse before dispatch or ACK.
 The reader revalidates the admitted directory's identity, ownership, mode and
 type along with the final leaf before accepting a read.
+At startup, the exclusive native owner removes only validated interrupted
+`.chio-<32 hex>.tmp` publications. A two-link temporary must share its inode with
+an existing published record in the same private directory. Partial temporaries
+are discarded; published originals are never removed or reconstructed from them.
+Symlinks, outside hardlinks, unexpected names and unsafe permissions still refuse.
 Handoffs contain no capability, bearer, session, provider or approval credentials.
 Known actual credential material is rejected even inside ordinary text; public
 session/capability IDs and digests remain permitted. Delivery proof fields remain
@@ -153,15 +158,25 @@ The trusted backend owner must prepare a stable 64-hex `storeId` and associate i
 with the exact selected persistent backend and Storage/Session handles. Durable's
 public Storage API exposes no persistent identity or backend path. Keep that
 owner association across restart; never assign its identity to another backend.
+The adapter runs in the actual native gateway owner process, including receiving
+host adapters. It checks that ownership before startup recovery and every intent
+write. All receiving hosts submit parent mutations through that owner; read-only
+original lookup can remain outside it. A live provenance directory cannot be
+rebound under another store identity in the same process.
 The adapter retains an immutable private `store-owner.binding`, checks actual
 selected-store tasks and entries, and rejects substitution by another live
 handle. The identity label or parent provenance file alone never proves delivery.
-`adapter.close()` shuts down only the adapter observer and its registrations.
+`adapter.close()` shuts down the adapter observer and its registrations and drains
+queued observations. It retains writer custody until admitted executions,
+recovery bindings and private writes settle. The close promise permits the owner
+to call `Session.close()` next to cancel an active tool; reattachment still refuses
+while that tool is running. It does not close the underlying Session.
 It retains the actual backend association and public `Session.subscribeClose`
 listener. An observer may reattach only to the exact same still-live handles,
 private directory and binding. The synchronous close listener marks and enqueues
 only; asynchronous confirmation awaits public `Session.close`, whose resolved
-promise establishes that admitted work settled and Storage closed. Only then may
+promise establishes that admitted work settled and Storage closed. The adapter
+also drains its separate ACK observer before releasing backend custody. Only then may
 the identity bind newly opened handles for that same backend. Failed or unresolved
 close retains custody; reattachment waits at most one second for confirmation
 before refusing. The trusted owner must still preserve backend identity across
@@ -265,8 +280,11 @@ conflicting outcomes retain the conservative refusal; no proof list is appended.
 ## Bounds and acceptance
 
 Private JSON and transport frames/responses are at most 1 MiB. Handoffs admit at
-most 256 originals and 32 KiB of context. Parent and Durable provenance inventories
-admit at most 4096 records. The proxy admits 32 pending requests, bounds inbound
+most 256 originals and 32 KiB of context. At 4096 parent mappings or Durable intents, fresh original admission stops before
+publication or dispatch. Existing records, including historical inventories above
+the threshold, remain readable and recoverable. Explicit recovery bindings and
+native-validated approval resumes may add delivery records at capacity. No
+original is evicted. Select a new operator-prepared session/store for fresh work. The proxy admits 32 pending requests, bounds inbound
 framing to 10 seconds and native requests to 40 seconds; the guest adapter uses
 the same 40 second bound. The proxy refuses to start when the prepared native
 execution `timeoutMs` exceeds 30000, leaving 10 seconds for parent lookups,

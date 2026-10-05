@@ -579,3 +579,33 @@ test("A2-M4: the parent refuses a native execution timeout its fixed upstream an
   const bounded = await nativeFixture({timeoutMs: 30000});
   try {await (await start(bounded)).close();} finally {await bounded.close();}
 });
+
+test("review: interrupted mapping publication reopens the exact original without redispatch", async () => {
+  const {link} = await import('node:fs/promises'); const f = await nativeFixture(); let proxy;
+  try {
+    proxy = await start(f); const session = await initialize(proxy); const logical = request();
+    const outcome = bodyOutcome(await call(proxy, session, logical)); await proxy.close();
+    const dir = join(f.config.journalDir, 'pi-parent-mappings'); const name = (await readdir(dir))[0];
+    await link(join(dir, name), join(dir, '.chio-' + 'd'.repeat(32) + '.tmp'));
+    await writeFile(join(dir, '.chio-' + 'e'.repeat(32) + '.tmp'), '{partial', {mode: 0o600});
+    await f.restart(); proxy = await start(f);
+    assert.deepEqual(await plugin.recoverOriginalOperation(logical, proxy.originals), outcome);
+    assert.deepEqual(await readdir(dir), [name]);
+    assert.deepEqual(f.counts(), {effects: 1, acks: 0, nativeCalls: 1});
+  } finally {await proxy?.close(); await f.close();}
+});
+
+test("review: a process without native gateway ownership cannot update parent delivery provenance", async () => {
+  const f = await nativeFixture(); let proxy;
+  try {
+    proxy = await start(f); const session = await initialize(proxy); const logical = request(); await call(proxy, session, logical);
+    const before = await proxy.originals.mappings.find(logical);
+    const source = `import {openParentMappings} from ${JSON.stringify(new URL('../dist/parent-mappings.js', import.meta.url).href)};
+      import {createToolRegistry} from ${JSON.stringify(new URL('../dist/tool-registry.js', import.meta.url).href)};
+      const store = await openParentMappings(${JSON.stringify(f.config.journalDir)}, ${JSON.stringify(f.binding)}, createToolRegistry(${JSON.stringify(f.config.tools)}), ${JSON.stringify(f.config.sessionId)});
+      try {await store.update(${JSON.stringify(logical)}, {hostHistory: {kind: 'pi-model-history', outcomeDigest: '${'a'.repeat(64)}'}}); console.log('unexpected-write');}
+      catch(error) {if (!/actual native gateway owner/.test(error.message)) throw error; console.log('owner-refused');}`;
+    assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', source], {encoding: 'utf8', env: {PATH: process.env.PATH, LANG: 'C'}}).trim(), 'owner-refused');
+    assert.deepEqual(await proxy.originals.mappings.find(logical), before);
+  } finally {await proxy?.close(); await f.close();}
+});

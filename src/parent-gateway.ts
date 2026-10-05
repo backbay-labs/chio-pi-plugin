@@ -3,7 +3,7 @@ import {createServer, type IncomingMessage, type ServerResponse} from "node:http
 import {admitsDispatch, createNativeOriginalOperationPort, type NativeDeliveryTransport, type NativeOriginalOperationPort} from "./continuation.js";
 import {preparedAuthorityDigest} from "./configured.js";
 import {object, OperatorRedactor, readOperatorContext} from "./operator.js";
-import {assertNativeGatewayOwner, gatewayIdentity, immutableRequest, leaseParentMappings, openParentMappings, type ContinuationBinding} from "./parent-mappings.js";
+import {assertNativeGatewayOwner, gatewayIdentity, immutableRequest, leaseParentMappings, openParentMappings, PARENT_MAPPING_LIMIT, type ContinuationBinding} from "./parent-mappings.js";
 import {canonicalJson, frozenJson} from "./tool-registry.js";
 import {PRIVATE_LIMIT, sha256} from "./private-state.js";
 import type {KernelRequest} from "./extension.js";
@@ -142,6 +142,7 @@ export async function startParentGatewayProxy(options: {configPath: string; bind
         const outcome = original.outcome ?? {state: "unknown", evidence: "unverified", requestId: original.nativeRequestId, reason: "reserved original has no authoritative completion; no automatic retry"};
         json(response, 200, {jsonrpc: "2.0", id: message.id, result: {isError: original.state !== "completed", content: [{type: "text", text: JSON.stringify(outcome)}], _meta: metadata(original.nativeRequestId)}}); return;
       }
+      if (logical.tool !== "chio_resume" && (await mappings.all()).length >= PARENT_MAPPING_LIMIT) {refused("parent mapping capacity reached; original recovery remains available; select a new operator-prepared session for fresh work"); return;}
       const inventory = await originals.inventory();
       if (!admitsDispatch(inventory, logical)) {
         refused(logical.tool === "chio_resume" && !inventory.operations.some(op => op.nativeRequestId === logical.arguments.requestId && op.state === "awaiting_approval")

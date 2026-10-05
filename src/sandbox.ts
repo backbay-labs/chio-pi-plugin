@@ -55,7 +55,9 @@ export async function buildSandboxPolicy(options: { executable: string; installa
 }
 
 export async function requireSessionCredential(path: string) {
-  const config = JSON.parse(await readFile(path, "utf8"));
+  let config;
+  try {config = JSON.parse(await readFile(path, "utf8"));}
+  catch {throw new Error("Private session configuration is unreadable or malformed; source bytes are withheld");}
   const credential = config.sessionCredential;
   const execution = config.execution;
   if (!credential || credential.schema !== "chio.mcp.session-credential.v1" || credential.sessionId !== execution?.sessionId || credential.subjectKey !== execution?.subjectKey || credential.serverId !== execution?.serverId || credential.endpointPath !== "/mcp" || !Array.isArray(credential.capabilityIds) || credential.capabilityIds.length !== 1 || credential.capabilityIds[0] !== execution?.capabilityId) throw new Error("Protected launcher requires operator-prepared delegated session authority");

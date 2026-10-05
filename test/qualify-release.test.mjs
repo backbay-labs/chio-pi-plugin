@@ -95,3 +95,16 @@ test("consumer lock must record the artifact's integrity, not merely omit it", (
   assert.deepEqual(qualify.consumerLockProblems({dependencies: {}}, {}, "a.tgz", "sha512-good", "0.2.0"),
     ["manifest dependency undefined", "lock resolved undefined", "lock integrity absent", "lock version undefined"]);
 });
+
+test("redacted UUID paths normalize only the selected archive and other absolute file URLs fail", () => {
+  const graph = {dependencies: {"@chio/pi-plugin": {resolved: "file:/private/tmp/session-***/chio-pi-plugin-0.2.0.tgz"}}};
+  const normalized = qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-pi-plugin-0.2.0.tgz");
+  assert.deepEqual(normalized.problems, []); assert.equal(normalized.absoluteArtifactResolutions, 1);
+  assert.equal(JSON.parse(normalized.text).dependencies["@chio/pi-plugin"].resolved, "file:../chio-pi-plugin-0.2.0.tgz");
+  for (const resolved of ["file:/redacted/***/other.tgz", "file:///unknown/path.tgz", "file:C:\\redacted\\other.tgz"]) {
+    graph.dependencies.other = {resolved};
+    assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-pi-plugin-0.2.0.tgz").problems.includes("graph retains an absolute file resolution"));
+  }
+  graph.dependencies["@chio/pi-plugin"].resolved = "file:/unknown/other.tgz";
+  assert.ok(qualify.normalizeConsumerGraph(JSON.stringify(graph), "chio-pi-plugin-0.2.0.tgz").problems.includes("selected archive lacks exactly one absolute graph resolution"));
+});

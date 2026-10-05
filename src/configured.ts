@@ -27,7 +27,9 @@ export async function readPreparedConfig(path: string): Promise<PreparedPiConfig
   if (resolve(path) !== path) throw new Error("Operator config path must be absolute");
   const stat = await lstat(path);
   if (!stat.isFile() || stat.isSymbolicLink() || stat.mode & 0o077 || stat.size > 1024 * 1024) throw new Error("Operator config must be a private regular file no larger than 1 MiB");
-  const config = JSON.parse(await readFile(path, "utf8")) as PreparedPiConfig;
+  let config: PreparedPiConfig;
+  try {config = JSON.parse(await readFile(path, "utf8")) as PreparedPiConfig;}
+  catch {throw new Error("Private prepared configuration is unreadable or malformed; source bytes are withheld");}
   if (!config.execution?.sessionId || !config.sessionId || !Array.isArray(config.tools) || !config.tools.length || config.execution.fetchImpl !== undefined) throw new Error("Prepared retained kernel session and explicit tools required");
   if (["nativeEmbedding", "nativePorts", "nativeModule", "nativeExecutable", "nativeVerifier", "nativeSink"].some(key => Object.hasOwn(config, key))) throw new Error("Trusted programmatic native composition cannot be selected by prepared JSON");
   const registry = registryForConfig(config);

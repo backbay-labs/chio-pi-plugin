@@ -1,6 +1,6 @@
 import {randomBytes, createHash} from "node:crypto";
 import {constants, type Stats} from "node:fs";
-import {link, lstat, mkdir, open, realpath, rename, unlink} from "node:fs/promises";
+import {link, lstat, mkdir, open, readdir, realpath, rename, unlink} from "node:fs/promises";
 import {basename, dirname, join, resolve} from "node:path";
 import {canonicalJson} from "./tool-registry.js";
 
@@ -65,6 +65,35 @@ export async function syncDirectory(path: string): Promise<void> {
   const file = await open(await ownedDirectory(path), constants.O_RDONLY | constants.O_NOFOLLOW);
   try {await file.sync();} finally {await file.close();}
 }
+/** Call only while holding the directory's exclusive writer ownership, before
+ * admitting work. Temporary bytes are never authoritative: publication and its
+ * directory fsync precede dispatch. An interrupted update retains the previous
+ * published original. A crash between link and unlink leaves exactly two links;
+ * require the other one to be a published record in this same private directory.
+ * Never promote a temporary or remove any published reservation or outcome. */
+export async function recoverPrivateWrites(directory: string): Promise<void> {
+  if (await ownedDirectory(directory) !== directory) throw new Error("Private recovery directory contains a link");
+  const names = await readdir(directory);
+  let changed = false;
+  for (const name of names.filter(name => /^\.chio-[a-f0-9]{32}\.tmp$/.test(name))) {
+    const path = join(directory, name); const stat = await lstat(path);
+    if (!stat.isFile() || stat.uid !== process.getuid?.() || stat.mode & 0o077 || stat.size > PRIVATE_LIMIT || ![1, 2].includes(stat.nlink))
+      throw new Error("Interrupted private publication has unsafe file identity");
+    if (stat.nlink === 2) {
+      let published = false;
+      for (const candidate of names.filter(value => /^[a-f0-9]{64}\.json$/.test(value) || value === "store-owner.binding")) {
+        const other = await lstat(join(directory, candidate));
+        if (other.isFile() && other.ino === stat.ino && other.dev === stat.dev) {published = true; break;}
+      }
+      if (!published) throw new Error("Interrupted private publication has an external hardlink");
+    }
+    const current = await lstat(path);
+    if (current.ino !== stat.ino || current.dev !== stat.dev || current.nlink !== stat.nlink || current.ctimeMs !== stat.ctimeMs)
+      throw new Error("Interrupted private publication changed during recovery");
+    await unlink(path); changed = true;
+  }
+  if (changed) await syncDirectory(directory);
+}
 /** A same-directory temporary is fully flushed before atomic publication. New
  * files use link's exclusive publication, then remove the temporary hardlink.
  * An interrupted publication remains a reservation, never permission to retry. */
@@ -77,8 +106,8 @@ export async function writePrivateJson(path: string, value: unknown, replace = f
   const text = canonicalJson(value) + "\n";
   if (Buffer.byteLength(text) > PRIVATE_LIMIT) throw new Error("Private JSON exceeds bounded size");
   const file = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
-  try {await file.writeFile(text, "utf8"); await file.sync();} finally {await file.close();}
   try {
+    try {await file.writeFile(text, "utf8"); await file.sync();} finally {await file.close();}
     if (replace) await rename(temporary, target);
     else {await link(temporary, target); await unlink(temporary);}
     await syncDirectory(directory);

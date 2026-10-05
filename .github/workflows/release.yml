@@ -105,6 +105,8 @@ jobs:
       - name: Install locked dependencies
         working-directory: ${{ env.PACKAGE_DIRECTORY }}
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install Linux sandbox prerequisite for launcher contract tests
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends bubblewrap
       - name: Typecheck, build, and unit regressions
         working-directory: ${{ env.PACKAGE_DIRECTORY }}
         run: |

@@ -175,7 +175,8 @@ export async function readOperatorContext(path: string, redactor: OperatorRedact
   if ((await privateText(join(config.journalDir, "authority.binding"))).text !== nativeBinding)
     return refuse("authority_binding_mismatch", "Native journal authority differs from the prepared configuration; no recovery or dispatch is permitted.");
   const names = await readdir(config.journalDir);
-  if (names.length > 4096) return refuse("journal_limit", "Native journal exceeds the bounded diagnostic inventory.");
+  // Capacity limits govern new admission, never access to retained originals.
+  // Native status and recovery must remain available when a session is full.
   const hostBindingPresent = names.includes("pi-host.binding");
   if (hostBindingPresent) {
     const binding = (await privateJson(join(config.journalDir, "pi-host.binding"))).value;

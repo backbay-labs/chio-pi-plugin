@@ -77,7 +77,8 @@ export async function prepareLinuxGuest(options:LinuxGuestOptions) {
 export function wholeGuestFilter(architecture:"arm64"|"x64"=process.arch as "arm64"|"x64"):Buffer {
   // Denied besides process creation: unshare, setns, mount, umount2, pivot_root,
   // io_uring_setup, then ptrace, process_vm_readv/writev and pidfd_getfd.
-  // bubblewrap's PID 1 runs without this filter; the guest must not drive it.
+  // Keep process inspection unavailable regardless of the host's Yama policy.
+  // Bubblewrap 0.8.0 applies this filter to its PID 1 reaper as well.
   const profiles={arm64:{arch:0xc00000b7,clone:220,socket:198,socketpair:199,denied:[97,268,40,39,41,425,117,270,271,438]},x64:{arch:0xc000003e,clone:56,socket:41,socketpair:53,denied:[57,58,272,308,165,166,155,425,101,310,311,438]}};
   const p=profiles[architecture];if(!p)throw new Error("Whole guest seccomp architecture unsupported");
   const ins:[number,number,number,number][]=[];const labels=new Map<string,number>();const jumps:{index:number;yes:string;no:string}[]=[];

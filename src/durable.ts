@@ -3,9 +3,9 @@ import {mkdir, readdir} from "node:fs/promises";
 import {join} from "node:path";
 import type {KernelExecutor, KernelRequest} from "./extension.js";
 import {admitsDispatch, recoverOriginalOperation, type NativeDeliveryTransport, type NativeOriginalOperationPort} from "./continuation.js";
-import {assertBinding, checkContentDigest, immutableRequest, withContentDigest, type ContinuationBinding, type HostCommitReference} from "./parent-mappings.js";
+import {assertBinding, assertNativeGatewayOwner, checkContentDigest, immutableRequest, withContentDigest, type ContinuationBinding, type HostCommitReference} from "./parent-mappings.js";
 import {object} from "./operator.js";
-import {ownedDirectory, PRIVATE_LIMIT, readPrivateJson, sha256, syncDirectory, writePrivateJson} from "./private-state.js";
+import {ownedDirectory, PRIVATE_LIMIT, readPrivateJson, recoverPrivateWrites, sha256, syncDirectory, writePrivateJson} from "./private-state.js";
 import {canonicalJson, frozenJson, resolveRegistryCall, type ToolRegistry} from "./tool-registry.js";
 
 type Context = Parameters<ToolRegistration["execute"]>[2];
@@ -58,12 +58,14 @@ interface StoreOwner {
   observer?: object;
   closing: boolean;
   closeConfirmation?: Promise<boolean>;
+  settleObserver?: () => Promise<void>;
 }
 const activeStores = new Map<string, StoreOwner>();
 const storageOwners = new WeakMap<Storage, string>();
 const sessionOwners = new WeakMap<Session, string>();
 async function bindStoreOwner(options: ChioDurableOptions, directory: string, binding: ContinuationBinding): Promise<{owner: StoreOwner; releaseObserver(): void}> {
   const storeId = options.storeId;
+  if ([...activeStores.entries()].some(([id, owner]) => id !== storeId && owner.directory === directory)) throw new Error("Durable private directory already belongs to another live store identity");
   let owner = activeStores.get(storeId);
   if (owner?.closeConfirmation) {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -85,6 +87,7 @@ async function bindStoreOwner(options: ChioDurableOptions, directory: string, bi
       selected.closing = true;
       selected.closeConfirmation = Promise.resolve().then(async () => {
         await options.session.close({...options.context, abortSignal: undefined});
+        await selected.settleObserver?.();
         if (activeStores.get(storeId) === selected) activeStores.delete(storeId);
         storageOwners.delete(options.storage); sessionOwners.delete(options.session); unsubscribeClose();
         return true;
@@ -112,6 +115,9 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
   assertBinding(options.binding);
   const binding = frozenJson(options.binding); const storeId = options.storeId;
   if (!/^[a-f0-9]{64}$/.test(storeId) || !same(binding, options.originals.binding) || options.registry.digest !== binding.registryDigest) throw new Error("Durable store identity or independently prepared authority binding mismatch");
+  // The native owner lock supplies cross-process exclusion; bindStoreOwner
+  // additionally excludes overlapping adapters and directory aliases here.
+  await assertNativeGatewayOwner(options.originals.mappings);
   const directory = await ownedDirectory(options.provenanceDir);
   const {owner, releaseObserver} = await bindStoreOwner(options, directory, binding);
   let intentsDirectory: string;
@@ -146,7 +152,7 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
   async function readIntents(): Promise<void> {
     await ownedDirectory(intentsDirectory);
     const names = await readdir(intentsDirectory);
-    if (names.length > 4096 || names.some(name => !/^[a-f0-9]{64}\.json$/.test(name))) throw new Error("Durable private intent inventory is invalid or interrupted");
+    if (names.some(name => !/^[a-f0-9]{64}\.json$/.test(name))) throw new Error("Durable private intent inventory is invalid or interrupted");
     for (const name of names.sort()) {
       if (admittedNames.has(name)) continue;
       const intent = validateIntent(await readPrivateJson(join(intentsDirectory, name)), name);
@@ -156,7 +162,9 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
   }
   function persistIntent(next: DurableIntent, replace: boolean): Promise<DurableIntent> {
     return intentIO(async () => {
+      await assertNativeGatewayOwner(options.originals.mappings);
       const name = intentKey(next) + ".json"; const frozen = validateIntent(next, name);
+      if (!replace && admittedNames.size >= 4096 && next.mode !== "recover-original" && next.request.tool !== "chio_resume") throw new Error("Durable intent capacity reached; retain originals and select a new operator-prepared store for fresh work");
       await writePrivateJson(join(intentsDirectory, name), frozen, replace);
       intents.set(frozen.taskId, frozen); admittedNames.add(name); return frozen;
     });
@@ -166,6 +174,7 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
     await persistIntent(withContentDigest({...current, reconciled}), true);
   }
   try {
+    await recoverPrivateWrites(directory);
     const ownerPath = join(directory, "store-owner.binding");
     const owner = {schema: "chio.pi.durable-store-owner.v1", storeId, binding};
     try {if (!same(await readPrivateJson(ownerPath), owner)) throw new Error("Durable immutable backend owner binding mismatch");}
@@ -173,10 +182,19 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
     const requested = join(directory, "intents");
     try {await mkdir(requested, {mode: 0o700}); await syncDirectory(directory);} catch (error) {if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;}
     intentsDirectory = await ownedDirectory(requested);
+    await recoverPrivateWrites(intentsDirectory);
     await readIntents();
   } catch (error) {releaseObserver(); throw error;}
   let closed = false;
   const shut = () => closed || owner.closing;
+  const active = new Set<Promise<unknown>>();
+  function tracked<T>(job: () => Promise<T>): Promise<T> {
+    if (shut()) return Promise.reject(new Error("Durable trusted host closed"));
+    const run = job(); active.add(run);
+    void run.then(() => active.delete(run), () => active.delete(run));
+    return run;
+  }
+  let closing: Promise<void> | undefined;
   /** Classifies one terminal task once and records the result in its intent.
    * A throw leaves the intent unreconciled for a later flush or dispatch to
    * observe again; it never disables other intents or the store. */
@@ -321,7 +339,7 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
     name: definition.name, description: definition.description, parameters: definition.parameters as ToolRegistration["parameters"], replay: "unsafe", executionMode: "sequential",
     outputLimits: {maxBytes: PRIVATE_LIMIT, maxLines: PRIVATE_LIMIT, retain: "head"},
     prepareArguments(raw) {resolveRegistryCall(options.registry, definition.name, raw); return frozenJson(raw) as never;},
-    async execute(args, api: ToolExecutionApi, context) {
+    execute(args, api: ToolExecutionApi, context) {return tracked(async () => {
       if (shut()) throw new Error("Durable trusted host closed");
       const call = resolveRegistryCall(options.registry, definition.name, args);
       const task = await api.getTask(api.taskId, context);
@@ -376,13 +394,21 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
       if (!object(outcome)) throw new Error("Native original outcome unavailable; preserve its fence");
       return {content: outcomeContent(outcome), isError: outcome.state !== "completed" || object(outcome.result) && outcome.result.isError === true,
         details: {schema: "chio.pi.durable-result.v1", binding, storeId, request, originalOutcome: outcome} as never};
-    },
+    });},
   }));
   const extension = defineExtension({name: "chio-original-operations", tools, hooks: [hook(GenerationTask, {afterTools: async () => {await flush();}})]});
+  // Session closure settles its tools, but does not own our asynchronous ACK
+  // observer. Drain that writer too before releasing the backend association.
+  owner.settleObserver = async () => {
+    closed = true; unsubscribe();
+    await Promise.allSettled([...active]);
+    if (pumping) await pumping;
+    await observation; await intentLine; releaseObserver();
+  };
   return {tools, extension, flush,
     /** Trusted owner action before scheduling the exact receiving ToolTask.
      * This never executes, creates authority or acknowledges an operation. */
-    async bindRecovery(input: {taskId: number; conversationId: number; callId: string; request: KernelRequest}): Promise<void> {
+    bindRecovery(input: {taskId: number; conversationId: number; callId: string; request: KernelRequest}): Promise<void> {return tracked(async () => {
       if (shut()) throw new Error("Durable trusted host closed");
       const request = immutableRequest(options.registry, input.request);
       await recoverOriginalOperation(request, options.originals);
@@ -397,9 +423,24 @@ export async function createChioDurableTools(options: ChioDurableOptions) {
         taskId: input.taskId, conversationId: input.conversationId, callId: input.callId, toolName: call.name, assistantEntryId: task.input.assistant as number, request});
       const prior = intents.get(input.taskId);
       if (prior) {if (!same(prior, intent)) throw new Error("Receiving task original recovery binding is immutable"); return;}
+      if (shut()) throw new Error("Durable trusted host closed before recovery binding");
       await persistIntent(intent, false);
-    },
+    });},
     requestFor(taskId: number): KernelRequest {const intent = intents.get(taskId); if (!intent) throw new Error("Original Durable task provenance unavailable"); return frozenJson(intent.request);},
-    async close() {if (closed) return; closed = true; unsubscribe(); if (pumping) await pumping; await observation; releaseObserver();}};
+    close() {
+      if (closing) return closing;
+      closed = true; unsubscribe();
+      closing = (async () => {
+        // Keep writer custody until every admitted callback and private write
+        // settles. Reattaching an observer earlier races the old writer.
+        if (pumping) await pumping;
+        await observation; await intentLine;
+        // Permit the caller to reach Session.close(), which cancels active tools.
+        // Waiting for those tools here would deadlock that shutdown order.
+        if (!active.size) releaseObserver();
+        else void Promise.allSettled([...active]).then(async () => {await intentLine; releaseObserver();});
+      })();
+      return closing;
+    }};
 }
 function retainedCall(request: KernelRequest): {tool: string; arguments: Record<string, unknown>} {return {tool: request.tool, arguments: request.arguments};}

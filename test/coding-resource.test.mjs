@@ -110,12 +110,15 @@ test("crash after durable intent fences fresh work and never returns terminal MC
   const state = JSON.parse((await command(["inspect", "--config", f.configPath])).stdout);
   assert.equal(state.fenced, true); assert.equal(state.operations[0].state, "intent");
 });
-for (const point of ["afterGeneration", "beforeCommit", "afterPublication"]) test(`post-intent storage failure at ${point} closes without ACK-able MCP error`, async t => {
+for (const point of ["afterGeneration", "beforeCommit", "afterPublication"]) test(`post-intent storage failure at ${point} closes without ACK-able MCP error`, {
+  skip: point === "afterPublication" && process.platform !== "darwin" && process.env.CHIO_CODING_LINUX_PROBE !== "1" && "requires a qualified recipe runtime; exercised by the confined Linux suite",
+}, async t => {
   const f = await initialized(); t.after(() => f.close());
   const io = stdio(f, {fault: `throw:${point}`});
   t.after(() => io.close());
   if (point === "afterPublication") {
     const result = data(await io.call("test_recipe", {sourceDigest: f.sourceDigest, recipe: "unit"}, meta("2")));
+    assert.equal(result.success, true, "publication fault must follow an actually successful confined test");
     await assert.rejects(io.call("publish_artifact", {sourceDigest: f.sourceDigest, testOperationId: "2".repeat(64), testResultSha256: result.resultSha256, recipeSha256: f.config.recipes[0].recipeSha256, destination: "review"}), /transport closed/);
   } else await assert.rejects(io.call("apply_patch", patch(f.sourceDigest, hash("alpha\nbeta\n"))), /transport closed/);
   await io.exited;
@@ -502,7 +505,8 @@ for (const kind of ["executable", ...(process.platform === "linux" ? ["runtime l
   const f = await initialized(); t.after(() => f.close());
   await f.updateConfig(config => {
     const recipe = config.recipes[0]; const missing = join(f.base, "missing-recipe-file");
-    if (kind === "executable") recipe.executable = missing; else recipe.runtimeFiles[0].path = missing;
+    if (kind === "executable") recipe.executable = missing;
+    else recipe.runtimeFiles = [{path: missing, mountPath: "/usr/lib/missing-recipe-file.so", sha256: "0".repeat(64)}];
     const {recipeSha256, ...body} = recipe; recipe.recipeSha256 = hash(canonicalJson(body));
   });
   const io = stdio(f); t.after(() => io.close()); const args = {sourceDigest: f.sourceDigest, recipe: "unit"};
