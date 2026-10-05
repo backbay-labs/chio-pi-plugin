@@ -23,6 +23,16 @@ Absent compatible ports are unavailable. Required profiles refuse before egress
 or child submission. Callback fixtures qualify adapter ordering and binding only.
 The current bridge and P5 profile do not supply the missing services.
 
+The operator selects CLI `--governance execution-only|required`. Compatibility
+default `execution-only` preserves existing kernel-mediated protected effects and
+the fixed credential relay; it does not claim native disclosure or knowledge
+governance. `required` refuses before provider credentials, gateway startup or
+egress when a compatible native embedding is absent. There is no fallback from
+required governance. Pin the selected mode in the parent resume binding and
+refuse a mode change on resume. Prepared JSON cannot activate native services or
+select their verifier, module, executable or sink. Missing optional services must
+not disable the existing execution-only workflow.
+
 ## Model release
 
 Use one native `releaseFrozenRequest(request, selectedSink, signal)` operation

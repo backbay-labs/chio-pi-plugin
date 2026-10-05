@@ -242,7 +242,9 @@ await assert.rejects(submitScopedChild(parent, widening, nativePort), /scope|aut
   authority scope, child accounting and unknown recovery in the adapter contract.
   Cross-process labeled artifact adoption refuses under current P4 profile.
 - [ ] Wire documented trusted SDK integration entrypoints and startup refusal for
-  required unavailable profiles. Record native service and P5 Linux prerequisites
+  required unavailable profiles. Preserve compatibility CLI execution-only mode;
+  select required governance explicitly and pin the mode on resume with no
+  downgrade or missing-service fallback. Record native service and P5 Linux prerequisites
   as open acceptance rows. Run all tests, commit `feat: gate semantic recovery
   and delegation on native authority`, obtain both reviews and fix.
 
