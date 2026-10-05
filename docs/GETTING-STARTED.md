@@ -28,10 +28,10 @@ pinned runtime manifest as described in [run limits and Linux](RUN-LIMITS-LINUX.
 Install the plugin and its exact Pi peer with one command, in a new directory:
 
 ```sh
-mkdir ~/chio-pi && cd ~/chio-pi
+mkdir ~/chio-pi && cd ~/chio-pi && npm init -y >/dev/null
 npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2
-npx chio-pi --help
-npx chio-coding-resource --help
+npx --no -- chio-pi --help
+npx --no -- chio-coding-resource --help
 ```
 
 To use the optional [Pi Durable adapter](CONTINUATION.md#native-pi-durable-tools),
@@ -41,11 +41,14 @@ root entrypoint never loads Pi Durable.
 The package bundles the Chio bridge and SDK; npm fetches Pi and the public
 TypeBox and Ajv dependencies from the registry. npm's default settings work: no
 install strategy, ordering or script flags are needed, and adding
-`--ignore-scripts` also works. When a directory has no `package.json`, npm installs
-into the nearest parent directory that has a `package.json` or `node_modules`, so
-run `npm init -y` first if a parent such as your home directory has either. Exact peers do not
-freeze Pi's transitive graph, so keep the generated `package-lock.json`. Help
-verifies the entrypoints; it does not start protected execution. See
+`--ignore-scripts` also works. `npm init -y` gives the new directory its own
+`package.json`; without one, npm installs into the nearest parent directory that
+has a `package.json` or `node_modules`, such as a home directory. `npx --no` runs
+only the binary installed here and refuses to install a registry package of that
+name; the `--` keeps npx from reading the binary name as an option value. Exact
+peers do not freeze Pi's transitive graph, so keep the generated
+`package-lock.json`. Help verifies the entrypoints; it does not start protected
+execution. See
 [release qualification](RELEASE-QUALIFICATION.md) for clean installation
 checks, provenance and publication procedures.
 
@@ -59,10 +62,10 @@ cd chio-pi-plugin
 npm ci --ignore-scripts
 npm run pack:release
 (cd artifacts && shasum -a 256 -c chio-protocol-pi-plugin-0.2.0.tgz.sha256)
-mkdir ../chio-pi && cd ../chio-pi
+mkdir ../chio-pi && cd ../chio-pi && npm init -y >/dev/null
 npm install ../chio-pi-plugin/artifacts/chio-protocol-pi-plugin-0.2.0.tgz \
   @earendil-works/pi-coding-agent@1.0.2
-npx chio-pi --help
+npx --no -- chio-pi --help
 ```
 
 The packer builds TypeScript and writes a tarball, SHA-256 file and provenance

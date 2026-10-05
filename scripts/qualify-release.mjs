@@ -16,10 +16,11 @@ const HELP = `Usage: node scripts/qualify-release.mjs --release DIR --work NEW_D
 DIR holds exactly one packed .tgz with its .sha256 and .provenance.json from scripts/pack-release.mjs.
 Creates two fresh consumers (base: exact Pi, no Pi Durable; durable: exact Pi and exact Pi Durable), each
 with an empty npm cache, isolated HOME and Pi profile, and a credential-free environment allowlist. Each
-consumer runs the documented single install command with the archive in place of the registry name,
+consumer runs the documented install with the archive in place of the registry name: npm init -y, then
 npm install ../ARCHIVE @earendil-works/pi-coding-agent@1.0.2 (the durable consumer adds
-@earendil-works/pi-durable@1.0.2), with default npm install strategy and lifecycle scripts. It then adds
-exact TypeScript tooling for the consumer typecheck and is replayed with npm ci from its retained lockfile.
+@earendil-works/pi-durable@1.0.2) with default npm install strategy and lifecycle scripts, then
+npx --no -- BIN --help for both binaries. It then adds exact TypeScript tooling for the consumer
+typecheck and is replayed with npm ci from its retained lockfile.
 Uses the Node running this script and the npm beside it unless --npm-cli is given. Writes builder and
 consumer provenance as separate records. Refuses existing work or evidence directories.
 Exit 0 passed, 1 failed with evidence retained, 2 usage or precondition.
@@ -194,15 +195,23 @@ export function directDependencyBins(consumer) {
   }))].sort();
 }
 
-/** The documented install, `npm install PACKAGE @earendil-works/pi-coding-agent@1.0.2`,
- * with the archive in place of the registry name and npm defaults (no strategy,
- * script or save flags). Durable adds its exact peer to the same command. The
- * typecheck tooling is a separate, later consumer step. */
+/** The documented install: `npm init -y` so npm cannot select an ancestor project,
+ * then `npm install PACKAGE @earendil-works/pi-coding-agent@1.0.2` with the archive
+ * in place of the registry name and npm defaults (no strategy, script or save
+ * flags). Durable adds its exact peer to the same command. The typecheck tooling
+ * is a separate, later consumer step. */
 export function consumerInstallCommands(kind, artifactName, peers, tooling) {
   const peerSpecs = [`@earendil-works/pi-coding-agent@${peers["@earendil-works/pi-coding-agent"]}`,
     ...(kind === "durable" ? [`@earendil-works/pi-durable@${peers["@earendil-works/pi-durable"]}`] : [])];
-  return {documented: ["install", `../${artifactName}`, ...peerSpecs], registryEquivalent: `npm install ${[PACKAGE_NAME, ...peerSpecs].join(" ")}`,
-    tooling: ["install", "--save-dev", "--save-exact", ...tooling]};
+  return {init: ["init", "-y"], documented: ["install", `../${artifactName}`, ...peerSpecs],
+    registryEquivalent: `npm install ${[PACKAGE_NAME, ...peerSpecs].join(" ")}`, tooling: ["install", "--save-dev", "--save-exact", ...tooling]};
+}
+
+/** Documented help through npx. `--no` refuses to install a registry package when
+ * the local binary is missing; `--` stops npx from reading the binary name as the
+ * value of the option `--no` expands to, which would print npx's own help instead. */
+export function documentedHelpCommand(bin) {
+  return ["--no", "--", bin, "--help"];
 }
 
 function metadataSnapshot(directory, limit = 20000) {
@@ -387,14 +396,11 @@ export async function main(argv = process.argv.slice(2)) {
     const directory = join(parent, "chio-pi"); mkdirSync(directory); return directory;
   }
   /** npm installs into the nearest ancestor holding package.json or node_modules
-   * when the current directory has neither, so prove the empty project is its own
-   * prefix: no such ancestor, and npm agrees (it may redact UUID-like segments). */
+   * when the current directory has neither. After `npm init -y` the project must
+   * hold its own manifest and npm must report it as the prefix (npm may redact
+   * UUID-like path segments). */
   function ownPrefix(directory, env, log) {
-    const problems = [];
-    for (let dir = dirname(directory), up = 1; ; dir = dirname(dir), up++) {
-      for (const name of ["package.json", "node_modules"]) if (existsSync(join(dir, name))) problems.push(`ancestor ${up} level(s) up holds ${name}`);
-      if (dir === dirname(dir)) break;
-    }
+    const problems = existsSync(join(directory, "package.json")) ? [] : ["npm init -y wrote no package.json in the project"];
     const result = run(directory, env, process.execPath, [npmCli, "prefix"], log);
     const reported = result.status === 0 ? result.stdout.trim().split(sep) : []; const expected = directory.split(sep);
     if (reported.length !== expected.length || reported.some((part, index) => part !== expected[index] && part !== "***")) problems.push(`npm prefix is not the new project directory (exit ${result.status})`);
@@ -405,10 +411,11 @@ export async function main(argv = process.argv.slice(2)) {
     const consumer = project(`consumer-${kind}`);
     const {env, dirs} = environment(`consumer-${kind}`);
     const install = consumerInstallCommands(kind, artifactName, peers, tooling);
-    const prefixProblems = ownPrefix(consumer, env, `consumer-${kind}-prefix`);
-    check(kind, "empty project directory is its own npm prefix", prefixProblems);
-    const installs = prefixProblems.length ? [] : [install.documented, install.tooling].map((args, index) =>
-      ({command: `npm ${args.join(" ")}`, ...run(consumer, env, process.execPath, [npmCli, ...args], `consumer-${kind}-install-${index + 1}`)}));
+    const npm = (args, log) => ({command: `npm ${args.join(" ")}`, ...run(consumer, env, process.execPath, [npmCli, ...args], log)});
+    const initialized = npm(install.init, `consumer-${kind}-init`);
+    const prefixProblems = initialized.status === 0 ? ownPrefix(consumer, env, `consumer-${kind}-prefix`) : [`${initialized.command} exited ${initialized.status}`];
+    check(kind, "npm init -y makes the empty project its own npm prefix", prefixProblems);
+    const installs = prefixProblems.length ? [] : [install.documented, install.tooling].map((args, index) => npm(args, `consumer-${kind}-install-${index + 1}`));
     const [documented, tooled] = installs;
     check(kind, "documented single-command installation from an empty cache", documented?.status === 0 ? [] : [`${documented?.command ?? "documented install"} exited ${documented?.status}`],
       {command: documented?.command, registryEquivalent: install.registryEquivalent, ms: documented?.ms});
@@ -417,8 +424,9 @@ export async function main(argv = process.argv.slice(2)) {
     const record = {schema: "chio.pi.consumer-provenance.v1", kind, artifact: artifactName, artifactSha256, sourceCommit: provenance.sourceCommit,
       builderProvenanceSha256: sha256(provenanceBytes), node: nodeIdentity, npm: npmVersion, platform,
       environment: {keys: Object.keys(env).sort(), isolatedHome: true, isolatedPiProfile: true, emptyNpmCache: true, emptyProjectDirectory: true, credentials: "none passed"},
-      documentedInstall: {command: `npm ${install.documented.join(" ")}`, registryEquivalent: install.registryEquivalent},
-      installCommands: installs.map(step => step.command), dependency: `file:../${artifactName}`};
+      documentedInstall: {init: initialized.command, command: `npm ${install.documented.join(" ")}`, registryEquivalent: install.registryEquivalent,
+        help: ["chio-pi", "chio-coding-resource"].map(bin => `npx ${documentedHelpCommand(bin).join(" ")}`)},
+      installCommands: [initialized, ...installs].map(step => step.command), dependency: `file:../${artifactName}`};
     if (installed) {
       const lockBytes = readFileSync(join(consumer, "package-lock.json")); const lock = JSON.parse(lockBytes);
       const manifest = JSON.parse(readFileSync(join(consumer, "package.json"), "utf8"));
@@ -455,6 +463,17 @@ export async function main(argv = process.argv.slice(2)) {
       check(kind, "npm executable symlinks stay contained and direct dependency help paths run", [...bins.problems, ...required,
         ...helpResults.filter(item => item.status !== 0 || !item.firstLine).map(item => `${item.bin} ${item.args.join(" ")} exited ${item.status}`)],
         {help: helpResults, containedOnly: bins.names.filter(name => !direct.includes(name))});
+      // The documented npx form must run the installed binary itself: identical
+      // output to the .bin link, not npx's own help, and no registry install.
+      const npxCli = join(dirname(npmCli), "npx-cli.js");
+      const npxResults = ["chio-pi", "chio-coding-resource"].map(bin => {
+        const args = documentedHelpCommand(bin);
+        const result = existsSync(npxCli) ? run(consumer, env, process.execPath, [npxCli, ...args], `consumer-${kind}-npx-${bin}`) : {status: null, stdout: ""};
+        const linked = helpResults.find(item => item.bin === bin && item.args.length === 1);
+        return {command: `npx ${args.join(" ")}`, status: result.status, stdoutSha256: sha256(result.stdout), sameAsInstalledBinary: Boolean(linked) && sha256(result.stdout) === linked.stdoutSha256};
+      });
+      check(kind, "documented npx --no help runs the installed binaries", [...(existsSync(npxCli) ? [] : ["npx-cli.js beside the selected npm is missing"]),
+        ...npxResults.filter(item => item.status !== 0 || !item.sameAsInstalledBinary).map(item => `${item.command} exited ${item.status}${item.sameAsInstalledBinary ? "" : " without the installed binary's help"}`)], npxResults);
       writeFileSync(join(consumer, "smoke.mjs"), smokeSource(kind, tools));
       const smoke = run(consumer, env, process.execPath, ["smoke.mjs"], `consumer-${kind}-smoke`);
       let smokeReport; try {smokeReport = JSON.parse(smoke.stdout.trim().split("\n").at(-1));} catch {}

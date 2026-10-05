@@ -58,17 +58,21 @@ directory `chio-pi` beside a copy of the tarball, is:
 
 ```sh
 export npm_config_cache=/absolute/new-empty-cache
+npm init -y >/dev/null
 npm install ../package.tgz @earendil-works/pi-coding-agent@1.0.2
-npx chio-pi --help
-npx chio-coding-resource --help
+npx --no -- chio-pi --help
+npx --no -- chio-coding-resource --help
 ```
 
 This is the [README](../README.md#build-and-install) command with the archive in
 place of the registry name: npm's default install strategy and lifecycle scripts,
 with no ordering, save or script flags. The Durable consumer adds
-`@earendil-works/pi-durable@1.0.2` to the same command. Before installing, the
-consumer command confirms that the empty directory is its own npm prefix, since
-npm otherwise installs into a parent that has a `package.json` or `node_modules`.
+`@earendil-works/pi-durable@1.0.2` to the same command. `npm init -y` gives the
+empty directory its own `package.json`, since npm otherwise installs into a parent
+that has a `package.json` or `node_modules`; the consumer command confirms that
+npm's prefix is the project directory. Help runs through the documented
+`npx --no --` form and must match the installed binary's own help, so npx can
+neither fall back to a registry package nor print its own usage instead.
 It then adds exact TypeScript tooling with
 `npm install --save-dev --save-exact typescript@7.0.2 @types/node@26.5.0` for the
 consumer typecheck. Executing installed help catches missing peer transitive

@@ -130,6 +130,10 @@ test("cold consumers run the documented single install command with npm defaults
   assert.equal(durable.registryEquivalent, "npm install @chio-protocol/pi-plugin @earendil-works/pi-coding-agent@1.0.2 @earendil-works/pi-durable@1.0.2");
   for (const args of [base.documented, durable.documented]) assert.ok(args.every(arg => !arg.startsWith("-")), `no flags: ${args.join(" ")}`);
   assert.deepEqual(base.tooling, ["install", "--save-dev", "--save-exact", ...tooling]);
+  // npm init -y first, so npm cannot select an ancestor package.json or node_modules.
+  assert.deepEqual(base.init, ["init", "-y"]); assert.deepEqual(durable.init, ["init", "-y"]);
+  // --no refuses registry installs; -- keeps npx from consuming the binary name.
+  assert.deepEqual(qualify.documentedHelpCommand("chio-pi"), ["--no", "--", "chio-pi", "--help"]);
 });
 
 test("help runs only executables that direct dependencies declare", async t => {
