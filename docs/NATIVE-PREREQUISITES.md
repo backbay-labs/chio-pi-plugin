@@ -6,31 +6,37 @@ the recovery worktree remain distinct from the bridge archive bundled here.
 
 ## Installed execution boundary
 
-The bundled bridge artifact is `chio-bridge-0.3.0-7d9e34f7408a.tgz`, SHA256
-`7d9e34f7408a316e35125982a23faaecfd2f31f4da6b50ca8eab287c2c918f67`.
+The bundled bridge artifact is `chio-bridge-0.3.0-9afe7d7a86a9.tgz`, SHA256
+`9afe7d7a86a96cb788a18d6d381857f8414ebfbf4686794d76d7a4b28b370efc`, built
+with `npm run pack:release` (npm 11.8.0) from chio-bridge commit
+`54d73c40181e5dd92a7584faed096137b43b501e`. Its `dist/gateway-operator.js` has
+SHA256 `335f3ca62f46a445003ac6c888e8262a4a5edc7b9835a058a52275050ee13f71`.
 It provides native execution, receipt/result verification, delegated retained
 session validation, approvals, and delivery ACK. Public APIs include
 `createMcpExecutionClient`, `verifyBoundReceipt`, `verifyReceivedOutcome`,
 `verifyCompletedOutcome`, and `startGatewayHttp`.
 
 Its trusted operator binary supports status, dead-lock recovery, delivery export,
-delivery acknowledgement, approval submission and approval decision. It does not
-support owner-result import or capability attenuation. All inspected bridge
+delivery acknowledgement, owner-result import, approval submission and approval
+decision. It does not support capability attenuation. All inspected bridge
 variants report version 0.3.0; compare archive and code identities, not only
 semver.
 
-Task 2 quality review reproduced a defect in this exact archive's decision
-utility. It checks an approval token's exact request and signature but accepts
-either signed decision without comparing it to the operator's requested
+Task 2 quality review reproduced a defect in the decision utility of the
+previously bundled `chio-bridge-0.3.0-7d9e34f7408a.tgz`. It checks an approval
+token's exact request and signature but accepts either signed decision
+without comparing it to the operator's requested
 decision or approval ID. An admin response with a genuine signed approved token
-and a displayed denied status was saved after `--decision denied`; the bundled
+and a displayed denied status was saved after `--decision denied`; that archive's
 gateway then selected it during `chio_resume` and invoked the scripted resource
 executor. This is a native-utility/component reproduction, not a live-kernel
 observation. The adapter gates `approval-decide` before native invocation and
 admin traffic. Post-write validation would leave a usable credential behind.
-Activation requires a separately qualified utility that checks the requested
-decision and approval ID before retention. Approval submission and verification
-of the original signed resume are independent supported paths.
+The bundled archive fixes this (backbay-labs/chio-bridge#3): the utility refuses,
+before retention, any response whose approval ID, signed decision or status
+differs from the requested values. The adapter gate stays until that path is
+qualified through this console. Approval submission and verification of the
+original signed resume are independent supported paths.
 
 Owner-result import was added in bridge commit
 `52f80517af3fce948a3cbc9c9bb485fcdac7dd04`. The frozen qualification references a
