@@ -173,9 +173,10 @@ The installed native entrypoint is resolved through public
 `@chio/bridge/package.json`, checked for realpath containment within the installed
 package, and executed as `node ENTRYPOINT ACTION CONFIG ...`.
 
-The bundled `chio-bridge-0.3.0-7d9e34f7408a.tgz` does not support owner-result
-import or native capability attenuation. All inspected bridge variants report
-0.3.0, so semver does not qualify a different utility. Unknown outcomes requiring
+The bundled `chio-bridge-0.3.0-9afe7d7a86a9.tgz` does not support native
+capability attenuation, and this console does not invoke its owner-result
+import. All inspected bridge variants report 0.3.0, so semver does not qualify
+a different utility. Unknown outcomes requiring
 owner import use only the separately qualified native exporter/importer in
 [FINAL-QUALIFICATION.md](FINAL-QUALIFICATION.md); this console does not substitute
 a local importer or fabricate signatures. Semantic recovery, a coding resource,

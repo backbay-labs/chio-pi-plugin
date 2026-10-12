@@ -31,7 +31,7 @@ export interface NativeOriginalOperationPort extends OriginalOperationPort {
   acknowledgeHistory(outcome: unknown, transport: NativeDeliveryTransport): Promise<{acknowledged: boolean}>;
 }
 export interface NativeDeliveryTransport {acknowledgeReceivedOutcome(outcome: unknown): Promise<{acknowledged: boolean}>;}
-const NATIVE_OPERATOR_SHA256 = "84602a3f626ecf47283f0ada72fd4d2116104b167adc16eedd02e45d23306ac8";
+const NATIVE_OPERATOR_SHA256 = "335f3ca62f46a445003ac6c888e8262a4a5edc7b9835a058a52275050ee13f71";
 function bindingFor(context: OperatorContext): ContinuationBinding {return {authorityDigest: preparedAuthorityDigest(context.config, context.registry), registryDigest: context.registry.digest};}
 function fingerprint(context: OperatorContext): string {return sha256(canonicalJson([...context.records.entries()].sort(([a], [b]) => a < b ? -1 : 1)));}
 function delivered(record: Record<string, unknown>): boolean {return record.state === "not_dispatched" || record.state === "completed" && record.acknowledged === true && (record.hostDeliveryRequired === false || record.hostDeliveryConfirmed === true);}
